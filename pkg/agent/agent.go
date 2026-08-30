@@ -29,13 +29,21 @@ import (
 // ErrTurnQueueFull 表示 pending turn 队列已满（拒绝新的 Run/Followup）。
 var ErrTurnQueueFull = errors.New("agent: turn queue full, reject pending turn")
 
-// CancelCause 是取消原因分类（M18 会扩展为 5 类）。
+// CancelCause 是取消原因分类（M18：5 类）。
 type CancelCause string
 
-// 取消原因枚举（M18 完整分类）。
+// 取消原因枚举（与上游 Agent.Cancel 的 5 类对齐）。
 const (
-	CancelUser   CancelCause = "user"
+	// CancelUser 用户主动取消。
+	CancelUser CancelCause = "user"
+	// CancelParent 父代理取消（subagent 场景）。
 	CancelParent CancelCause = "parent"
+	// CancelHook hook 因拒绝触发取消。
+	CancelHook CancelCause = "hook"
+	// CancelDisposed 代理被释放（dispose）导致的取消。
+	CancelDisposed CancelCause = "disposed"
+	// CancelLegacy 历史/兼容性取消路径。
+	CancelLegacy CancelCause = "legacy"
 )
 
 // Agent 是代理执行器。
@@ -164,9 +172,9 @@ func (a *Agent) Dispose() {
 	a.wg.Wait()
 }
 
-// Cancel 取消当前 turn（写入取消事件）。
+// Cancel 取消当前 turn（写入取消原因，turn 以 aborted 关闭）。
 func (a *Agent) Cancel(cause CancelCause) {
-	_, _ = a.log.Append(session.TurnStoppingData{Reason: "cancel:" + string(cause)})
+	_ = RecordCancel(a.log, cause)
 }
 
 // runTurn 执行单个 turn（串行保证：一次只运行一个 turn）。
