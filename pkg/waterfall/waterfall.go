@@ -37,8 +37,9 @@ type Chain[T any] struct {
 }
 
 // New 构建一条中间件链，按给定顺序执行。
+// 注意：空参数时也要保证内部 slice 非 nil，否则后续 Use() 会被误判为零值。
 func New[T any](handlers ...Handler[T]) *Chain[T] {
-	return &Chain[T]{handlers: handlers}
+	return &Chain[T]{handlers: append([]Handler[T]{}, handlers...)}
 }
 
 // Use 追加一个或多个中间件到链尾（构建期使用，运行期调用会 panic 以暴露误用）。
