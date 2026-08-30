@@ -82,6 +82,31 @@ func (l *Layer[V]) get(name string) (V, bool) {
 	return winner.value, found
 }
 
+// Get 是本层内的具名查找（导出版本，供外部判断某值是否存在于本层）。
+func (l *Layer[V]) Get(name string) (V, bool) {
+	return l.get(name)
+}
+
+// Has 判断本层是否存在该具名条目。
+func (l *Layer[V]) Has(name string) bool {
+	_, ok := l.get(name)
+	return ok
+}
+
+// Unregister 从本层移除所有匹配该 name 的具名条目（匿名条目不受影响）。
+func (l *Layer[V]) Unregister(name string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	out := l.entries[:0]
+	for _, e := range l.entries {
+		if e.name == name {
+			continue
+		}
+		out = append(out, e)
+	}
+	l.entries = out
+}
+
 // snapshot 返回本层全部条目的浅拷贝，供 ScopedLayers 合并使用。
 func (l *Layer[V]) snapshot() []entry[V] {
 	l.mu.RLock()
