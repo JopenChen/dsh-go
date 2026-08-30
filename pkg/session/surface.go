@@ -35,3 +35,48 @@ func NewAppendOp() *SurfaceOp {
 func NewReplaceOp(start, end uint64, data json.RawMessage) *SurfaceOp {
 	return &SurfaceOp{Op: SurfaceReplace, Start: start, End: end, Data: data}
 }
+
+// ============================================================================
+// FoldSurface：表面折叠（任务 M21）
+// ============================================================================
+
+// SurfaceNode 是表面折叠后的单个节点（源事件或替换事件）。
+type SurfaceNode struct {
+	// Seq 事件序号。
+	Seq uint64
+	// Replaced 是否为替换事件（携带 surfaceOp=replace）。
+	Replaced bool
+	// Event 该节点的完整事件。
+	Event SessionEvent
+}
+
+// ReplaceRange 描述一次表面替换覆盖的 seq 范围。
+type ReplaceRange struct {
+	Start uint64 `json:"start"`
+	End   uint64 `json:"end"`
+}
+
+// FoldSurface 折叠表面：读时应用所有 surface replace，返回：
+//   - nodes：有效节点列表（被替换范围内的旧事件被隐藏，替换事件自身保留）；
+//   - replacements：全部替换范围（供 compaction 审计与测试断言）。
+//
+// 源事件永不被修改——替换是"读时"视角，持久化数据保持 append-only。
+func FoldSurface(events []SessionEvent) (nodes []SurfaceNode, replacements []ReplaceRange) {
+	hidden := map[uint64]bool{}
+	for _, ev := range events {
+		if ev.SurfaceOp != nil && ev.SurfaceOp.Op == SurfaceReplace {
+			replacements = append(replacements, ReplaceRange{Start: ev.SurfaceOp.Start, End: ev.SurfaceOp.End})
+			for s := ev.SurfaceOp.Start; s <= ev.SurfaceOp.End && s <= ev.Seq; s++ {
+				hidden[s] = true
+			}
+		}
+	}
+	for _, ev := range events {
+		if hidden[ev.Seq] {
+			continue
+		}
+		replaced := ev.SurfaceOp != nil && ev.SurfaceOp.Op == SurfaceReplace
+		nodes = append(nodes, SurfaceNode{Seq: ev.Seq, Replaced: replaced, Event: ev})
+	}
+	return nodes, replacements
+}
