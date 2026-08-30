@@ -30,3 +30,6 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# 本地维护的详细文档（任务表 / trace / 实施计划）
+docs
