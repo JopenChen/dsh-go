@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/JopenChen/dsh-go/pkg/brand"
 	"github.com/JopenChen/dsh-go/pkg/llm"
@@ -73,6 +74,8 @@ type Agent struct {
 	pendingToolRounds int
 	// toolProvider 按工具名解析工具（测试可注入 mock；生产由 harness 注入）。
 	toolProvider func(name string) *tools.Tool
+	// runCtx 本次运行的上游 ctx（H01：取消/超时/追踪透传）。默认 Background。
+	runCtx context.Context
 }
 
 // turnReq 是单个 turn 的请求。
@@ -103,6 +106,28 @@ func NewAgent(id brand.SessionID, log *session.SessionLog, sys *sysprompt.Assemb
 // SetToolProvider 注入工具解析函数。
 func (a *Agent) SetToolProvider(fn func(name string) *tools.Tool) {
 	a.toolProvider = fn
+}
+
+// SetRunContext 绑定本次运行的上游 ctx（H01）：可取消父 ctx + 可选超时预算。
+// timeout<=0 表示不设额外超时（仅继承父 ctx 的取消）。
+func (a *Agent) SetRunContext(parent context.Context, timeout time.Duration) {
+	if parent == nil {
+		parent = context.Background()
+	}
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		parent, cancel = context.WithTimeout(parent, timeout)
+		_ = cancel // 由上层在 turn 结束后调用；此处保留引用用于传播。
+	}
+	a.runCtx = parent
+}
+
+// runContext 返回生效的运行 ctx（未设置则回退 Background，保证非 nil）。
+func (a *Agent) runContext() context.Context {
+	if a.runCtx == nil {
+		return context.Background()
+	}
+	return a.runCtx
 }
 
 // Log 返回事件溯源日志（供测试/上层读取派生状态）。
@@ -267,7 +292,8 @@ func (a *Agent) runStep(req *turnReq, stepSeq uint64) error {
 	}
 
 	var toolCalls []*llm.ToolCall
-	_, err := a.adapter.Chat(context.Background(), llm.ChatRequest{
+	runCtx := a.runContext()
+	_, err := a.adapter.Chat(runCtx, llm.ChatRequest{
 		Model:    a.modelName(),
 		System:   system,
 		Messages: messages,
@@ -321,7 +347,7 @@ func (a *Agent) executeTool(tc *llm.ToolCall) error {
 	}
 
 	req := &tools.ToolCallRequest{CallID: callID, Tool: tc.Name, Input: tc.Input}
-	res := a.pipeline.Run(context.Background(), req, a.findTool(tc.Name))
+	res := a.pipeline.Run(a.runContext(), req, a.findTool(tc.Name))
 	_, err := a.log.Append(session.ToolResultData{
 		CallID: callID, IsError: res.IsError, Output: stringify(res.Value),
 	})

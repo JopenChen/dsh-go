@@ -79,6 +79,8 @@ type ExecContext struct {
 	Denied bool
 	// Meta 附加元数据（post 级可写入，供展示/审计）。
 	Meta map[string]any
+	// Ctx 携带进入本次执行的父 ctx（H01：取消/超时/追踪 propagate 到工具实现）。
+	Ctx context.Context
 }
 
 // Pipeline 是四级工具执行流水线。
@@ -131,6 +133,7 @@ func (p *Pipeline) Run(ctx context.Context, req *ToolCallRequest, tool *Tool) *T
 		Signal:  SignalContinue,
 		Denied:  false,
 		Meta:    map[string]any{},
+		Ctx:     ctx,
 	}
 
 	// 阶段 1：pre-execute（拦截/改写入参）
@@ -170,7 +173,8 @@ func executeInner(tool *Tool) waterfall.Handler[ExecContext] {
 			ec.Result.Error = "tool implementation missing"
 			return next()
 		}
-		val, err := tool.Execute(contextWithMeta(ec), ec.Request.Input)
+		// H01：把本次执行的父 ctx（含取消/超时/追踪）透传给工具实现，而非重建 Background。
+		val, err := tool.Execute(withExecContext(ec.Ctx, ec), ec.Request.Input)
 		if err != nil {
 			ec.Result.IsError = true
 			ec.Result.Error = err.Error()
