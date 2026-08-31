@@ -14,9 +14,9 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/JopenChen/dsh-go/pkg/brand"
+	"github.com/JopenChen/dsh-go/pkg/registry"
 	"github.com/JopenChen/dsh-go/pkg/session"
 )
 
@@ -33,49 +33,43 @@ type CommandDefinition struct {
 	Handler CommandHandler
 }
 
-// Registry 是命令注册中心。
+// Registry 是命令注册中心（H07：基于可冻结共享注册表，Freeze 后读路径无锁）。
 type Registry struct {
-	mu   sync.RWMutex
-	cmds map[string]*CommandDefinition
+	cmds *registry.Freezable[string, *CommandDefinition]
 }
 
 // NewRegistry 创建命令注册中心，并注册内置 plan/goal 命令。
 func NewRegistry() *Registry {
-	r := &Registry{cmds: map[string]*CommandDefinition{}}
-	r.Register(&CommandDefinition{Name: "plan", Description: "切换计划模式 (on/off)", Handler: handlePlan})
-	r.Register(&CommandDefinition{Name: "goal", Description: "设置目标", Handler: handleGoal})
+	r := &Registry{cmds: registry.NewFreezable[string, *CommandDefinition]()}
+	_ = r.cmds.Put("plan", &CommandDefinition{Name: "plan", Description: "切换计划模式 (on/off)", Handler: handlePlan})
+	_ = r.cmds.Put("goal", &CommandDefinition{Name: "goal", Description: "设置目标", Handler: handleGoal})
 	return r
 }
 
-// Register 注册一个命令。
+// Register 注册一个命令；冻结后返回 ErrFrozen。
 func (r *Registry) Register(def *CommandDefinition) error {
 	if def == nil || def.Name == "" {
 		return fmt.Errorf("commands: name required")
 	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.cmds[def.Name] = def
-	return nil
+	return r.cmds.Put(def.Name, def)
 }
+
+// Freeze 冻结命令注册表（不可逆）：此后读路径无锁走只读快照，写返回 ErrFrozen。
+func (r *Registry) Freeze() { r.cmds.Freeze() }
+
+// IsFrozen 返回注册表是否已冻结。
+func (r *Registry) IsFrozen() bool { return r.cmds.IsFrozen() }
 
 // List 返回全部命令名（字典序）。
 func (r *Registry) List() []string {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	names := make([]string, 0, len(r.cmds))
-	for n := range r.cmds {
-		names = append(names, n)
-	}
+	names := r.cmds.Keys()
 	sort.Strings(names)
 	return names
 }
 
-// Get 按名取命令。
+// Get 按名取命令（冻结后无锁读快照）。
 func (r *Registry) Get(name string) (*CommandDefinition, bool) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	def, ok := r.cmds[name]
-	return def, ok
+	return r.cmds.Get(name)
 }
 
 // Dispatch 解析 "/name args" 并执行对应命令（不存在返回 ErrUnknownCommand）。
