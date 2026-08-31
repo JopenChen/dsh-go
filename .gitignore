@@ -37,3 +37,4 @@ go.work.sum
 #   - docs/trace.md                 本地对话/演进历史（保留本地维护）
 docs/*.html
 docs/trace.md
+trace.md
