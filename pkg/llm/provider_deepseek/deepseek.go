@@ -228,13 +228,20 @@ func (d *DeepSeek) Name() string {
 // ============================================================================
 
 type chatRequest struct {
-	Model       string           `json:"model"`
-	Messages    []chatMessage    `json:"messages"`
-	Tools       []chatTool       `json:"tools,omitempty"`
-	Stream      bool             `json:"stream"`
-	Temperature float64          `json:"temperature,omitempty"`
-	MaxTokens   int              `json:"max_tokens,omitempty"`
-	StreamUsage bool             `json:"stream_options"`
+	Model         string           `json:"model"`
+	Messages      []chatMessage    `json:"messages"`
+	Tools         []chatTool       `json:"tools,omitempty"`
+	Stream        bool             `json:"stream"`
+	Temperature   float64          `json:"temperature,omitempty"`
+	MaxTokens     int              `json:"max_tokens,omitempty"`
+	StreamOptions *streamOptions   `json:"stream_options,omitempty"`
+}
+
+// streamOptions 对应官方 stream_options 对象（OpenAI 兼容格式）。
+// 注意：必须是对象 `{"include_usage": true}`，不能传布尔值，否则 DeepSeek
+// 会返回 400 "stream_options: invalid type: boolean `true`, expected struct StreamOptions"。
+type streamOptions struct {
+	IncludeUsage bool `json:"include_usage"`
 }
 
 type chatMessage struct {
@@ -330,6 +337,12 @@ func (d *DeepSeek) Chat(ctx context.Context, req llm.ChatRequest, cb func(llm.St
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		// 优先读取响应 body，用官方对齐的分类器做精确归类（R04 语义）；
+		// 读失败或无法识别时回退到状态码兜底分类。
+		body, rerr := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
+		if rerr == nil && len(body) > 0 {
+			return llm.Usage{}, d.mapHTTPErrorBody(resp.StatusCode, string(body))
+		}
 		return llm.Usage{}, d.mapHTTPError(resp.StatusCode)
 	}
 
@@ -373,13 +386,13 @@ func (d *DeepSeek) buildPayload(req llm.ChatRequest) chatRequest {
 	}
 
 	return chatRequest{
-		Model:       req.Model,
-		Messages:    messages,
-		Tools:       tools,
-		Stream:      true,
-		Temperature: req.Temperature,
-		MaxTokens:   req.MaxTokens,
-		StreamUsage: true,
+		Model:         req.Model,
+		Messages:      messages,
+		Tools:         tools,
+		Stream:        true,
+		Temperature:   req.Temperature,
+		MaxTokens:     req.MaxTokens,
+		StreamOptions: &streamOptions{IncludeUsage: true},
 	}
 }
 
@@ -529,6 +542,28 @@ func (d *DeepSeek) mapHTTPError(status int) *llm.LlmFailure {
 	default:
 		return &llm.LlmFailure{Kind: llm.FailResponseRefusal, Message: fmt.Sprintf("http %d", status)}
 	}
+}
+
+// mapHTTPErrorBody 结合状态码与响应 body 做精确错误分类（R04 语义对齐）。
+//   - 先用官方分类器 llm.NewProviderFailure(body) 从 provider detail 判别稳定分类；
+//   - 若识别为 unknown（空串）则回退到状态码兜底分类 mapHTTPError；
+//   - Message 始终携带原始 body（截断到 ~200 字符）便于上层与用户诊断真实原因，
+//     避免「仅按状态码猜」导致的误归类（例如短消息被 400 误判为 context-overflow）。
+func (d *DeepSeek) mapHTTPErrorBody(status int, body string) *llm.LlmFailure {
+	const maxBody = 200
+	snippet := body
+	if len(snippet) > maxBody {
+		snippet = snippet[:maxBody] + "..."
+	}
+	if f := llm.NewProviderFailure(body); f.Kind != "unknown" && f.Kind != "" {
+		// 用 API 返回的 detail 精确归类，并带上原始正文便于排障。
+		f.Message = fmt.Sprintf("http %d: %s", status, snippet)
+		return f
+	}
+	// 无法从 body 识别 → 回退状态码分类，但 Message 附上原文。
+	f := d.mapHTTPError(status)
+	f.Message = fmt.Sprintf("%s (body: %s)", f.Message, snippet)
+	return f
 }
 
 // 避免 errors 包未使用告警（上面 Cause: ctx.Err() 已用 context 包里的接口；
