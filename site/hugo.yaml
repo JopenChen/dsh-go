@@ -77,6 +77,17 @@ disableKinds:
 # 参数（Hextra 特有）
 # ============================================================================
 params:
+  # 导航栏（logo 用 AI 融合 README 角色生成的品牌图标）
+  navbar:
+    logo:
+      path: "img/dsh-icon.jpg"
+      dark: "img/dsh-icon.jpg"
+      width: 28
+      height: 28
+      link: "/"
+    displayLogo: true
+    displayTitle: true
+
   # 主题外观（默认暗色，DeepSeek Harness 玻璃拟态风格）
   theme:
     default: dark

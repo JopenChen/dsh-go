@@ -1,0 +1,61 @@
+{{- /* ==========================================================================
+   Dsh-Go 站点覆盖：Hextra 主题 footer.html
+   --------------------------------------------------------------------------
+   与主题原版差异：
+   1) 移除底部语言/主题切换条（语言切换+主题切换已统一移到导航栏右上角）；
+   2) 页脚底部追加 DeepSeek Harness 官方引用链接（官网 + 源码仓库）；
+   其余逻辑与主题保持一致。
+   ========================================================================== */ -}}
+
+{{- $copyrightSectionVisible := or (.Site.Params.footer.displayPoweredBy | default true) .Site.Params.footer.displayCopyright -}}
+
+{{- $copyright := (T "copyright") | default "© 2024 Hextra." -}}
+{{- $poweredBy := (T "poweredBy") | default "Powered by Hextra" -}}
+
+{{- $footerWidth := "hx-max-w-screen-xl" -}}
+{{- with .Site.Params.footer.width -}}
+  {{ if eq . "wide" -}}
+    {{ $footerWidth = "hx-max-w-[90rem]" -}}
+  {{ else if eq . "full" -}}
+    {{ $footerWidth = "max-w-full" -}}
+  {{ end -}}
+{{- end -}}
+
+
+<footer class="hextra-footer hx-bg-gray-100 hx-pb-[env(safe-area-inset-bottom)] dark:hx-bg-neutral-900 print:hx-bg-transparent">
+  {{- /* Dsh-Go 定制：已移除语言/主题切换条 */ -}}
+  <div
+    class="hextra-custom-footer {{ $footerWidth }} hx-pl-[max(env(safe-area-inset-left),1.5rem)] hx-pr-[max(env(safe-area-inset-right),1.5rem)] hx-text-gray-600 dark:hx-text-gray-400"
+  >
+    {{- partial "custom/footer.html" (dict "context" . "switchesVisible" false "copyrightVisible" $copyrightSectionVisible) -}}
+  </div>
+  {{- if $copyrightSectionVisible -}}
+    <div
+      class="{{ $footerWidth }} hx-mx-auto hx-flex hx-justify-center hx-py-12 hx-pl-[max(env(safe-area-inset-left),1.5rem)] hx-pr-[max(env(safe-area-inset-right),1.5rem)] hx-text-gray-600 dark:hx-text-gray-400 md:hx-justify-start"
+    >
+      <div class="hx-flex hx-w-full hx-flex-col hx-items-center sm:hx-items-start">
+        {{- if (.Site.Params.footer.displayPoweredBy | default true) }}<div class="hx-font-semibold">{{ template "theme-credit" $poweredBy }}</div>{{- end -}}
+        {{- if .Site.Params.footer.displayCopyright }}<div class="hx-mt-6 hx-text-xs">{{ $copyright | markdownify }}</div>{{- end -}}
+
+        {{- /* Dsh-Go 定制：页面底部 DeepSeek Harness 官方引用（直接引用） */ -}}
+        <div class="dsh-footer-refs">
+          <span>参考实现自</span>
+          <a href="https://www.deepseek.com/harness/" target="_blank" rel="noreferrer">DeepSeek Harness 官网</a>
+          <span>·</span>
+          <a href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noreferrer">deepseek-harness 源码</a>
+        </div>
+      </div>
+    </div>
+  {{- end -}}
+</footer>
+
+{{- define "theme-credit" -}}
+  <a class="hx-flex hx-text-sm hx-items-center hx-gap-1 hx-text-current" target="_blank" rel="noopener noreferrer" title="Hextra GitHub Homepage" href="https://github.com/imfing/hextra">
+    <span>
+      {{- . | markdownify -}}
+      {{- if strings.Contains . "Hextra" -}}
+        {{- partial "utils/icon.html" (dict "name" "hextra" "attributes" `height=1em class="hx-inline-block ltr:hx-ml-1 rtl:hx-mr-1 hx-align-[-2.5px]"`) -}}
+      {{- end -}}
+    </span>
+  </a>
+{{- end -}}

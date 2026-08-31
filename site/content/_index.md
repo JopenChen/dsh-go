@@ -4,8 +4,9 @@ layout: hextra-home
 ---
 
 <!-- ========== Hero ========== -->
-<div class="hx-mt-10 hx-mb-8">
-{{< hextra/hero-badge >}}
+<div class="hx-mt-10 hx-mb-8 hx-flex hx-flex-col hx-items-center">
+  <img class="dsh-hero-icon" src="img/dsh-icon.jpg" alt="Dsh-Go icon" width="104" height="104" />
+  {{< hextra/hero-badge >}}
   <div class="hx-w-2 hx-h-2 hx-rounded-full hx-bg-primary-400"></div>
   <span>In-process Go reference implementation of the DeepSeek Harness Agent</span>
 {{< /hextra/hero-badge >}}
@@ -26,6 +27,11 @@ layout: hextra-home
 {{< hextra/hero-button text="Read the Docs" link="/en/docs/" >}}
 {{< hextra/hero-button text="GitHub" link="https://github.com/JopenChen/dsh-go" >}}
 </div>
+
+<div class="hx-mt-8"></div>
+
+<!-- ========== 架构图（带动效数据流） ========== -->
+{{< arch-diagram >}}
 
 <div class="hx-mt-8"></div>
 
@@ -75,10 +81,3 @@ and run `go run ./examples/tutorial` — no LLM key needed until the very last o
 | `sandbox_approval` | Approval states + sandbox mode |
 | `mcp` | MCP client → tool bridge |
 | `chat` | Real DeepSeek multi-turn chat (requires an API key) |
-
-## Reference
-
-Dsh-Go is an in-process Go reference implementation of the official DeepSeek Harness:
-
-- [DeepSeek Harness — official website](https://www.deepseek.com/harness/)
-- [deepseek-harness — source code](https://github.com/deepseek-ai/deepseek-harness)

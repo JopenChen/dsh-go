@@ -4,8 +4,9 @@ layout: hextra-home
 ---
 
 <!-- ========== Hero ========== -->
-<div class="hx-mt-10 hx-mb-8">
-{{< hextra/hero-badge >}}
+<div class="hx-mt-10 hx-mb-8 hx-flex hx-flex-col hx-items-center">
+  <img class="dsh-hero-icon" src="img/dsh-icon.jpg" alt="Dsh-Go 图标" width="104" height="104" />
+  {{< hextra/hero-badge >}}
   <div class="hx-w-2 hx-h-2 hx-rounded-full hx-bg-primary-400"></div>
   <span>DeepSeek Harness Agent 的进程内 Go 参考实现</span>
 {{< /hextra/hero-badge >}}
@@ -26,6 +27,11 @@ layout: hextra-home
 {{< hextra/hero-button text="阅读文档" link="/zh-cn/docs/" >}}
 {{< hextra/hero-button text="GitHub" link="https://github.com/JopenChen/dsh-go" >}}
 </div>
+
+<div class="hx-mt-8"></div>
+
+<!-- ========== 架构图（带动效数据流） ========== -->
+{{< arch-diagram >}}
 
 <div class="hx-mt-8"></div>
 
@@ -73,10 +79,3 @@ Dsh-Go 只回答一个问题：**一个真实 Agent 内部到底是怎么运作�
 | `sandbox_approval` | 审批三态 + 沙箱模式 |
 | `mcp` | MCP 客户端 → 工具桥 |
 | `chat` | 真实 DeepSeek 多轮对话（需 API Key） |
-
-## 参考
-
-Dsh-Go 是官方 DeepSeek Harness 的进程内 Go 参考实现：
-
-- [DeepSeek Harness 官网](https://www.deepseek.com/harness/)
-- [deepseek-harness 源码仓库](https://github.com/deepseek-ai/deepseek-harness)
