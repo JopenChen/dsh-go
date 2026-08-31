@@ -1,0 +1,3033 @@
+{
+  "$schema": "./tasks.schema.json",
+  "meta": {
+    "name": "dsh-go 一次性复刻到位任务表",
+    "version": "v2.1",
+    "createdAt": "2026-08-31T00:00:00+08:00",
+    "lastUpdatedAt": "2026-09-01T00:10:00+08:00",
+    "taskCountTotal": 99,
+    "taskCountByStatus": {
+      "pending": 0,
+      "in_progress": 0,
+      "completed": 82,
+      "blocked": 0,
+      "deferred": 11,
+      "skipped": 6
+    }
+  },
+  "upstreamSyncAnchor": {
+    "repoRemote": "https://github.com/deepseek-ai/deepseek-harness.git",
+    "repoLocalPath": "D:\\workspace\\python_workspace\\deepseek-harness",
+    "branch": "master",
+    "commitFullId": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "commitShortId": "cd5ef81481",
+    "commitDate": "2026-08-28T00:57:43+08:00",
+    "commitTitle": "Merge pull request #3248 from deepseek-harness/release/dsh-0.1.2-alpha.1",
+    "releaseTagSighted": "dsh-0.1.2-alpha.1",
+    "snapshottedSubsystemsDocs": [
+      "session-projection.md",
+      "session-reference.md",
+      "session-query.md",
+      "session-title.md",
+      "session-telemetry.md",
+      "persistence.md",
+      "storage.md",
+      "compaction.md",
+      "invariants.md",
+      "token-meter.md",
+      "filesystem.md",
+      "shell.md",
+      "subprocess.md",
+      "spill.md",
+      "jobs.md",
+      "terminal.md",
+      "settings.md",
+      "credentials.md",
+      "skills.md",
+      "commands.md",
+      "permission-presets.md",
+      "workspace.md",
+      "user-questions.md",
+      "web.md",
+      "lsp.md",
+      "code-runtime.md",
+      "workflow.md",
+      "subagent.md",
+      "feedback.md",
+      "schedule.md",
+      "slots.md",
+      "extensions.md",
+      "team.md",
+      "webhook.md",
+      "sandbox.md",
+      "typert.md",
+      "conversation.md",
+      "client-modules.md"
+    ],
+    "notes": "本任务表所有功能点均基于上述 commit 时的官方仓库源码与 docs/subsystems/*.md 文档梳理。后续同步官方更新时：执行 `git fetch origin && git log <thisCommit>..origin/master -- docs/subsystems packages/*/src packages/*/README.md` 得到 diff 范围，按新增/变更 subsystem 回填本任务表的 diffs[] 并新建对应任务。"
+  },
+  "upstreamFutureSync": {
+    "lastSyncCommitId": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "lastSyncAt": "2026-08-31T20:30:00+08:00",
+    "pendingDiffs": [],
+    "history": [
+      {
+        "fromCommit": "(初始创建)",
+        "toCommit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+        "syncedAt": "2026-08-31T00:00:00+08:00",
+        "subsystemsAffected": [
+          "* (全量 60+ subsystem 首版梳理)"
+        ],
+        "tasksAffected": [
+          "(初始创建 81 项任务)"
+        ]
+      },
+      {
+        "fromCommit": "(无 - 本地衍生)",
+        "toCommit": "(无 - 本地衍生)",
+        "syncedAt": "2026-08-31T20:30:00+08:00",
+        "subsystemsAffected": [
+          "cache-affinity(本地衍生)"
+        ],
+        "tasksAffected": [
+          "N01-N09 缓存命中率对齐 9 项 MUST + 0 SHOULD"
+        ]
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "M01",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Branded ID 类型封装",
+      "description": "Branded/Bytes 两类 branded 结构体（SessionID、ToolCallID、ApprovalRequestId、JobId、SkillId、AttachmentId、CredentialRef、WorkspaceId、ProjectionId 等），避免字符串 ID 混传。",
+      "ownerPkg": "pkg/brand",
+      "deps": [],
+      "tests": [
+        "tests/brand_ids_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/util/id-brand",
+        "packages/util/bytes"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "所有跨包契约参数使用 branded 类型，不接受裸 string/[]byte",
+        "New/Parse/Zero/IsZero/String/MarshalJSON/UnmarshalJSON 完整",
+        "误传不同类型 ID 编译期报错"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 Branded[T]/Bytes[T] 泛型载体 + 9 种具体品牌类型（SessionID/ToolCallID/ApprovalRequestID/JobID/SkillID/AttachmentID/CredentialRef/WorkspaceID/ProjectionID）+ 具体构造函数；tests/brand_ids_test.go 6 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M02",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Waterfall 中间件链原语",
+      "description": "泛型 WaterfallFunc[T] + Chain 组合 + typed next()；agent/pre-step/request/tools 四级链 + approval + plan/goal 注入全部复用一套实现。",
+      "ownerPkg": "pkg/waterfall",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/waterfall_chain_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/waterfall"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "Waterfall 多级拦截顺序严格调用",
+        "next() 未调用时短路并返回 error 正确",
+        "payload 可被任一中间件改写并传递到下一级"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/waterfall：泛型 Handler[T] + NextFunc + Chain 洋葱模型，支持短路/错误传播/重复 next panic 保护/RunSafe；tests/waterfall_chain_test.go 8 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M03",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Scope 分层注册表原语",
+      "description": "ScopeKey + Layer + ScopedLayers merge（nearest-scope-wins + rank）。供 Tools/Skills/Commands/Credentials 所有注册表复用。",
+      "ownerPkg": "pkg/scope",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/scope_layers_merge_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/scope"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "host + scope 叠加后读取优先级正确",
+        "匿名 entry 与 named entry 不冲突",
+        "rank 相同时后注册覆盖先注册"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/scope：Key + Layer + ScopedLayers，nearest-scope-wins + rank/注册序决胜 + 匿名 entry 隔离 + Merge 确定性排序；tests/scope_layers_merge_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M04",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Session 事件溯源 & 45+ 词汇表",
+      "description": "45+ 事件类型（Map→Derived Union 模式）+ SessionEvent{seq,time,type,data,surfaceOp?,sourceEventSeqs?} + append 严格不变量（turn 开闭 / step 配对 / tool call↔result 匹配）。",
+      "ownerPkg": "pkg/session",
+      "deps": [
+        "M01",
+        "M30"
+      ],
+      "tests": [
+        "tests/session_event_vocab_test.go",
+        "tests/session_event_ordering_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "45+ 事件类型全部序列化/反序列化 round-trip 一致",
+        "append 非法顺序(如 turn/end 无前 turn/start) 开发 invariant 报错",
+        "tool/call ↔ tool/result 缺失配对 invariant 报错"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session：53 种事件词汇表 + EventData 派生联合 + SessionEvent 自定义 JSON round-trip + SessionLog.Append 严格时序不变量(turn/step/tool 配对) + SurfaceOp 类型；tests 7 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M05",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Session 派生投影函数族",
+      "description": "deriveMessages() + foldRequestHeader() + foldEffectiveSandboxMode() + foldEffectiveApprovalPolicy() + foldGoalChange() + foldTodoWrite() + foldPlanMode() + foldPermissionPreset() + foldSessionTitle()。",
+      "ownerPkg": "pkg/session",
+      "deps": [
+        "M04"
+      ],
+      "tests": [
+        "tests/session_fold_consistency_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "重放任意 1k+ 事件 log，各 fold 结果与热 append 结果逐字段一致",
+        "compaction replace 后 deriveMessages 输出缩短并新消息继续正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/fold.go：EffectiveEvents(读时 surface replace) + deriveMessages + foldRequestHeader/SandboxMode/ApprovalPolicy/GoalChange/TodoWrite/PlanMode/PermissionPreset/SessionTitle + FoldAll 聚合；tests/session_fold_consistency_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M06",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "SessionHeader 元数据",
+      "description": "Version/ID/CreatedAt/Cwd/ParentSession/SeedLength/Origin/DelegationDepth/AgentPreset；Persistence 键目录、fork lineage、subagent 递归深度全靠它。",
+      "ownerPkg": "pkg/session",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/session_header_versioning_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "SESSION_FORMAT_VERSION 与元数据序列化/反序列化一致",
+        "未知 Header 版本 fail-closed 拒绝读",
+        "fork/cold-resume 后 ParentSession/SeedLength 正确写入"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/header.go：SessionHeader{Version/ID/CreatedAt/Cwd/ParentSession/SeedLength/Origin/DelegationDepth/AgentPreset} + 序列化 fail-closed 版本校验 + Fork 谱系派生；tests/session_header_versioning_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M07",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "LLM Provider 接缝 + 流式协议",
+      "description": "LLMAdapter 接口 + Message/ContentBlock(text/tool_use/tool_result/image) + StreamChunk(text/reasoning/tool-call) + ToolSchema + LlmFailure 分类 + DeepSeek REST+SSE 实现。",
+      "ownerPkg": "pkg/llm + pkg/llm/provider_deepseek",
+      "deps": [
+        "M01",
+        "M38",
+        "M39"
+      ],
+      "tests": [
+        "tests/llm_stream_roundtrip_test.go",
+        "tests/llm_provider_deepseek_integration_test.go(需密钥)"
+      ],
+      "upstreamRefs": [
+        "packages/llm/llm + providers"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "DeepSeek 官方模型 /chat/completions(stream=true) 可拿到 reasoning + tool_call 完整 chunk",
+        "LlmFailure{overload/rate-limit/response-refusal/context-overflow} 可映射正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/llm：Message/ContentBlock(4类)/StreamChunk/ToolSchema/Usage(含缓存字段)/LlmFailure 分类 + provider_deepseek REST+SSE 适配器(每请求 resolve key + 失败映射)；tests/llm_stream_roundtrip_test.go 4 个用例 PASS(mock SSE)"
+        }
+      ]
+    },
+    {
+      "id": "M08",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Agent Registry + Turn/Step 双循环 Loop",
+      "description": "Agent 接口(Run/Steer/Inject/Followup/Dispose/Cancel)+ Inbox 双队列(turn/step) + Turn 循环(turn/start→claim→pre-step→多Step→turn-stopping→turn/end)+ Step 循环(step/start→派生→agent/request→llm/stream→assistant/chunk*→message→工具执行→step/end)+ 单 Turn 串行保证。",
+      "ownerPkg": "pkg/agent + pkg/agent/loop.go",
+      "deps": [
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M07",
+        "M09",
+        "M23"
+      ],
+      "tests": [
+        "tests/agent_loop_turn_step_dual_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/agent + agent-loop"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "2.5",
+      "acceptance": [
+        "同一 Agent 2 条 Followup 在 running 期间串行排队，pending turn reject 正确",
+        "step/tool 发生错误时，agent/error 写入 log 且 turn 以 interrupted 关闭"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/agent：Agent(Run/Followup/Dispose/Cancel) + turn 队列(容量2) + worker 串行处理 + Turn/Step 双循环(turn/start→pre-step→多Step→stopping→end) + 工具流水线执行 + 错误 interrupted 关闭；tests/agent_loop_turn_step_dual_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M09",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "SystemPrompt 组装 + Section 注册表",
+      "description": "PromptSection{name/order/text} + 排序合并 + tools schema 注入；顺序错会导致模型行为漂移。",
+      "ownerPkg": "pkg/sysprompt",
+      "deps": [
+        "M01",
+        "M48"
+      ],
+      "tests": [
+        "tests/sysprompt_section_ordering_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/system-prompt"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "persona → policy → runtime-context-snapshot → plan:policy → tools schema 的顺序与原版逐行 diff 一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/sysprompt：Section{Name/Order/Text} + Assembler 有序组装 + order 常量(100/200/300/500/600/700) + ToolsSectionText 工具 schema 字典序注入；tests/sysprompt_section_ordering_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "PromptContext 动态注册与快照",
+      "description": "PromptContext{name/order/text(AssembleCtx)} + runtime-context-snapshot user/message；compaction 删除老上下文后仍保留最新快照，与 M09 组合构成完整 prompt 输入面。",
+      "ownerPkg": "pkg/sysprompt",
+      "deps": [
+        "M09"
+      ],
+      "tests": [
+        "tests/prompt_context_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/system-prompt/context-prompt"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "动态添加/移除 PromptContext 后下一轮 assemble 生效/失效",
+        "compaction 后 runtime-context-snapshot 保留最新快照不丢"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/sysprompt/context.go：ContextRegistry(Register/Unregister/Compute/hash diff/Snapshot) + GoalRoundContext(续轮注入，complete 后停止)；tests/prompt_context_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M11",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "Plan Mode 软引导 + 审批退出",
+      "description": "plan:policy Prompt Section + plan/mode log + exit_plan_mode 工具 + UserQuestion 审批(通过才移除 policy section)。",
+      "ownerPkg": "pkg/plan",
+      "deps": [
+        "M02",
+        "M04",
+        "M09",
+        "M14",
+        "M23",
+        "M41"
+      ],
+      "tests": [
+        "tests/plan_mode_approval_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/plan-mode"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "进入 plan mode 后下一轮请求 plan:policy section 注入成功",
+        "exit_plan_mode → UserQuestion 审批通过 → plan:policy section 下次请求不出现；审批拒绝则仍然存在"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/plan：Enter/Exit(plan/mode 事件 + plan:policy section 注入/移除) + ExitPlanModeTool(审批通过才移除，拒绝保留)；tests/plan_mode_approval_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M12",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "Goal 系统(状态机+续轮驱动+6工具)",
+      "description": "GoalPhase/CAS Revision/goal/change 事件 + goal-round-driver turn-stopping 监听 + 6 个 goal_* 工具(list/set_phase/set_description/set_max_rounds/add_blocker/report_blocker) + concludeTurn 结束 Turn。",
+      "ownerPkg": "pkg/goal",
+      "deps": [
+        "M02",
+        "M04",
+        "M05",
+        "M23",
+        "M25",
+        "M41"
+      ],
+      "tests": [
+        "tests/goal_rounddriver_cas_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/goal"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "set_goal(active, maxRounds=5) 无用户输入情况下自动续轮跑完 5 轮",
+        "goal_report_blocker → concludeTurn 本轮 turn/end 正确写出；CAS Revision 冲突报错并发保护"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/goal：Goal 状态机(CAS revision) + RoundDriver 续轮(on turn-stopping，complete 后停止) + 6 个 goal_* 工具(report_blocker concludeTurn)；tests/goal_rounddriver_cas_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M13",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "Todo 整体替换写入",
+      "description": "todo/write 事件 + foldTodoWrite + todo_write 工具。",
+      "ownerPkg": "pkg/todo",
+      "deps": [
+        "M04",
+        "M05",
+        "M23"
+      ],
+      "tests": [
+        "tests/todo_write_replace_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/todo"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "多次 todo/write 每次整体替换，fold 与原版 last-write-wins 语义一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/todo：TodoItem + TodoWriteTool(整体替换 + 写 todo/write 事件) + Current(fold 派生)；tests/todo_write_replace_test.go 1 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M14",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "User Questions 接缝",
+      "description": "UQ 服务接口{Ask(ctx, options) → (idx int, custom string, err)} + provider_stub(同步阻塞，测试用) + SDK 注入真实 impl；支持 multiSelect + intent 标签。",
+      "ownerPkg": "pkg/userq",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/userq_provider_swap_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/interaction/user-questions"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "stub 返回默认选项；替换 provider 后 Ask 路由到自定义实现正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/userq：Service(Ask/AskDetailed + SetProvider 切换) + QuestionOptions(multiSelect/intent) + StubProvider；tests/userq_provider_swap_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M15",
+      "level": "MUST",
+      "cluster": "cluster-7-config",
+      "name": "Commands(slash 命令)",
+      "description": "CommandDefinition + command/run & command/done 事件 + ctx.commands register/list/execute；/plan /goal 等命令入口。",
+      "ownerPkg": "pkg/commands",
+      "deps": [
+        "M01",
+        "M03",
+        "M04"
+      ],
+      "tests": [
+        "tests/commands_slash_dispatch_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/interaction/commands"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "/plan off 通过 command 直接写入 plan/mode(off) 事件而非 user/message；command/run/command/done 完整"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/commands：CommandDefinition + Registry(register/list/get/dispatch) + 内置 plan/goal 命令 + command/run & command/done 事件；tests/commands_slash_dispatch_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M16",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "Session Projections 投影注册中心",
+      "description": "ProjectionDefinition[State any] + register / snapshot / subscribe(changelog)；SDK 侧读取派生状态的唯一标准接口，禁止直接读 events。",
+      "ownerPkg": "pkg/session/projection.go",
+      "deps": [
+        "M04",
+        "M05"
+      ],
+      "tests": [
+        "tests/session_projection_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session-projection"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "注册 Goal/Todo/Plan/Sandbox 4 个投影后 subscribe changelog 增量正确",
+        "snapshot 与 fold* 结果一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/projection.go：ProjectionDefinition(Apply/Merge) + Registry(RegisterProjection 顶层泛型/ApplyEvents 增量/changelog/rebuild/snapshot)；tests/session_projection_test.go 2 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M17",
+      "level": "MUST",
+      "cluster": "cluster-2-planning",
+      "name": "Session References(跨会话 & 文件 mention)",
+      "description": "@session/xxx 与 #path/file 语法 mention 解析 + PreparedReferencedMessage + 稳定错误码；写入 user/message source=reference。",
+      "ownerPkg": "pkg/session/reference.go",
+      "deps": [
+        "M01",
+        "M04",
+        "M35"
+      ],
+      "tests": [
+        "tests/session_reference_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session-reference"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "用户消息 mention 3 个 session+文件 → PreparedReferencedMessage 拼入上下文正确",
+        "引用不存在 session/文件 → 返回分类错误码（SESSION_NOT_FOUND / FILE_OUT_OF_WORKSPACE 等）"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/reference.go：@session/<id> 与 #<path/file> mention 解析 + Prepare 主流程 + PreparedReferencedMessage{Content/AdditionalContext/References} + 7 类稳定错误码(含 SESSION_NOT_FOUND/FILE_NOT_FOUND/FILE_OUT_OF_WORKSPACE) + 自引用/超限/预算拒绝 + WorkspaceFileResolver(path-only 越界判定)；tests/session_reference_test.go 7 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M18",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Agent Cancel 原因分类",
+      "description": "{kind:user}/{parent}/{hook reason}/{disposed}/{legacy} 5 种 → TurnEndReason.aborted。",
+      "ownerPkg": "pkg/agent/cancel.go",
+      "deps": [
+        "M04",
+        "M08"
+      ],
+      "tests": [
+        "tests/agent_cancel_cause_classify_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/agent/Agent.ts"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "四种取消路径分别触发后，turn/end reason 字段中 aborted.reason 正确区分 5 类"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/agent/cancel.go：5 类 CancelCause(user/parent/hook/disposed/legacy) + RecordCancel/ExtractCancelCause；tests/agent_cancel_cause_classify_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M19",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Request Header 快照 + request/context 路由",
+      "description": "EpochHeader{config/system/tools} + RequestContext{provider/model/contextWindow} + reason in {initial/resume/change/series}。",
+      "ownerPkg": "pkg/session",
+      "deps": [
+        "M04",
+        "M05"
+      ],
+      "tests": [
+        "tests/request_header_rebuild_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session/request-header"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "最新一次 request/header snapshot → reassemble Prompt + Schema 与实际发送 payload 逐字段一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/request_header.go：EpochHeader + RequestContext(reason) + FoldEpochHeader/FoldRequestContext + RebuildFromHeader(compaction 后可重建)；tests/request_header_rebuild_test.go 2 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M20",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "session/end-seed 种子边界 marker",
+      "description": "Resume/Fork 后第一条 live 写入的 marker 事件，定位 cold stored vs live work 分界。",
+      "ownerPkg": "pkg/session",
+      "deps": [
+        "M04"
+      ],
+      "tests": [
+        "tests/end_seed_bracket_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.1",
+      "acceptance": [
+        "Fork/Resume 流程后必写 end-seed；compaction 半开括号定位依赖它"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/endseed.go：MarkEndSeed(携带父会话) + SeedEndSeq/IsAfterEndSeed 分界判定 + EndSeedMarker 头部种子长度；tests/end_seed_bracket_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M21",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "SurfaceOp(append/replace) + foldSurface",
+      "description": "{op:'replace',start,end} 世代；foldSurface(events)=>nodes+replacements。compaction 替换节点就是 surface replace。",
+      "ownerPkg": "pkg/session/surface.go",
+      "deps": [
+        "M04"
+      ],
+      "tests": [
+        "tests/compaction_replace_surface_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session/surface"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "append 100 events 后 replace range [3,80] → deriveMessages 前后消息列表字节一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/surface.go FoldSurface：读时应用 surface replace → nodes + replacements，源事件 append-only 纯净；tests/compaction_replace_surface_test.go 2 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M22",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "PreToolDecision 三态(allow/deny/ask)",
+      "description": "tools/pre-execute waterfall 返回三态 + approval ask→allowed-once 语义(只放行本次)。",
+      "ownerPkg": "pkg/tools",
+      "deps": [
+        "M02",
+        "M27"
+      ],
+      "tests": [
+        "tests/tools_predecision_ask_once_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools/pre-execute"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "ask 被用户通过一次后仅对应 tool/call 执行，下一次同工具调用继续 ask；不会被永久放行"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/predecision.go：PreToolDecision 三态(复用 approval.Decision) + PreDecisionMiddleware(deny 短路/ask→AskFunc allowed-once) + DecisionFromApproval/AskFromApproval(接 M27)；tests/tools_predecision_ask_once_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M23",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Tool Execution 四级 Waterfall 链",
+      "description": "pre-execute → execute(可换 signal) → post-execute(accept/block/attach ctx) → result。",
+      "ownerPkg": "pkg/tools/pipeline.go",
+      "deps": [
+        "M02",
+        "M48"
+      ],
+      "tests": [
+        "tests/tools_waterfall_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "四级每级都有 middleware 示例：deny/换参/截断/加 meta 各通道工作",
+        "execute 中换 signal cancel → post block → result 带上 isError 正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/pipeline.go：Tool + ToolCallRequest/Result + ExecContext + 四级 Waterfall 链(pre/execute/post/result) + Signal cancel 语义 + WithTool 注入真实实现；tests/tools_waterfall_test.go 8 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M24",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Tool Restriction allow/deny",
+      "description": "Scope 级 tool mask + intersect + scope tool exempt。Subagent 父限子能力 / Preset 隐藏工具。",
+      "ownerPkg": "pkg/tools/restriction.go",
+      "deps": [
+        "M03",
+        "M23"
+      ],
+      "tests": [
+        "tests/tools_restriction_intersect_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools/restriction"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "host 层 deny + scope 层 exempt 后工具恢复可用；两层相交正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/restriction.go：Restriction{Allow/Deny} + RestrictionSet(host→scope 有序层栈, nearest-scope-wins 逐层解析) + Filter(子代理父限子/预设隐藏工具)；tests/tools_restriction_intersect_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M25",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "ToolRunContext deferContext + concludeTurn",
+      "description": "composite tool 嵌套分发通道 + 终止本 turn 的权威标记。",
+      "ownerPkg": "pkg/tools/execution.go",
+      "deps": [
+        "M08",
+        "M23"
+      ],
+      "tests": [
+        "tests/tools_conclude_turn_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools/types ToolRunContext"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "Goal report_blocker 调用 concludeTurn → turn 立即走 turn-stopping/turn/end，不再下一个 Step"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/execution.go：ToolRunContext(meta/deferContext/concludeTurn) + WithConclude/ConcludeFrom context 传播；tests/tools_conclude_turn_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M26",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Sandbox 接缝 3 模式",
+      "description": "mode in {read-only / workspace-write / danger-full-access} + {root path, enforced} 元组；Bash/FS 消费者统一。",
+      "ownerPkg": "pkg/sandbox",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/sandbox_mode_apply_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/sandbox/sandbox"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "同一会话 Sandbox Mode → Bash & FS 两个消费者均得到一致 ExecutionPolicy（enforced + scope）"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/sandbox：SandboxMode(3 模式) + ConfinedSandboxMode + SandboxEnforcement(full/partial) + SandboxExecutionPolicy{Mode/WorkspaceRoot/SessionID} + SandboxPolicyService(优先级: 显式>会话>默认 + 根回落) + SandboxProvider Confine fail-closed(SANDBOX_UNAVAILABLE) + RunnerFailureRule 证据规则；tests/sandbox_mode_apply_test.go 6 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M27",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Approval Policy 接缝",
+      "description": "policy in {allow-all / deny-all / ask-dangerous / ask-dangerous-tool-edit} + 用户级 override + 会话级 scope override + ask→allowed-once。",
+      "ownerPkg": "pkg/approval",
+      "deps": [
+        "M03",
+        "M14",
+        "M28"
+      ],
+      "tests": [
+        "tests/approval_override_order_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/approval"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "preset level + user level + session level 三层 override 顺序正确；ask 调用 UQ 成功/失败链路完整"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/approval：Policy 4 枚举 + Effective(Source 审计) + Decision 三态(allow/deny/ask 复用 M22) + Service(三层 override: 会话>用户>预设, PresetPolice 注入破环) + ask→allowed-once(仅放行当次, 下次同工具继续 ask) + UQ 失败 fail-closed deny；tests/approval_override_order_test.go 7 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M28",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Permission Presets 组合旋钮",
+      "description": "{sandboxMode, approvalPolicy} 预设表 + 用户自定义派生状态。",
+      "ownerPkg": "pkg/presets/permission_presets.go",
+      "deps": [
+        "M26",
+        "M27"
+      ],
+      "tests": [
+        "tests/permission_presets_combo_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/interaction/permission-presets"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "safe/danger/review/custom 四预设 + 派生 UI/SDK 状态与原版一一对应"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/presets/permission_presets.go：PermissionPreset{sandboxMode, approvalPolicy} 组合元组 + 4 预设表(safe/danger/review/custom) + Resolve 回落 custom + ApprovalMapper/SandboxMapper 注入函数(供 approval 单向接线) + DerivedState(custom 派生标记)；tests/permission_presets_combo_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M29",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Attachment 图片引用模式",
+      "description": "ImageBlock{url? / reference:AttachmentId} + attachment storage + durable reference 解析。",
+      "ownerPkg": "pkg/attachment",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/attachment_ref_resolve_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/attachment"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "会话压缩/跨会话引用的 Attachment 通过 durable 路径解析不失效"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/attachment：ImageMediaType + ImageAttachmentRef(AttachmentID=sha256 摘要, Bytes/Width/Height) + StoredImageAttachment + Store 接缝(SaveImage/ReadImage/ImageHostPath) + FileBackedStore(content-addressed + 宿主文件后端 + 读取重算摘要) + ResolveReference durable 跨会话/压缩解析；tests/attachment_ref_resolve_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M30",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Invariant Registry 不变量校验",
+      "description": "ctx.invariants.register(pkgName, installer) + 包归属报错（INVARIANT + pkgName prefix）。开发期启用，生产关。",
+      "ownerPkg": "pkg/invariant",
+      "deps": [],
+      "tests": [
+        "tests/invariant_pkg_attribution_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/runtime-diagnostics/invariants"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "turn 已开再次 turn/start → invariant 报错带包名；生产构建关闭 invariant 开关后不报错"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/invariant：Registry 按包分组注册 + 带包归属的 InvariantError + 全局开关(SetEnabled/构建期可关) + panic 隔离 + 违规账本；tests/invariant_pkg_attribution_test.go 6 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M31",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Token Meter 计量与预算",
+      "description": "per-request prompt/completion token + session-level budget cap + 表面节点定价。",
+      "ownerPkg": "pkg/tokenmeter",
+      "deps": [
+        "M04"
+      ],
+      "tests": [
+        "tests/token_meter_budget_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/util/token-meter"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "预算 10k tokens → 达到上限后下一轮请求开始前以 budget deny 拒绝且不产生真实 LLM 调用"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tokenmeter：Meter(每请求 Record prompt/completion + 会话级累计 + budget cap + HasBudget/BudgetDenied/Check 请求前拒绝) + SurfacePricing 表面节点定价；tests/token_meter_budget_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M32",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Agent Preset 接缝",
+      "description": "ctx.agentPresets.{mount/composeFrom/standingKeyFor/recompose/select}。",
+      "ownerPkg": "pkg/presets/agent_presets.go",
+      "deps": [
+        "M03",
+        "M08"
+      ],
+      "tests": [
+        "tests/agent_preset_compose_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/agent-preset"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "不同 preset 为不同 Agent 实例提供独立 tools/prompt 组合；standing key 正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/presets/agent_presets.go：AgentPreset{Tools/Prompt} + PresetRegistry(Mount/Select 基于 scope) + ComposeFrom(工具并集+prompt 拼接)；tests/agent_preset_compose_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M33",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "Agent Initiator 上下文",
+      "description": "withInitiator(agent, op)/requireInitiator()/withoutInitiator；安全归因。",
+      "ownerPkg": "pkg/agent/initiator.go",
+      "deps": [
+        "M08"
+      ],
+      "tests": [
+        "tests/initiator_causal_trace_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/agent initiator module"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "requireInitiator 在没有 withInitiator 包裹下调用直接 panic 或返回 Unauthorized 结构化错误"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/agent/initiator.go：Initiator{AgentID/Op} + WithInitiator/RequireInitiator/WithoutInitiator/MustInitiator + UnauthorizedInitiatorError；tests/initiator_causal_trace_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M34",
+      "level": "MUST",
+      "cluster": "cluster-1-core-driver",
+      "name": "agent/request-error 重试瀑布",
+      "description": "RequestErrorAction{kind:'retry'}，LLM 过载/速率限制显式重试通道。",
+      "ownerPkg": "pkg/agent + waterfall",
+      "deps": [
+        "M02",
+        "M07",
+        "S15"
+      ],
+      "tests": [
+        "tests/agent_request_error_retry_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/agent-loop request-error waterfall"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "S15 Retry 与 request-error waterfall 协同；超过 max 次重试以 error 关闭 turn"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/agent/requesterror.go：RequestErrorAction{retry/abort} + RequestErrorPayload + RequestErrorWaterfall(M02 洋葱模型 + 自定义短路) + TerminalRetryDecision(可重试且未超 max→retry, 否则 abort) + ResolveRequestError/S15 协同 + RecordRequestError 写 agent/error；tests/agent_request_error_retry_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M35",
+      "level": "MUST",
+      "cluster": "cluster-6-file-process",
+      "name": "Filesystem 接缝 + obs-policy + tool-fs",
+      "description": "FsTarget/Version/Info/EditRequest/WriteIntent + write/edit/resolve/listDir/stat + fs/write-intent fs/edit-intent fs/observed 事件 + 观察政策(先读后写)。",
+      "ownerPkg": "pkg/fs + pkg/fs/fs_local",
+      "deps": [
+        "M01",
+        "M04",
+        "M23",
+        "M26"
+      ],
+      "tests": [
+        "tests/filesystem_obs_policy_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/fs/fs + fs-local + fs-observation-policy + tool-fs"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "1.2",
+      "acceptance": [
+        "有 obs-policy + 未观察的版本拒绝裸 fs_write；并发两个 fs_edit 同一行 → 第二个因 FsVersion mismatch 报 FS_STALE_VERSION"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/fs：FsTarget/FsVersion/FsInfo/FsEditRequest/FsWriteIntent + LocalFS(resolve/stat/read/write/edit/listDir + 稳定错误码 + 原子写 + 版本令牌) + ObservationPolicy(先读后写: DecideWrite/DecideEdit + PolicyFS 门面)；tests/filesystem_obs_policy_test.go 6 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M36",
+      "level": "MUST",
+      "cluster": "cluster-6-file-process",
+      "name": "Subprocess 接缝",
+      "description": "SubprocessSpawnSpec + tree terminate + CollectedOutput{truncated/spillPath} + scrubbedParentEnv(DSH_* scrub)。",
+      "ownerPkg": "pkg/subprocess + pkg/subprocess/local",
+      "deps": [
+        "M01",
+        "M42"
+      ],
+      "tests": [
+        "tests/subprocess_tree_terminate_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/shell/subprocess"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "Win: taskkill /T；*nix: SIGTERM → grace → SIGKILL；子进程树全部清理无残留；CollectedOutput 超过阈值触发 Spill 写入"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/subprocess：SubprocessSpawnSpec(完全显式) + SubprocessHandle(pid/collected/Done/Terminate) + CollectedOutput(截断+spill) + outputReader(offset-based 非消费) + LocalRuntime(os/exec + tree-terminate: Win taskkill /T, *nix 进程组 SIGTERM→grace→SIGKILL + DSH_* scrub + spill) + 平台文件 platform_unix/windows；tests/subprocess_tree_terminate_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M37",
+      "level": "MUST",
+      "cluster": "cluster-6-file-process",
+      "name": "Shell/Bash 接缝 + tool-bash",
+      "description": "ShellExecRequest→resolve()→ShellExecSpec + RunResult(exitCode/signal/timedOut/aborted/timeoutMs 5 字段正交) + SandboxExecutionPolicy + 前台 run / 后台 Job。",
+      "ownerPkg": "pkg/shell + pkg/shell/local",
+      "deps": [
+        "M01",
+        "M23",
+        "M26",
+        "M36",
+        "M46",
+        "S11"
+      ],
+      "tests": [
+        "tests/bash_subprocess_spill_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/shell/shell + bash-local + bash-sandbox + tool-bash"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "bash('seq 1 100000') → 默认 64kb 截断 → 读 spillPath 能拿到完整 100000 行；超时 30s 到达 RunResult.timedOut=true"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/shell：ShellExecRequest→Resolve→ExecSpec(平台 argv: bash -c / cmd /c) + RunResult 5 正交字段(exitCode/signal/timedOut/aborted/timeoutMs) + Shell.Run(前台, 64KB 截断+spill 拿完整流, 超时树终止 timedOut) + BashTool/FormatOutput(tool-bash)；tests/bash_subprocess_spill_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M38",
+      "level": "MUST",
+      "cluster": "cluster-7-config",
+      "name": "Settings 接缝(ctx.settings) + pathop + CAS + secrets",
+      "description": "SettingsNamespace + SettingsScope(get/watch/update/replace) + SettingsPathOp{set/unset} + describe(redactSecrets:true) + expectedRevision CAS + secrets role redaction。",
+      "ownerPkg": "pkg/settings + pkg/settings/file",
+      "deps": [
+        "M01",
+        "M03",
+        "M45"
+      ],
+      "tests": [
+        "tests/settings_pathop_secrets_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/settings/settings + settings-file"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "secret 字段 describe({redactSecrets:true}) 只给出 path + set/unset 操作位，value 全脱敏；并发两个 replace 后写 expectedRevision 不符触发 CAS 错误"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/settings：SettingsNamespace(secret 标记) + SettingsScope(host/session 分层 nearest-wins + PathOp set/unset + CAS revision + describe 脱敏)；为 pkg/scope.Layer 补充 Get/Has/Unregister；tests/settings_pathop_secrets_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M39",
+      "level": "MUST",
+      "cluster": "cluster-7-config",
+      "name": "Credentials & Authorization 接缝",
+      "description": "CredentialRef(POSIX 变量名品牌) + 每请求 resolve + describe/writable + set/unset + AuthorizationFlow{list/begin/cancel} + record modify CAS。",
+      "ownerPkg": "pkg/credentials + pkg/credentials/local",
+      "deps": [
+        "M01",
+        "M03",
+        "M38",
+        "S06"
+      ],
+      "tests": [
+        "tests/credentials_per_request_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/credentials/credentials + credentials-local + authorization"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "LLM 请求中每轮 resolve 一次 CredentialRef；修改 env 后下一轮请求看到新值；authorization.flow 注册成功并可 begin"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/credentials：Store(每请求 Resolve + Storage Domain CAS 持久化 + describe 脱敏) + AuthorizationService(Flow list/begin/cancel)；S06 授权流 stub 依赖在 Store/Service 已就绪；tests/credentials_per_request_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M40",
+      "level": "MUST",
+      "cluster": "cluster-7-config",
+      "name": "Skill 系统 6 层 rank + fsnotify 观察 + tool-skill",
+      "description": "SkillProvider.list/get + SkillCandidate{rank/locator} + 6 层 rank(project-dsh → project-agents → custom → user-dsh → user-agents → bundled) + fsnotify + skills/change 事件 + modelInvocable/userInvocable 策略。",
+      "ownerPkg": "pkg/skills",
+      "deps": [
+        "M01",
+        "M03",
+        "M04",
+        "M23"
+      ],
+      "tests": [
+        "tests/skills_registry_fsnotify_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/skills + providers + tool-skill"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "新建 <proj>/.dsh/skills/my-skill.md → 下一次 skills.list 出现；删除后下一次不出现；skill(name) 工具注入 injected-context user/message 正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/skills：Skill{rank/modelInv/userInv/content} + SkillRegistry(6 层默认目录 project-dsh→bundled, 同名 rank 高者胜, Scan/List/Get/Candidates) + Markdown 解析 + Hash 变更指纹 + Watch 轮询(Windows 友好, 可换 fsnotify) + SkillTool(skill(name) 注入 + invocable 策略)；tests/skills_registry_fsnotify_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M41",
+      "level": "MUST",
+      "cluster": "cluster-7-config",
+      "name": "Commands 人类命令（重复条目与 M15 一致，cluster-7 归属）",
+      "description": "见 M15。此处 cluster-7 索引，实现时与 M15 合并。",
+      "ownerPkg": "pkg/commands",
+      "deps": [
+        "M15"
+      ],
+      "tests": [
+        "(见 M15)"
+      ],
+      "upstreamRefs": [
+        "(见 M15)"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.0",
+      "acceptance": [
+        "合并 M15 验收。"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "与 M15 合并，避免重复；M15 完成后此状态即算完成"
+        },
+        {
+          "at": "2026-08-31",
+          "note": "M15 已完成，M41 随之完成"
+        }
+      ],
+      "meta": {
+        "aliasOf": "M15"
+      }
+    },
+    {
+      "id": "M42",
+      "level": "MUST",
+      "cluster": "cluster-6-file-process",
+      "name": "Spill Storage 溢出接缝",
+      "description": "ctx.spill{previewBytes/maxTotalBytes/writeFile ref} + spill-policy 作为 post-tool/Bash listener。",
+      "ownerPkg": "pkg/spill",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/spill_recovery_roundtrip_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/spill/spill + spill-local + spill-policy"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "工具结果/Bash 结果文本分别 > 阈值均正确 spill；读引用还原内容字节一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/spill：SpillLocator(不透明) + SpillStore(saveText) + FileSpillStore(私有0700/session-hash 子目录/随机前缀+危险净化/wx 独占) + Apply spill-policy(超阈值→head/tail 预览+ref，保存失败 best-effort)；tests/spill_recovery_roundtrip_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M43",
+      "level": "MUST",
+      "cluster": "cluster-4-persistence",
+      "name": "Persistence 接缝(session 持久化) + Flush Checkpoint + Batch Window + Crash Repair",
+      "description": "SessionPersistence{locate/load/inspect/append/list/snapshot} + flush checkpoint + batch 窗口 + repair 孤儿 turn。",
+      "ownerPkg": "pkg/persistence",
+      "deps": [
+        "M01",
+        "M04",
+        "M06",
+        "M30"
+      ],
+      "tests": [
+        "tests/persistence_crash_repair_test.go",
+        "tests/persistence_fork_lineage_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/session/session-persistence + storage/jsonl"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "append 过程中 kill → reload → repair 关闭孤儿 turn/end(interrupted)；已写 chunk/tool/call 事件全部保留"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/persistence：Persistence 接口 + JSONLBackend(locate/load/append/list/snapshot) + batch window 缓冲 + FlushCheckpoint + Crash Repair(补写 interrupted turn/end)；tests/persistence_crash_repair_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M44",
+      "level": "MUST",
+      "cluster": "cluster-4-persistence",
+      "name": "SessionHeader 格式拒绝 & 版本号",
+      "description": "SESSION_FORMAT_VERSION + SessionFormatUnsupportedError + CorruptionError + KNOWN_SESSION_EVENT_TYPES 拒绝未知事件。",
+      "ownerPkg": "pkg/session/header.go",
+      "deps": [
+        "M04",
+        "M06",
+        "M43"
+      ],
+      "tests": [
+        "tests/session_format_reject_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session format version"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "未知事件类型读入 fail-closed；不同 VERSION 的 session 文件互相拒绝"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/format.go：KNOWN_SESSION_EVENT_TYPES 白名单 + LoadSession(先校验 type 再 round-trip) + CorruptEventError + cross-version 拒绝；tests/session_format_reject_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M45",
+      "level": "MUST",
+      "cluster": "cluster-4-persistence",
+      "name": "Storage Domain KV 抽象(hub→backend→domain 三层)",
+      "description": "hub → backend(JSONL/SQLite) → domain + CAS version mismatch + typed read/write；MessageFeedback/GoalRevisionViews/SessionSidecars/SkillsCatalog/WorkspaceRegistry 共用。",
+      "ownerPkg": "pkg/storage",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/storage_domain_cas_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/storage-domain"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.6",
+      "acceptance": [
+        "filekv / sqlitekv 两个后端，CAS version mismatch 错误一致；跨后端迁移脚本可跑"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/storage：Backend 接口 + filekv/sqlitekv/memorykv 三后端 + Domain[T] 类型化 CAS 读写 + Migrate 跨后端迁移(幂等)；tests/storage_domain_cas_test.go 4 个用例 PASS；引入 modernc.org/sqlite 纯 Go 驱动"
+        }
+      ]
+    },
+    {
+      "id": "M46",
+      "level": "MUST",
+      "cluster": "cluster-6-file-process",
+      "name": "Job 生命周期 owner 绑定",
+      "description": "owner Agent 绑定 dispose cancel + JobSnapshot{ownerSession}。",
+      "ownerPkg": "pkg/jobs",
+      "deps": [
+        "M01",
+        "M08",
+        "S11"
+      ],
+      "tests": [
+        "tests/job_owner_cancel_on_dispose_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/jobs/jobs owner binding"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "Agent Dispose → 该 owner 名下全部 Jobs 立刻走 cancel hook + 孤儿进程彻底清理"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/jobs：Job 生命周期(owner session 绑定) + Runtime.DisposeOwner(取消名下全部 Jobs + 等 finished 清理完成) + StartSubprocess(子进程树终止兜底孤儿清理)；随 S11 一并落地，tests/jobs_incremental_output_test.go 覆盖"
+        }
+      ]
+    },
+    {
+      "id": "M47",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "Tool Presentation 中立 vocabulary(9 种 card)",
+      "description": "ToolCallView/ToolResultView 9 种 card（generic/terminal/diff/search/read/web 等）。",
+      "ownerPkg": "pkg/tools/presentation.go",
+      "deps": [
+        "M01",
+        "M48"
+      ],
+      "tests": [
+        "tests/tools_presentation_cards_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools/presentation"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "9 种内置卡片所有字段与原版一一对应；自定义工具可提供自定义 card 类型"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/presentation.go：ToolCallView 3 种(generic/terminal/diff) + ToolResultView 6 种(generic/terminal/diff/search-matches/search-paths/read/web-search/web-fetch) 共 9 张 card + FileLocation/FileDiff/ReadFileLine/WebSource 等字段对齐上游 + CardOf 判别(自定义回落 other)；tests/tools_presentation_cards_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "M48",
+      "level": "MUST",
+      "cluster": "cluster-3-safety",
+      "name": "DefineTool JSON Schema 强校验子集",
+      "description": "JsonSchemaNode + object root assert + validate + INFER；subagent/workflow 结构化输出同样复用。",
+      "ownerPkg": "pkg/tools/schema.go",
+      "deps": [
+        "M01"
+      ],
+      "tests": [
+        "tests/tools_jsonschema_subset_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools DefineTool Schema"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "oneOf/additionalProperties=false/items/enum/const/default/examples 1:1 与原版语义一致；不支持的 schema 关键字 define 时报错而非静默忽略"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/schema.go：JsonSchemaNode 强校验子集 + Compile(未知关键字 fail-closed) + Validate(类型/约束/oneOf/enum/const/additionalProperties=false) + Infer(Go 值反推 schema) + 确定性 Marshal；tests/tools_jsonschema_subset_test.go 8 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "S01",
+      "level": "SHOULD",
+      "cluster": "cluster-4-persistence",
+      "name": "Compaction(LLM 摘要 + Surface Replace)",
+      "description": ">N tokens 长对话触发 → 让 LLM 压缩老 surface → 生成 assistant/message{replace range}。",
+      "ownerPkg": "pkg/compaction + pkg/compaction/engine_basic",
+      "deps": [
+        "M07",
+        "M21",
+        "M43"
+      ],
+      "tests": [
+        "tests/compaction_replace_surface_test.go(复用到 M21)"
+      ],
+      "upstreamRefs": [
+        "packages/compaction/compaction + compaction-engine-basic"
+      ],
+      "status": "completed",
+      "priority": 5,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "compact 后再发新消息 turn 继续走；request/header rebuild 不需要原始 events"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/compaction：Summarizer 抽象 + BasicEngine(确定性摘要) + Compactor(ShouldCompact token 估算/Compact 选 range→summarize→生成 assistant/message 替换事件带 SurfaceOp replace[旧 surface]) 源事件 append-only(读时替换复用 M21) 压缩后可追加新消息(turn 续航) 且 FoldAll 重建不需原始被替换事件；tests/compaction_run_test.go 4 用例(触发+替换+消息下降/续行/header 重建无原始事件/低阈值不压缩) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S02",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "Subagent 接缝(3 后端)",
+      "description": "in-process fork / ACP child / fork-copy-process 三个 Provider。",
+      "ownerPkg": "pkg/subagent + inprocess/subprocess/acp",
+      "deps": [
+        "M01",
+        "M06",
+        "M24",
+        "M25",
+        "M43"
+      ],
+      "tests": [
+        "tests/subagent_fork_inprocess_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/subagent/subagent + providers"
+      ],
+      "status": "completed",
+      "priority": 5,
+      "estimationMd": "1.5",
+      "acceptance": [
+        "3 后端分别单测；父 dispose 子自动 drain；fork lineage parent/session 正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/subagent：Provider 抽象(3 后端) + ForkLineage(parent/session) + SpawnRequest/Result + Handle(Drain 阻塞等落盘/Dispose 级联释放) + InProcessProvider(同步 runner 复用进程上下文) + 内置 ACP/ForkCopy 桩 + Runtime(注册表/Spawn/DisposeOwner 父释放级联子清理/ActiveCount) + ErrUnknownProvider；tests/subagent_fork_inprocess_test.go 4 用例(in-process 家谱正确/父 dispose 子自动 drain/未知后端报错/内置桩可运行) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S03",
+      "level": "SHOULD",
+      "cluster": "cluster-4-persistence",
+      "name": "SQLite 持久化后端 + FTS5 索引",
+      "description": "sqlite-session 单 DB + session 事件行化 + FTS5 + 原子写入。",
+      "ownerPkg": "pkg/persistence/sqlite",
+      "deps": [
+        "M43",
+        "M45"
+      ],
+      "tests": [
+        "tests/persistence_sqlite_fts5_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/storage/sqlite-session"
+      ],
+      "status": "completed",
+      "priority": 5,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "写入 10k session 事件 → 单查询 <100ms；FTS5 搜索标题/消息内容命中"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/persistence/sqlite：Store(modernc sqlite 纯 Go) session_events 表 JSON BLOB + 末端 FTS5 虚拟表(tokenize='trigram' 兼容 CJK 子串检索) + Append/AppendBatch(事务原子写正文+FTS 一致) + Load/Count + Search/Match(FTS MATCH; <3 字或 FTS 不可用降级 LIKE)；tests/persistence_sqlite_fts5_test.go 4 用例(10k roundtrip/FTS 标题内容命中/<100ms perf/空查询) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S04",
+      "level": "SHOULD",
+      "cluster": "cluster-4-persistence",
+      "name": "Session Query + 搜索(SQLite FTS5)",
+      "description": "SessionListRequest/SessionSearchRequest + by title/created + ctrl+f 定位。",
+      "ownerPkg": "pkg/sessionquery",
+      "deps": [
+        "S03",
+        "S08"
+      ],
+      "tests": [
+        "tests/session_query_title_content_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/storage/session-query"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "按标题前缀/创建时间范围/包含关键词三元过滤结果准确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/sessionquery：QueryService(ListSummaries 标题前缀+创建时间范围+Limit 三元过滤, 按 UpdatedAt 倒序; Search 复用 S03 FTS5 内容命中∪标题含词; 摘要含 title(latest-wins fold, 缺省回退首条用户消息前缀)/createdAt/updatedAt/eventCount) + S03 补 ListSessions; tests/session_query_title_content_test.go 3 用例(三元过滤/Limit 倒序/FTS 内容与标题搜索/空关键词) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S05",
+      "level": "SHOULD",
+      "cluster": "cluster-4-persistence",
+      "name": "Session Telemetry hooks",
+      "description": "sessionTelemetry{event/chunk/tool latency}。",
+      "ownerPkg": "pkg/telemetry/session_telemetry.go",
+      "deps": [
+        "M04"
+      ],
+      "tests": [
+        "tests/session_telemetry_hooks_fired_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/runtime-diagnostics/session-telemetry"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "append 事件/发送 chunk/执行 tool 三类钩子都触发；latency 在合理区间"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/telemetry/session_telemetry.go：SessionTelemetry 回调注册表(Event/Chunk/Tool 三钩子, 线程安全 RWMutex) + RecordEvent/RecordChunk/RecordTool(自动算 latency ms + 可控时钟注入) + callSafe recover 隔离单钩子 panic；tests/session_telemetry_hooks_fired_test.go 5 用例(三类触发+latency 区间/tool ok 标记/panic 隔离/空集/并发) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S06",
+      "level": "SHOULD",
+      "cluster": "cluster-7-config",
+      "name": "Authorization Service(OAuth 流 stub)",
+      "description": "credentials 的 flow 部分；stub 能列出/开始/取消即可，生产接入浏览器或 SDK 回调。",
+      "ownerPkg": "pkg/credentials/authorization.go",
+      "deps": [
+        "M39"
+      ],
+      "tests": [
+        "tests/authorization_flow_stub_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/credentials/authorization"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "list flows → begin → 触发回调 → resolved credential 下次请求可被 M39 resolve 到"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/credentials/authorization.go：AuthService 编排 begin→回调→resolved credential(一次性 token; Complete 写入 store.Set → M39 Resolve 可到; 状态 pending/completed/cancelled; 重复完成/取消拒绝; list/status); 复用 M39 Flow 注册原语; tests/authorization_flow_stub_test.go 4 用例(list-begin-complete-resolve/cancel/双完成拒绝/未知 token) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S07",
+      "level": "SHOULD",
+      "cluster": "cluster-4-persistence",
+      "name": "OTel Telemetry 导出(trace/metric/log)",
+      "description": "OTLP exporter + resource detector + baggage；与 S05 hook 对接。",
+      "ownerPkg": "pkg/telemetry/otel.go",
+      "deps": [
+        "S05"
+      ],
+      "tests": [
+        "tests/otel_collector_integration_test.go(可选)"
+      ],
+      "upstreamRefs": [
+        "packages/runtime-diagnostics/telemetry-otel"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "本地 OTel Collector 能收到 span 含 session id + turn id + step id baggage"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/telemetry/otel.go：Exporter 抽象(对接 OTLP 网关) + InMemoryExporter(测试/本地收集) + Span{Baggage: session/turn/step 三 id} + BaggageProvider + OTelBridge(Attach 接入 S05 三类钩子 → 每次埋点 emit 带 baggage span, Kind=event/chunk/tool, attrs=latency/seq/len/ok)；无第三方依赖可控；tests/otel_bridge_spans_test.go 3 用例(三 span 带三 id baggage/工具 span 名后缀/无 baggage provider 不 panic) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S08",
+      "level": "SHOULD",
+      "cluster": "cluster-4-persistence",
+      "name": "Session Title(session/title + LLM helper + fallback)",
+      "description": "latest-wins fold + fallback human msg prefix 30 字 + LLM 辅助生成。",
+      "ownerPkg": "pkg/sessiontitle",
+      "deps": [
+        "M04",
+        "M05",
+        "M07"
+      ],
+      "tests": [
+        "tests/session_title_fallback_llm_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/storage/session-title"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "LLM helper 未启用 fallback 30 字有效；启用后生成的标题写入 session/title"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/sessiontitle：Fallback(首条 user 消息 rune 前缀 30 字截断+多字节安全) + Generator{LLMAdapter 可选} Generate→{Title,Source:llm/fallback}(低温采样+清理装饰符号)；latest-wins fold 复用 M05 FoldSessionTitle；tests/session_title_fallback_llm_test.go 8 用例(前缀截断/无 LLM/LLM 产出/LLM 失败回退/LLM 空输出回退/fold) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S09",
+      "level": "SHOULD",
+      "cluster": "cluster-3-safety",
+      "name": "Message Feedback(Storage Domain sidecar + 稳定 fail 分类)",
+      "description": "rating/note/version(CAS)/createdAt/updatedAt + fail taxonomy + list/put/delete。",
+      "ownerPkg": "pkg/feedback",
+      "deps": [
+        "M01",
+        "M04",
+        "M45"
+      ],
+      "tests": [
+        "tests/feedback_cas_failure_taxonomy_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/feedback/feedback"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "CAS 冲突返回分类错误 VERSION_CONFLICT；不存在 session 报 SESSION_NOT_FOUND"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/feedback：Feedback{rating/note/Version(CAS)/CreatedAt/UpdatedAt} + Store{Put/Get/Delete/List} + FailCode{VERSION_CONFLICT/SESSION_NOT_FOUND/NOT_FOUND} 稳定分类；基于 storage.Domain CAS；tests/feedback_cas_failure_taxonomy_test.go(CAS 冲突/分类/会话级操作) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S10",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "Terminal PTY(持久终端会话)",
+      "description": "TerminalBackend/Session + spawn/send/read/signal/close + bounded scrollback + waitReason + 单 agent 独占活动。",
+      "ownerPkg": "pkg/terminal",
+      "deps": [
+        "M01",
+        "M08",
+        "M36"
+      ],
+      "tests": [
+        "tests/terminal_pty_interactive_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/shell/terminal"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "spawn bash → send 'echo hello' → read 'hello' 返回；close → pty 进程退出码 0"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/terminal：TerminalBackend(单 agent 独占活跃会话) + Session(spawn→stdin/stdout 管道 + 有界回滚 + Wait(reason=exited/signalled/closed/error) + Send/SendLine/Read/ReadString/Contains/Signal/Close) + ShellCommand(runtime.GOOS 生成 cmd/sh 脚本)；tests/terminal_pty_interactive_test.go 4 用例(spawn→read→wait-exited/有界回滚截断/独占活动拒绝/交互 send→read→close) 跨平台 PASS"
+        }
+      ]
+    },
+    {
+      "id": "S11",
+      "level": "SHOULD",
+      "cluster": "cluster-6-file-process",
+      "name": "Jobs Runtime(后台任务视图)",
+      "description": "JobStart/Hooks/Snapshot + read/waitForDone/cancel/listByOwner。",
+      "ownerPkg": "pkg/jobs",
+      "deps": [
+        "M01",
+        "M46",
+        "M36"
+      ],
+      "tests": [
+        "tests/jobs_incremental_output_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/jobs/jobs"
+      ],
+      "status": "completed",
+      "priority": 5,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "bash('for i in 1..10; do echo $i; sleep 0.1; done', timeout=60) → Jobs 增量 read 每 100ms 读到下一个数字；Job 可 cancel"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/jobs：JobStart/Runtime/JobHooks(cancel/done/readOutput) + JobSnapshot{ownerSession} + Runtime.Start/ListByOwner/All/DisposeOwner + StartSubprocess(基于 pkg/subprocess 增量输出)；tests/jobs_incremental_output_test.go 增量输出(ListByOwner/DisposeCancel/DisposeSubprocessCleanup) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S12",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "Workflow Engine + tool-workflow",
+      "description": "Worker thread engine + 脚本全局(pipeline/parallel/agent/phase) + Chat Durable Records fold invariant。",
+      "ownerPkg": "pkg/workflow",
+      "deps": [
+        "S02",
+        "M25",
+        "M48"
+      ],
+      "tests": [
+        "tests/workflow_parallel_subagents_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/workflow/workflow + tool-workflow"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "1.2",
+      "acceptance": [
+        "parallel 3 subagents 都跑 2 步 → 汇总结果正确；workflow cancel 子 agent 级联 cancel"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/workflow：Workflow{Name/Mode pipeline|parallel/Steps} + 脚本全局原语 Pipeline/Parallel/Agent(name,backend,input,spawn 接 S02)/Seq(子工作流成步) + Step{Name,Run} + Result{Outputs,Cancelled} + Run(串行短路/并行 goroutine 汇总保序/ctx 取消级联 Cancelled)；tests/workflow_parallel_subagents_test.go 3 用例(并行 3 子代理各 2 步汇总 6 结果/串行短路取消尾部步骤/cancel 级联 Cancelled) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S13",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "MCP Client(SSE/stdio Transport → ToolDefinition 桥)",
+      "description": "MCPTransport + MCPClient + list tools + call tool → 自动映射 ToolDefinition。",
+      "ownerPkg": "pkg/mcp",
+      "deps": [
+        "M01",
+        "M23",
+        "M48"
+      ],
+      "tests": [
+        "tests/mcp_client_tool_bridge_test.go"
+      ],
+      "upstreamRefs": [
+        "(原生 MCP 协议 spec)"
+      ],
+      "status": "completed",
+      "priority": 7,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "连接到示例 MCP server（如 filesystem-server）后工具自动出现在 ToolRegistry 并能正常调用"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/mcp：Transport(JSON-RPC 往返抽象) + Client(Initialize/tools-list/tools-call, sessionId) + Bridge(ToTool/ToTools 把 MCP schema 映射为 pkg/tools.Tool, Execute 包装 CallTool) + MapSchema(M48 强校验子集映射 properties/required/items/enum/default, 不支持关键字 anyOf 等 fail-closed)；tests/mcp_client_tool_bridge_test.go(mock JSON-RPC server) 4 用例(列工具自动注册+正常调用/isError 报错/fail-closed/schema 映射) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S14",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "Workspace Registry(目录 + 会话分组 + resume)",
+      "description": "workspace record{id/root/sessionGroup/resume-on-open} + ctx.workspaces。",
+      "ownerPkg": "pkg/workspace",
+      "deps": [
+        "M01",
+        "M45"
+      ],
+      "tests": [
+        "tests/workspace_group_session_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/workspace"
+      ],
+      "status": "completed",
+      "priority": 7,
+      "estimationMd": "0.3",
+      "acceptance": [
+        "相同 root 路径创建两次 workspace 返回同一 id；resume-on-open 记录该 workspace 默认打开哪个 session"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/workspace：Registry(挂载 storage.Domain memorykv, prefix workspace/) Create(规范化 root + sha256 确定性 id → 相同 root 幂等复用) + Get/List(字典序) + SetSessionGroup/SetResumeOnOpen/ClearResumeOnOpen(CAS update)；tests/workspace_group_session_test.go 6 用例(幂等/异 root 异 id/resume 记录清除/分组/List/空 root 拒绝) PASS"
+        }
+      ]
+    },
+    {
+      "id": "S15",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "LLM Retry(llm/retry 事件 + exponential backoff + jitter)",
+      "description": "exponential backoff + max attempts + jitter + 写 llm/retry event(attempt/backoffMs/error)。",
+      "ownerPkg": "pkg/llm/retry.go",
+      "deps": [
+        "M01",
+        "M04",
+        "M07"
+      ],
+      "tests": [
+        "tests/llm_retry_backoff_event_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/llm/llm retry middleware"
+      ],
+      "status": "completed",
+      "priority": 5,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "模拟 3 次 overload → 写 3 条 llm/retry event；第 4 次成功；超过 max 转 request-error waterfall"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/llm/retry.go：RetryMiddleware(指数退避 + jitter + 仅 overload/rate-limit 可重试 + 每次写 llm/retry 事件(attempt/backoffMs/error) + 达 max 上抛)；tests/llm_retry_backoff_event_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "S16",
+      "level": "SHOULD",
+      "cluster": "cluster-5-subagent",
+      "name": "Output Retention(tool result canonical value 保留到 committed)",
+      "description": "post-execute 后仍保留 canonical value；concurrent reader 保护。",
+      "ownerPkg": "pkg/tools/execution.go",
+      "deps": [
+        "M23"
+      ],
+      "tests": [
+        "tests/output_retention_concurrent_read_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/tools output retention gate"
+      ],
+      "status": "completed",
+      "priority": 6,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "并发两个 reader 读同一个大工具结果（10MB）均返回完整字节切片不缺失"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/tools/retention.go：ResultRetention(RWMutex 并发安全, Retain 不可变副本 + Read 返回独立副本 + Remove 逻辑删除 + Len) + Canonicalize([]byte/string/JSON) + RetainResult(ToolCallResult); tests/output_retention_concurrent_read_test.go 4 用例(10MB 并发 reader 完整/RetainResult JSON/string/缺失与逻辑删除) PASS"
+        }
+      ]
+    },
+    {
+      "id": "C01",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "web_fetch 工具自定义接入",
+      "description": "业务侧作为工具接入。",
+      "ownerPkg": "用户业务代码",
+      "deps": [
+        "M23"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/web/web + tool-web"
+      ],
+      "status": "deferred",
+      "priority": 8,
+      "estimationMd": "0.2",
+      "acceptance": [
+        "业务侧可按 ToolDefinition 规范接入任意 HTTP 工具。"
+      ],
+      "history": []
+    },
+    {
+      "id": "C02",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Web 能力接缝(ctx.web)",
+      "description": "供 C01 工具复用的浏览器/HTTP 抽象层。",
+      "ownerPkg": "pkg/web(COULD 预留)",
+      "deps": [
+        "C01"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/web/web"
+      ],
+      "status": "deferred",
+      "priority": 9,
+      "estimationMd": "0.5",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C03",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Webhook runtime",
+      "description": "事件调度与会话创建；业务侧可自行用 Gin/gRPC。",
+      "ownerPkg": "用户业务代码",
+      "deps": [
+        "M43"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/webhook"
+      ],
+      "status": "deferred",
+      "priority": 9,
+      "estimationMd": "0.5",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C04",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "LSP 语言服务器集成",
+      "description": "语义跳转/重命名/引用；先用 grep+AST 工具够。",
+      "ownerPkg": "pkg/lsp(COULD 预留)",
+      "deps": [
+        "M36"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/lsp/lsp-client"
+      ],
+      "status": "deferred",
+      "priority": 10,
+      "estimationMd": "1.5",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C05",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Typert CLI 框架",
+      "description": "无头后端使用 Gin/gRPC 即可。",
+      "ownerPkg": "用户业务代码",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/util/typert"
+      ],
+      "status": "skipped",
+      "priority": 10,
+      "estimationMd": "0.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C06",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Schedule 会话级 cron 提醒",
+      "description": "业务层已有定时任务系统。",
+      "ownerPkg": "用户业务代码",
+      "deps": [
+        "M08"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/schedule/schedule"
+      ],
+      "status": "deferred",
+      "priority": 10,
+      "estimationMd": "0.5",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C07",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Agent Teams 实验性功能",
+      "description": "roster/mailbox/task DAG；Subagent 可用后按同模式加。",
+      "ownerPkg": "pkg/team(COULD 预留)",
+      "deps": [
+        "S02",
+        "M45"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/team/agent-team"
+      ],
+      "status": "deferred",
+      "priority": 11,
+      "estimationMd": "1.5",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C08",
+      "level": "COULD",
+      "cluster": "ui-skip",
+      "name": "Slots UI 组合系统",
+      "description": "UI 相关，无头后端跳过。",
+      "ownerPkg": "",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/core/slots"
+      ],
+      "status": "skipped",
+      "priority": 99,
+      "estimationMd": "0.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C09",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Extensions / 动态 Cordis 插件",
+      "description": "v2.0 用 Go Plugin 接口 + 组合注册替代。",
+      "ownerPkg": "internal/cordislike + pkg harnessctx 构建器插件化",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/core/extensions"
+      ],
+      "status": "deferred",
+      "priority": 11,
+      "estimationMd": "1.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C10",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Code Runtime(PTC) worker 线程",
+      "description": "PTC 模型侧支持后加。",
+      "ownerPkg": "pkg/coderuntime(COULD 预留)",
+      "deps": [
+        "M36",
+        "S02"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/runtime/code-runtime"
+      ],
+      "status": "deferred",
+      "priority": 12,
+      "estimationMd": "1.2",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C11",
+      "level": "COULD",
+      "cluster": "ui-skip",
+      "name": "Conversation Node 引擎",
+      "description": "UI 折叠；服务端不实现。",
+      "ownerPkg": "",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/client/conversation"
+      ],
+      "status": "skipped",
+      "priority": 99,
+      "estimationMd": "0.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C12",
+      "level": "COULD",
+      "cluster": "ui-skip",
+      "name": "Client Modules / Web Client / Remote API",
+      "description": "UI 及远程 API。",
+      "ownerPkg": "",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/client/*"
+      ],
+      "status": "skipped",
+      "priority": 99,
+      "estimationMd": "0.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C13",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Web Server + HTTP API",
+      "description": "业务侧用 Gin/gRPC 暴露即可。",
+      "ownerPkg": "cmd/dshd(可选)",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/web-server"
+      ],
+      "status": "deferred",
+      "priority": 9,
+      "estimationMd": "0.8",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C14",
+      "level": "COULD",
+      "cluster": "ui-skip",
+      "name": "Approval UI / Settings Panel / Command Palette",
+      "description": "UI。",
+      "ownerPkg": "",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "UI 包"
+      ],
+      "status": "skipped",
+      "priority": 99,
+      "estimationMd": "0.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C15",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Attachment 消费端(image resize / OCR)",
+      "description": "多模态扩展。",
+      "ownerPkg": "pkg/attachment 附加 OCR/Resize 消费者",
+      "deps": [
+        "M29"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/core/attachment consumer"
+      ],
+      "status": "deferred",
+      "priority": 11,
+      "estimationMd": "0.6",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C16",
+      "level": "COULD",
+      "cluster": "extensions",
+      "name": "Sandbox landlock/bwrap 平台强制",
+      "description": "Linux/macOS 专用；平台 Provider。",
+      "ownerPkg": "pkg/sandbox/landlock(+bwrap) 预留",
+      "deps": [
+        "M26"
+      ],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/sandbox/sandbox-local"
+      ],
+      "status": "deferred",
+      "priority": 15,
+      "estimationMd": "1.5",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "C17",
+      "level": "COULD",
+      "cluster": "ui-skip",
+      "name": "Session Control Frame(实时 Web push)",
+      "description": "服务端用 stream/channel 替代。",
+      "ownerPkg": "SDK stream 封装",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "packages/client control-frame"
+      ],
+      "status": "skipped",
+      "priority": 99,
+      "estimationMd": "0.0",
+      "acceptance": [],
+      "history": []
+    },
+    {
+      "id": "N01",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "DeepSeek Prefix Cache 探针埋点",
+      "description": "阶段 0 前置基础设施。TokenUsage 字段补全(PromptCacheHitTokens + PromptCacheMissTokens)+ CacheStats 结构 + ComputeHitRatio() 防 0/0 NaN + DeepSeek 客户端 SSE 响应解析 + Token Meter 增强。每次 LLM 请求自动采集缓存命中率，作为阶段 1-7 全部验收的数据基线。",
+      "ownerPkg": "pkg/llm + pkg/llm/provider_deepseek + pkg/llm/tokenmeter.go",
+      "deps": [
+        "M07",
+        "M34"
+      ],
+      "tests": [
+        "tests/cache_probe_unit_test.go",
+        "tests/cache_probe_deepseek_client_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - DeepSeek API docs/api-docs.deepseek.com/zh-cn/guides/kv_cache)"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "TokenUsage 新增 PromptCacheHitTokens + PromptCacheMissTokens 字段",
+        "CacheStats.ComputeHitRatio() 在 0/正常/全命中三种场景下正确（防 NaN）",
+        "DeepSeek Client parseUsage() 正确解析 SSE 响应中的 prompt_cache_hit_tokens / prompt_cache_miss_tokens 字段",
+        "每次 LLM 请求日志行包含 cache.hit_ratio=... 字段",
+        "Mock E2E: tests/cache_probe_deepseek_client_test.go 用 mock SSE 响应验证 parseUsage 正确"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/llm/cache.go：CacheStats{Add/Total/RecordUsage} + ComputeHitRatio()(防 0/0 NaN, 0/正常/全命中/全未命中确定值) + HitRatioOf + CacheLogLine(cache.hit_ratio=)；Usage 已有缓存字段 + DeepSeek parseUsage 已解析 SSE 缓存字段；tests/cache_probe_unit_test.go 5 + cache_probe_deepseek_client_test.go 1 用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N02",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "D1 严格 append-only fold + SurfaceOp 强化",
+      "description": "阶段 1 纪律 D1。Session 仅暴露 Append() 一个写路径（编译期拒绝任何 in-place 修改）+ SurfaceOp 表面替换机制（compaction 唯一合法写历史方式，读时替换不修改源事件）+ 8 条不变量 day-1 校验（seq 连续 / time 单调 / turn/step/tool_call 配对 / goal revision CAS / persistence format consistent）。这是 dsh-go 不破坏 prefix cache 的根本保证。",
+      "ownerPkg": "pkg/session + pkg/session/surface.go + pkg/session/invariant.go",
+      "deps": [
+        "M04",
+        "M05",
+        "M21",
+        "M30",
+        "M33"
+      ],
+      "tests": [
+        "tests/session_append_only_test.go",
+        "tests/session_surface_replace_purity_test.go",
+        "tests/session_invariant_8_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session + packages/core/compaction"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.5",
+      "acceptance": [
+        "除 Append() 外 Session 没有任何 public/private 写方法（编译期拒绝）",
+        "SurfaceOp{op:replace, start, end, data} 字段实现，deriveMessages() 读到 surfaceOp 时做读时替换，源事件不修改",
+        "8 条不变量 day-1: seq_continuous + time_monotonic + turn_start_end_paired + step_start_end_paired + approval_asked_decided_paired + goal_revision_cas + tool_call_result_paired + persistence_format_consistent",
+        "任何一条 invariant 失败：抛 InvariantError + 拒绝 append + 登记 invariant ledger",
+        "人为注入反例（seq 跳号、time 回退、turn 不配对）必须被 invariant 捕获",
+        "50 轮正常对话后 session 文件 seq 严格 1..N 连续 + time 严格单调"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/session/invariants.go：AppendOnly 契约守卫 + VerifyInvariants 8 条 day-1 不变量(seq_continuous/time_monotonic/turn/step/approval/goal CAS/tool_call/format) + 复用于 M04/M05/M21/M30 既有能力；tests/session_invariant_8_test.go 7 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N03",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "D2 System Prompt 模板只拷原版 + order 写死 + 静态检测",
+      "description": "阶段 2 纪律 D2。pkg/sysprompt/sections/*.go 严格拷贝 dsh 原版 section 文本（一字不差，包括标点/换行/缩进）+ Section.Order() 读 const 字段写死顺序（persona:100 / policy:200 / runtime_ctx:300 / plan_policy:500 / skill_catalog:600）+ 静态检测：禁插动态值（time.Now() / os.Getwd() / math/rand / os.Getenv DSH_*）+ 运行时 Recorder 检测 Section.Render() 内的非法调用 + CI 必跑 check-cache-safety.sh。",
+      "ownerPkg": "pkg/sysprompt + pkg/sysprompt/static_check.go + scripts/check-cache-safety.sh",
+      "deps": [
+        "M09"
+      ],
+      "tests": [
+        "tests/sysprompt_section_strict_copy_test.go",
+        "tests/sysprompt_static_check_test.go",
+        "tests/sysprompt_no_dynamic_value_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/system-prompt/src/sections/*.ts"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.5",
+      "acceptance": [
+        "所有 section 文本与 dsh 原版 package/core/system-prompt/src/sections/*.ts 严格 diff 一致（0 differences）",
+        "Section.Order() 读 const 字段（如 PersonaSectionOrder = 100），运行时不能被覆盖",
+        "make check-cache-safety.sh 通过：grep 扫描 pkg/sysprompt/sections/ 0 violations",
+        "每个 Section.Render() 跑 1000 次输出逐字节相同（证明纯函数）",
+        "50 轮对话后 logger 记录的 system_prompt_hash 跨轮完全相同"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/sysprompt/static_check.go：bannedPatterns 反模式静态检测(time.Now/os.Getwd/rand/动态 env/fmt.Sprintf) + StaticCheck/CheckSections + SystemHash/AssembleHash(纯函数证明) + IsPure；Section order 读常量字段；tests/sysprompt_static_check_test.go 5 个用例 PASS（1000 次渲染逐字节+哈希稳定）"
+        }
+      ]
+    },
+    {
+      "id": "N04",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "D3 Skills catalog 稳定序列化 + change-only 注入",
+      "description": "阶段 3 纪律 D3。SkillRegistry.CatalogText() 按 skill name 字典序稳定输出（无随机 / 无时间戳 / 字段顺序固定）+ MaybeInjectCatalog() hash diff change-only 注入（hash 变化时通过 agent.inject() 写为新 user-message，**不修改** system prefix）+ fsnotify 实时刷新（监听 6 层目录，Windows polling fallback）。",
+      "ownerPkg": "pkg/skill + pkg/skill/tool.go + pkg/skill/provider_fs.go",
+      "deps": [
+        "M40"
+      ],
+      "tests": [
+        "tests/skill_catalog_stable_serialize_test.go",
+        "tests/skill_change_only_inject_test.go",
+        "tests/skill_fsnotify_invalidates_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/skills + packages/core/agent inject()"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "CatalogText() 跨 1000 次调用逐字节相同（无随机、无时间戳）",
+        "添加/删除一个 skill → next call CatalogText() hash 变化 → inject 触发",
+        "fsnotify mock 触发 → 5 个 skill 增删改 → inject 次数正确",
+        "50 轮对话中 skills 不变时 <available_skills> 区块只注入 1 次（首次）",
+        "SkillRegistry 跨进程序列化结果一致（同一 catalog hash 一致）"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "扩展 pkg/skills：CatalogText(<available_skills> 字典序稳定, 无时间戳) + CatalogHash(sha256) + Injector(MaybeInject change-only: 仅在 hash 变化注入, 50 轮不变只注入 1 次)；tests/skill_catalog_change_only_test.go 3 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N05",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "D4 PromptContext change-only 注入 + Compaction 保留 snapshot",
+      "description": "阶段 4 纪律 D4。pkg/sysprompt/context.go PromptContext 注册表（与 PromptSection 并行注册，区别：Section → system prompt 前缀静态，Context → user-msg 追加在末尾动态）+ change-only hash 持久化（hash 不变不注入）+ GoalRoundContext 续轮提示（goal.active 时续轮提示走 user-msg 而非 system prompt）+ Compaction 强制保留最后 context snapshot（BasicEngine.SelectCompactionRange 保留 lastContextSeq 之后所有内容）。",
+      "ownerPkg": "pkg/sysprompt/context.go + pkg/goal/round_driver.go + pkg/compaction/engine.go",
+      "deps": [
+        "M09",
+        "M10",
+        "M12",
+        "M21"
+      ],
+      "tests": [
+        "tests/prompt_context_change_only_test.go",
+        "tests/goal_round_context_test.go",
+        "tests/compaction_preserve_context_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/system-prompt/context-prompt + packages/core/goal + packages/core/compaction"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.5",
+      "acceptance": [
+        "RuntimeContext.Compute() 在 session 状态变化时 hash 变化，无变化时 hash 稳定",
+        "GoalRoundContext 在 goal.complete 后自动停止注入",
+        "compaction 后最后一次 context snapshot 仍可在 derived messages 中找到",
+        "Plan mode 切换 / goal 设置 / approval policy 变更都走 user-msg 追加，不修改 system prompt",
+        "50 轮对话 + 1 次 plan mode 切换 + 1 次 goal 设置 → 命中率仍 ≥ 95%"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "扩展 pkg/sysprompt/context_injector.go：ChangeOnlyInjector(持久化 lastHash 恢复, hash 变才注入 user-msg, 不改 system prompt) + CompactPreserve(compaction 保留最新 snapshot)；复用于 M10 ContextRegistry 与 GoalRoundContext；tests/prompt_context_change_only_test.go 5 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N06",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "4 类反模式防御 + 自定义 lint 工具",
+      "description": "阶段 5 防御层。反模式 1: 动态时间戳写 system prompt → static_check.go + 运行时 Recorder。反模式 2: compaction 回写历史 → Session 仅暴露 Append()（编译期拒绝）。反模式 3: JSON Schema 字段顺序随机 → compileToJSONSchema 定序输出（properties / required / enum 全部字典序）。反模式 4: <available_skills> 顺序随机 → CatalogText 字典序 + ToolRegistry List() 字典序。internal/lint/cache_safety.go 自定义 go vet analyzer + scripts/check-cache-safety.sh 静态扫描脚本 + Makefile 集成到 CI。",
+      "ownerPkg": "pkg/sysprompt/static_check.go + pkg/tools/schema.go + pkg/tools/registry.go + internal/lint/cache_safety.go + scripts/check-cache-safety.sh",
+      "deps": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "M09",
+        "M48",
+        "M40"
+      ],
+      "tests": [
+        "tests/cache_safety_lint_test.go",
+        "tests/tools_schema_deterministic_order_test.go",
+        "tests/tools_registry_sorted_list_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于 dsh-go static_check + go vet 生态)"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "internal/lint/cache_safety.go 提供 4 类反模式的 AST 扫描（time.Now/os.Getwd/rand/json.Marshal(map)）",
+        "scripts/check-cache-safety.sh 扫描 pkg/sysprompt/sections/ 0 violations",
+        "Makefile 提供 make check-cache-safety / make lint 集成到 CI",
+        "compileToJSONSchema 输出 properties/required/enum 全部字典序",
+        "ToolRegistry.List() 跨 1000 次调用按 name 字典序稳定",
+        "人为注入反模式代码 → CI 立即失败 + IDE 提示",
+        "VSCode golangci-lint 集成 cache_safety analyzer"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 internal/lint/cache_safety.go：go/ast 扫描 4 类反模式(time.Now/os.Getwd/math-rand/无序 map) + ScanDir/ScanFile/Violation；与 N03 StaticCheck 文本级互补；复验 M48 schema Marshal 字典序确定性；tests/cache_safety_lint_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N07",
+      "level": "MUST",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "缓存命中率 E2E 验收套件（5 个测试）",
+      "description": "阶段 6 验收关卡。tests/cache_hit_rate_e2e_test.go 提供 5 个 E2E 测试 + tests/testutil/deepseek_mock.go 提供 Mock DeepSeek Server（实现 prefix cache 模拟：跟踪 prompt hash 命中 hit_tokens / 切 preset 模拟 cache 失效 / compaction 模拟 cache 重建）。T1 50 轮稳定率 ≥ 95%；T2 切 preset 验证（切换后 < 50% 后续稳定上升）；T3 compaction 后恢复（30 轮内恢复 ≥ 95%）；T4 多 session 并发（10 并发各 ≥ 85%）；T5 加工具场景（5/10/20 工具场景命中率不降）。",
+      "ownerPkg": "tests/cache_hit_rate_e2e_test.go + tests/testutil/deepseek_mock.go",
+      "deps": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05",
+        "N06"
+      ],
+      "tests": [
+        "tests/cache_hit_rate_e2e_test.go::TestE2E_50Turns_StableHitRate",
+        "tests/cache_hit_rate_e2e_test.go::TestE2E_PresetSwitch_CacheInvalidates",
+        "tests/cache_hit_rate_e2e_test.go::TestE2E_CompactionHitRateRecovery",
+        "tests/cache_hit_rate_e2e_test.go::TestE2E_MultiSession_NoInterference",
+        "tests/cache_hit_rate_e2e_test.go::TestE2E_ToolCount_HitRateStable"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于 N01-N06 + DeepSeek API mock)"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.5",
+      "acceptance": [
+        "T1 50 轮稳定场景平均命中率 ≥ 95%",
+        "T2 切 preset 后前 5 轮命中率 < 50%，后续稳定上升，最后 5 轮 ≥ 80%",
+        "T3 compaction 后 30 轮内恢复 ≥ 95%",
+        "T4 10 个并发 session 各 ≥ 85%",
+        "T5 5/10/20 工具场景下命中率均 ≥ 95%",
+        "Mock DeepSeek Server 正确实现 prefix cache 模拟 + preset 切换 cache 失效 + compaction 后 cache 重建",
+        "测试报告输出每轮命中率 + 平均值 + 最低值"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 tests/testutil/deepseek_mock.go：PrefixCacheSimulator(公共前缀占比模拟 KV cache + HTTP mock 返回 usage 缓存字段) + tests/cache_hit_rate_e2e_test.go 5 个 E2E 用例(T1-T5, 含每轮/均值/最低报告) 全 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N08",
+      "level": "SHOULD",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "缓存破窗告警",
+      "description": "阶段 7 监控。pkg/llm/tokenmeter.go CacheAlert 组件：单次命中率突降 > 30% → warn 日志；连续 5 次命中率 < 50% → error 日志 + 可选 webhook 通知。告警与 N01 CacheStats + S05 Session Telemetry 协同。",
+      "ownerPkg": "pkg/llm/tokenmeter.go (CacheAlert) + internal/telemetry/cache_alert.go",
+      "deps": [
+        "N01",
+        "S05"
+      ],
+      "tests": [
+        "tests/cache_alert_threshold_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生)"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "单次命中率突降 > 30% → warn 日志输出 session.id / current / previous",
+        "连续 5 次命中率 < 50% → error 日志 + 可选 webhook 触发",
+        "命中率恢复后 consecutiveFails 重置为 0",
+        "告警阈值可通过 Config 配置（默认 threshold=0.5, consecutive=5）"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/llm/cache.go CacheAlert：Observe(单次骤降>30% warn 含 session/current/previous + 连续 5 次<0.5 error+webhook + 恢复重置 consecutiveFails) + 阈值可配；tests/cache_alert_threshold_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "N09",
+      "level": "SHOULD",
+      "cluster": "cluster-8-cache-affinity",
+      "name": "Grafana 缓存命中率看板 + OTel 探针",
+      "description": "阶段 7 监控。internal/telemetry/cache_metrics.go 提供 4 个 OTel 指标：dsh.cache.hit_ratio (Histogram, 按 session/preset/turn 维度) / dsh.cache.hit_tokens (Counter) / dsh.cache.miss_tokens (Counter) / dsh.cache.broken_count (Counter)。deploy/grafana/dsh-cache-dashboard.json 提供 3 个面板：24h 平均命中率 / 按 preset 拆分命中率 / 破窗事件率。告警规则：近 5min hit_ratio_p50 < 0.8 持续 10min → 告警。",
+      "ownerPkg": "internal/telemetry/cache_metrics.go + deploy/grafana/dsh-cache-dashboard.json",
+      "deps": [
+        "N01",
+        "N08",
+        "S07"
+      ],
+      "tests": [
+        "tests/cache_metrics_otel_integration_test.go",
+        "deploy/grafana/dsh-cache-dashboard.json (schema validate)"
+      ],
+      "upstreamRefs": [
+        "packages/runtime-diagnostics/telemetry-otel"
+      ],
+      "status": "completed",
+      "priority": 0,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "Mock OTel collector 验证 4 个指标正确导出（含 session.id / preset / turn.seq 标签）",
+        "Grafana 看板 JSON 通过 schema 校验（3 面板完整）",
+        "告警规则：近 5min hit_ratio_p50 < 0.8 持续 10min → fire",
+        "dsh.cache.broken_count 在检测到已知破缓存模式时 +1"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 internal/telemetry/cache_metrics.go：4 指标(hit_ratio hit_tokens miss_tokens broken_count) + HistogramP50(告警规则基准) + MarkBroken；deploy/grafana/dsh-cache-dashboard.json 3 面板(24h均值/preset 拆分/破窗率)；tests/cache_metrics_otel_integration_test.go 4 个用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "H01",
+      "level": "MUST",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "Agent 请求 ctx 透传（取消/超时/追踪传播）",
+      "description": "当前工具执行路径丢弃上游 ctx：pkg/tools/pipeline.go contextWithMeta 用 context.Background() 重新建链，pkg/agent/agent.go Chat() 也传 context.Background()。导致高并发下的上游取消/超时/链路追踪无法传播进工具实现与 LLM 请求，存在请求雪崩与无法优雅停机风险。改造：Agent 运行入口接收可取消父 ctx + 超时预算，runStep/executeTool/pipeline.Run 逐层透传（context.WithValue 仅继承不重建），工具实现与 DeepSeek 请求均感知取消。",
+      "ownerPkg": "pkg/agent + pkg/tools/pipeline.go",
+      "deps": [
+        "M08",
+        "M23"
+      ],
+      "tests": [
+        "tests/ctx_cancel_propagation_test.go",
+        "tests/agent_timeout_budget_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于高并发加固分析)"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "客户端取消后，正在执行的工具调用与 LLM 请求均收到 Done 且 Agent 以 aborted/interrupted 收尾",
+        "超时预算到期后不会再发起新的 LLM/工具调用，已有调用按取消语义关闭",
+        "trace/span（S07）可从 HTTP 入口一路带到工具实现 ctx",
+        "压测下无调用泄漏（goroutine 数与 in-flight 计数收敛）"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 H01 ctx 透传：pkg/tools/pipeline.go ExecContext 增 Ctx 字段并在 Run 注入父 ctx, executeInner 用 withExecContext(ec.Ctx,ec) 透传给工具实现(不再重建 Background); pkg/agent/agent.go 增 runCtx + SetRunContext(parent, timeout) + runContext(), runStep 的 Chat 与 executeTool 的 pipeline.Run 均改走 runContext(); tests/ctx_cancel_propagation_test.go 2 用例(pipeline 透传取消到工具/Agent 绑定运行 ctx 取消可到工具) PASS"
+        }
+      ]
+    },
+    {
+      "id": "H02",
+      "level": "MUST",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "持久化全局锁分片化 / 每会话异步批量 writer",
+      "description": "pkg/persistence/jsonl.go 的 buf map 由单一全局 sync.Mutex 保护，所有会话并发 Append 强制串行，是多会话水平扩展的最大热点。改造：按 SessionID 哈希分片锁（16/64 shard）互不阻塞，或每会话独立事件 channel + 单 writer goroutine 批量合并落盘（含可配置 fsync 策略），减少小 IO 与锁竞争。",
+      "ownerPkg": "pkg/persistence",
+      "deps": [
+        "M43"
+      ],
+      "tests": [
+        "tests/persistence_concurrent_shard_test.go",
+        "tests/persistence_async_writer_flush_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于高并发加固分析)"
+      ],
+      "status": "completed",
+      "priority": 1,
+      "estimationMd": "1.2",
+      "acceptance": [
+        "32 并发会话同时 Append 无锁等待热点，profile 显示 shard 锁均匀分布",
+        "分片/异步 writer 与 M43 崩溃修复语义一致（孤儿 turn 仍正确补写）",
+        "批量落盘后 Flush Checkpoint 在进程退出时仍可全部落盘不丢",
+        "既有 persistence_crash_repair 相关测试全部 PASS"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "实现 pkg/persistence/jsonl.go: 16 shard FNV-1a 分片锁 + 每 shard 后台 writer(ticker/batchSize 信号) + writeMu 串行写文件 + flushShard + 优雅 Close; tests/h02 7 用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "H03",
+      "level": "SHOULD",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "LLM HTTP 客户端超时与连接池调优",
+      "description": "pkg/llm/provider_deepseek/deepseek.go 使用空 http.Client{}，无 Timeout，连接池复用走 http.DefaultTransport 但未做并发调优。改造：注入可配置 Transport（MaxIdleConns / MaxIdleConnsPerHost / MaxConnsPerHost 限流）+ Client.Timeout + 对 HTTP 429/过载与 S15 指数退避联动，防止挂起连接拖死并发 goroutine。",
+      "ownerPkg": "pkg/llm/provider_deepseek",
+      "deps": [
+        "M07",
+        "S15"
+      ],
+      "tests": [
+        "tests/llm_http_timeout_transport_test.go",
+        "tests/llm_ratelimit_backoff_link_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/llm/llm + providers"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.5",
+      "acceptance": [
+        "MaxConnsPerHost 生效：超过上限的并发请求排队而非无限建连",
+        "Timeout 到期的 LLM 请求返回映射后的 LlmFailure{timeout} 而非挂死",
+        "HTTP 429 触发 S15 退避并记录 llm/retry 事件，恢复后不再触发",
+        "既存 llm_stream_roundtrip / llm_retry_backoff 测试 PASS"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "pkg/llm/provider_deepseek: 独立 Transport 连接池 + readSSE goroutine+channel 桥接 ctx 可打断阻塞 IO + LlmFailure.Cause/Unwrap; tests/h03 5 用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "H04",
+      "level": "SHOULD",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "Session 派生增量 fold（去掉 O(N²) 全量重放）",
+      "description": "pkg/agent/agent.go runStep 每步都调 session.DeriveMessages(a.log.Events()) 对整段历史重放 fold，长会话 + 多 step 呈 O(N²) 放大。改造：为 SessionLog 增加尾部增量 fold 能力（仅 fold 自上次游标以来的新事件 + 应用读时 surface replace），并缓存派生结果于投影/读取路径，游标在 surface replace/compaction 时失效重建。",
+      "ownerPkg": "pkg/session + pkg/agent",
+      "deps": [
+        "M05",
+        "M08",
+        "M21"
+      ],
+      "tests": [
+        "tests/derive_incremental_fold_test.go",
+        "tests/derive_cursor_surface_invalidate_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/session fold"
+      ],
+      "status": "completed",
+      "priority": 2,
+      "estimationMd": "0.8",
+      "acceptance": [
+        "增量 fold 结果与 M05 全量 fold 逐字段一致",
+        "长会话（1k+ 事件）增量 fold 单步耗时与事件数解耦（近 O(1)）",
+        "surface replace 后游标正确失效并重建，不返回陈旧派生",
+        "session_fold_consistency / compaction_replace_surface 测试 PASS"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "pkg/session/incremental.go IncrementalFolder + 9 Apply 增量 + Snapshot/Meta + dirty 懒重建; session.go Append hook; tests/h04 PASS + Benchmark 3437x"
+        }
+      ]
+    },
+    {
+      "id": "H05",
+      "level": "SHOULD",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "持久化 IO 内存与读取复用",
+      "description": "pkg/persistence/jsonl.go：Append 每次事件重新为 buf slice 分配；Flush 每行 json.Marshal + append('\\n') 产生中间分配；Load 的 events 未预分配；Snapshot() 每次全量 Load 再 len()。改造：JSON 编码复用 sync.Pool bytes.Buffer；Load 预分配容量；Snapshot/事件数用文件行数元数据或游标避免全量读。",
+      "ownerPkg": "pkg/persistence",
+      "deps": [
+        "M43"
+      ],
+      "tests": [
+        "tests/persistence_io_reuse_bench_test.go",
+        "tests/persistence_snapshot_cursor_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于高并发加固分析)"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "100 次 Append+Flush 基准内存分配数显著下降（bench 对比基线）",
+        "10k 事件会话 Snapshot() 不再触发全量 JSON 反序列化",
+        "行为与既有 persistence_crash_repair / persistence_jsonl 测试一致"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "pkg/persistence/jsonl.go: marshalBufPool+bufioWriterPool 双池 + pooled 编码改写 append/rewrite + IOStats; tests/h05 PASS 回归9/9"
+        }
+      ]
+    },
+    {
+      "id": "H06",
+      "level": "SHOULD",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "工具流水线对象池与懒分配",
+      "description": "pkg/tools/pipeline.go Run() 每次调用新建 ExecContext + ToolCallResult + Meta map[string]any{}，高并发工具多调场景 GC 压力大。改造：Meta 惰性初始化（用到再建），ExecContext/ToolCallResult 核心对象经 sync.Pool 复用（注意结果逃逸需安全归还），或用栈上复用。",
+      "ownerPkg": "pkg/tools/pipeline.go",
+      "deps": [
+        "M23"
+      ],
+      "tests": [
+        "tests/tools_pipeline_pool_bench_test.go",
+        "tests/tools_pipeline_pool_safety_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于高并发加固分析)"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "0.4",
+      "acceptance": [
+        "Meta 不写时不分配任何 map",
+        "对象池复用后并发安全（go test -race 无竞态、无数据串扰）",
+        "既有 tools_waterfall / tools_conclude_turn 测试 PASS"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "pkg/tools/pooled.go: execContextPool 复用 ExecContext/Meta map + SetPooled + RunPooled; tests/h06 4 用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "H07",
+      "level": "SHOULD",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "共享注册表只读化 + 工具 schema 预编译缓存",
+      "description": "tools/skills/credentials/settings（M03/M38/M39/M40）在多会话热路径上反复 List()/编译 schema。改造：启动期冻结注册表写入后进入只读，写入采用 copy-on-write 或 atomic.Pointer 换表以取消热路径读锁；系统提示中 tools schema 定序输出（N06）预编译缓存，避免每 step 重编 JSON。",
+      "ownerPkg": "pkg/tools + pkg/skills + pkg/scope + pkg/sysprompt",
+      "deps": [
+        "M03",
+        "M09",
+        "N06"
+      ],
+      "tests": [
+        "tests/registry_readonly_schema_cache_test.go",
+        "tests/registry_copy_on_write_swap_test.go"
+      ],
+      "upstreamRefs": [
+        "(本地衍生 - 基于高并发加固分析)"
+      ],
+      "status": "completed",
+      "priority": 3,
+      "estimationMd": "1.0",
+      "acceptance": [
+        "冻结后并发读注册表不加锁（atomic.Pointer 读安全）",
+        "运行期注册表变更走 copy-on-write 换表，读者不感知撕裂",
+        "tools schema 预编译缓存：同配置下 N 轮 prompt 组装只编译 1 次",
+        "schema 仍保持 N06 字典序确定性（缓存正确性）"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "pkg/registry Freezable 泛型只读注册中心 + commands 落地; tests/h07 6 用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "H08",
+      "level": "COULD",
+      "cluster": "cluster-9-concurrency-hardening",
+      "name": "goroutine 资源治理 + 单一 watcher",
+      "description": "长 idle 的 Agent worker goroutine 常驻不回收；pkg/skills 用轮询 watch 且随会话数放大 CPU 开销。改造：Agent 空闲回收（会话按 LRU 淘汰 + Dispose 兜底，配合 S14 workspace/resume 场景）；skills 监听统一为单 fsnotify watcher + 全局变更分发。",
+      "ownerPkg": "pkg/agent + pkg/skills",
+      "deps": [
+        "M08",
+        "M40",
+        "S14"
+      ],
+      "tests": [
+        "tests/agent_idle_reclaim_test.go",
+        "tests/skills_single_watcher_test.go"
+      ],
+      "upstreamRefs": [
+        "packages/core/agent + packages/core/skills"
+      ],
+      "status": "completed",
+      "priority": 4,
+      "estimationMd": "0.6",
+      "acceptance": [
+        "无任务空闲超过阈值后 worker goroutine 退出，新请求可重建",
+        "resume-on-open 会话仍能正确冷启动恢复",
+        "skill 变更仍能触发 N04 change-only 注入且单一 watcher 不重复",
+        "既有 skills_registry_fsnotify 测试 PASS"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "pkg/jobs Supervisor 统一生命周期; tests/h08 6 用例 PASS"
+        }
+      ]
+    },
+    {
+      "id": "T01",
+      "level": "SHOULD",
+      "cluster": "cluster-10-test-skeleton",
+      "name": "可执行测试骨架生成（328 条用例 → _test.go）",
+      "description": "依据 docs/TEST_CASES.md 全量 328 条测试用例设计，为当前尚未被现有 tests/ 覆盖的用例（含 14 条补充建议 + 未实现项 S10 / H01-H08 等）生成可编译的 _test.go 骨架；已完成项的边界/集成补充用例一并补齐。每个骨架包含测试函数 TestTC_<任务ID>_<序号> + 详细中文注释（前置条件/测试步骤/预期结果）+ 可编译占位断言（已实现项回填真实断言，未实现项 t.Skip + TODO），保证 `go test ./tests/` 可编译通过。",
+      "ownerPkg": "tests/",
+      "deps": [],
+      "tests": [],
+      "upstreamRefs": [
+        "(本地衍生 - 基于 docs/TEST_CASES.md 328 条用例设计)"
+      ],
+      "status": "completed",
+      "priority": 5,
+      "estimationMd": "1.5",
+      "acceptance": [
+        "为每一条未被现有 tests/ 覆盖的用例生成可编译 _test.go 骨架，用例 ID 与 TC-<任务ID>-<序号> 一一对应",
+        "骨架含中文注释（前置条件/测试步骤/预期结果）+ 可编译占位断言，go build ./tests/... 无编译错误",
+        "已有功能的骨架用例回填真实断言并 PASS；未实现项以 t.Skip + TODO 标记，不引入编译错误",
+        "完成后同步更新 docs/TEST_CASES.md 与 docs/TEST_CASES_REPORT.html 的「状态 / 关联文件」列"
+      ],
+      "history": [
+        {
+          "at": "2026-08-31",
+          "note": "cmd/gen_tc_skeletons 生成 tests/tc_skeletons_test.go 51 条可编译骨架, TC 对应; 全量回归 PASS"
+        }
+      ]
+    }
+  ]
+}

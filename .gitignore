@@ -31,5 +31,6 @@ go.work.sum
 # .idea/
 # .vscode/
 
-# 本地维护的详细文档（任务表 / trace / 实施计划）
-docs
+# 任务表 / 设计文档（docs/）纳入版本控制，确保任务状态可追踪、可提交。
+# docs 下仅忽略运行时生成的报告类产物（如 HTML 报告），md/json 全量跟踪。
+docs/*.html
