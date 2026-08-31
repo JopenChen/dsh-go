@@ -2471,7 +2471,22 @@ sort.Slice(allSkills, func(i,j int) bool { return allSkills[i].Name < allSkills[
 3. **全量回归**：`go test ./tests -count=1` **100% PASS**（51 个骨架以 SKIP 计入，不阻塞其它真实测试）。
 4. **顺带修复一个既有 flaky 测试** `TestSchemaMarshalDeterministic`：原实现用 Go map 无序迭代断言 `properties` 字典序（本身测不准），改为对序列化字节做 `alpha`↔`zeta` 出现次序断言 + 多轮确定性比对——修复后全量稳定绿。
 
+### 13.11 Code Review 对照官方源码修复（R01–R07）
+
+> 结合官方仓库 `D:\workspace\python_workspace\deepseek-harness`（TS 主仓，锚点 commit `cd5ef81481`）对照源码做一致性审查，逐点修复并提交：
+
+| 提交 | 任务点 | 内容 |
+|---|---|---|
+| R01/R02/R03 | 任务表一致化 + 版本化 | tasks.json/TASKS.md 状态与实现同步（H02–H08/T01 置 completed、meta completed=82）；`.gitignore` 原本整体忽略 `docs` 导致任务表无法进入 git，改为纳入（仅忽略 `docs/*.html` 与 `docs/trace.md`） |
+| R04 | LLM 稳定失败分类对齐 | 对照官方 `packages/llm/llm/src/error.ts`，补 `FailQuota/FailEmptyResponse/FailInvalidCredential` 三类 + `Retryable()` + `ClassifyProviderDetail(detail)` 官方语料判别器 + `NewProviderFailure`；DeepSeek 401→invalid-credential |
+| R05 | 对齐官方 `errorChain()` | 新增 `RenderErrorChain(v)`：单一 cause 链 + errors.Join 聚合成员 `[a; b]` + 循环 `<circular cause>` + message 字段回落，供日志/通知诊断（路由仍走稳定 Kind/Code） |
+| R06 | Goal 对齐官方四态 + 稳定错误码 | Phase `active/paused/blocked/complete`（对齐官方，去 `in-progress`）+ `RoundDriver` 仅 active 续轮 + 9 个 `GOAL_*` 稳定错误码（`GoalError` errors.Is/As）+ `GoalBlockReason` |
+| R07 | BlockReason 持久化 | `session.GoalChangeData.BlockReason` 字段 + `foldGoalChange`/`ApplyGoalChange`/`GoalFold.Equal` 全链路透传；goal `FromLog`/`writeGoal` 映射，`goal_report_blocker` 阻塞时随事件持久化 |
+
+- 验证对照（无修复）：M47 Tool Presentation 9 卡片词汇、agent `AgentCancelCause` 5 类、LLM retry 退避语义 均与官方一致。
+- 全量回归：`go test ./tests -count=1` **100% PASS**。
+
 ---
 
-**（README.md 到此结束 · v2.0 + 任务表锚点 + 竞品对比 + 缓存命中率对齐方案 + 实施计划锚点 + 实时进度跟踪 第十三章 · 全部任务点 H 簇 8/8 + T 簇 1/1 = 100%）**
+**（README.md 到此结束 · v2.0 + 任务表锚点 + 竞品对比 + 缓存命中率对齐方案 + 实施计划锚点 + 实时进度跟踪 第十三章 · 全部任务点 H 簇 8/8 + T 簇 1/1 = 100% + Code Review 13.11）**
 
