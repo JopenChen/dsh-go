@@ -22,6 +22,8 @@
 >
 > 它定位为**参考实现与学习素材**，而非与 LangChain / Eino / 官方 DSH 竞争的生产级框架：生态、背书与多模型适配均非本文目标，本文目标是"**读懂 Agent 内核**"。
 
+> **❓ 快速了解本项目** —— 想先弄清楚"这是什么 / 和 Eino·LangChain 什么关系 / 有什么优势 / 适合什么场景 / 值不值得用"？请直接阅读 **[FAQ（常见问题）](./docs/FAQ.md)**。
+
 ## 📖 目录
 
 - [为什么选择 dsh-go](#-为什么选择-dsh-go)
@@ -149,6 +151,7 @@ Session (事件溯源) ──► fold / 投影 ──► Prompt 组装 ──►
 
 ## 📚 文档
 
+- 🌐 **在线文档站（GitHub Pages）**：https://JopenChen.github.io/dsh-go/ —— 中英双语、全文搜索、教程与示例导航（源码在 [`site/`](./site)）。
 - [文档索引](./docs) —— 详细设计、任务表、缓存方案、测试用例矩阵。
 - [`docs/FAQ.md`](./docs/FAQ.md) —— **新手 FAQ**：本项目是什么、与 Eino / LangChain / 官方 DSH 的关系、审计算不算独有、适合什么场景、值不值得用。
 - [`docs/TASKS.md`](./docs/TASKS.md) · [`docs/tasks.json`](./docs/tasks.json) —— 结构化任务表（机器 + 人可读）。

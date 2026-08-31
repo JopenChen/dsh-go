@@ -38,3 +38,11 @@ go.work.sum
 docs/*.html
 docs/trace.md
 trace.md
+
+# Hugo 文档站（site/）构建产物与本地锁文件
+# site/ 源码（content/hugo.yaml/layouts 等）纳入版本控制
+site/public/
+site/.hugo_build.lock
+site/resources/
+site/.hugo/
+site/.cache/
