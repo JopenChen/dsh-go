@@ -42,6 +42,7 @@ trace.md
 # Hugo 文档站（site/）构建产物与本地锁文件
 # site/ 源码（content/hugo.yaml/layouts 等）纳入版本控制
 site/public/
+site/public-local/
 site/.hugo_build.lock
 site/resources/
 site/.hugo/

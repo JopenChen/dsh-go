@@ -5,7 +5,7 @@ layout: hextra-home
 
 <!-- ========== Hero ========== -->
 <div class="hx-mt-10 hx-mb-8 hx-flex hx-flex-col hx-items-center">
-  <img class="dsh-hero-icon" src="img/dsh-icon.jpg" alt="Dsh-Go 图标" width="104" height="104" />
+  <img class="dsh-hero-icon" src="/img/dsh-icon.jpg" alt="Dsh-Go 图标" width="104" height="104" />
   {{< hextra/hero-badge >}}
   <div class="hx-w-2 hx-h-2 hx-rounded-full hx-bg-primary-400"></div>
   <span>DeepSeek Harness Agent 的进程内 Go 参考实现</span>
