@@ -994,6 +994,7 @@ table[class*="bg-neutral"] {
 .dsh-arch {
   margin: 2.5rem auto;
   padding: 1.5rem;
+  width: 100%;               /* 撑满 flex 容器（父级 content 是 items-start），避免收缩到内容宽度 */
   max-width: 1000px;               /* 限制最大宽度，居中展示 */
   text-align: center;
   border-radius: 18px;
