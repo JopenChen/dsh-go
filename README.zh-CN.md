@@ -84,15 +84,17 @@ func main() {
 
 ## 🧭 示例
 
-仓库内置两个可直接运行的完整示例：
+仓库内置三个可直接运行的完整示例：
 
 ```bash
 go run ./examples/agent_loop   # 完整 Agent Turn/Step 循环（含工具续步）
 go run ./examples/usage        # 会话/投影/Goal 工具/命令/DeepSeek Provider/持久化
+go run ./examples/chat         # 真实调用 DeepSeek 大模型的多轮对话（需 DEEPSEEK_API_KEY）
 ```
 
 - [examples/agent_loop/main.go](examples/agent_loop/main.go) —— 装配 SessionLog + SystemPrompt + 工具流水线 + LLM 适配器，演示 Turn 内「工具续步 → 结束」。
 - [examples/usage/main.go](examples/usage/main.go) —— 事件溯源、fold 投影、Goal 工具（含稳定错误码）、slash 命令、DeepSeek 连接池与失败分类、JSONL 持久化读回。
+- [examples/chat/main.go](examples/chat/main.go) —— 从环境变量读取 `DEEPSEEK_API_KEY`，构造 DeepSeek provider，通过 `LLMAdapter.Chat` 发起流式多轮对话，展示 `ChunkReasoning / ChunkText / ChunkToolCall / ChunkDone` 分片消费、`LlmFailure` 稳定分类与 usage 用量统计。
 
 ## 🏗️ 架构
 
