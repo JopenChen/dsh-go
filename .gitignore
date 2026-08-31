@@ -32,5 +32,8 @@ go.work.sum
 # .vscode/
 
 # 任务表 / 设计文档（docs/）纳入版本控制，确保任务状态可追踪、可提交。
-# docs 下仅忽略运行时生成的报告类产物（如 HTML 报告），md/json 全量跟踪。
+# 仅忽略运行时生成的报告产物与本地对话历史（不进入版本库）：
+#   - docs/*.html                   运行时生成的 HTML 报告
+#   - docs/trace.md                 本地对话/演进历史（保留本地维护）
 docs/*.html
+docs/trace.md
