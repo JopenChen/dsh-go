@@ -4,8 +4,6 @@ description: "关于 Dsh-Go 的常见问题"
 weight: 3
 ---
 
-# FAQ
-
 关于 Dsh-Go 的高频问题。完整内容见 [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md)。
 
 ## Q1. Dsh-Go 到底是什么？

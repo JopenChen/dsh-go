@@ -76,8 +76,9 @@ and run `go run ./examples/tutorial` — no LLM key needed until the very last o
 | `mcp` | MCP client → tool bridge |
 | `chat` | Real DeepSeek multi-turn chat (requires an API key) |
 
-## Start from source
+## Reference
 
-- [GitHub repository](https://github.com/JopenChen/dsh-go)
-- [Documentation](/en/docs/)
-- [FAQ](/en/faq/)
+Dsh-Go is an in-process Go reference implementation of the official DeepSeek Harness:
+
+- [DeepSeek Harness — official website](https://www.deepseek.com/harness/)
+- [deepseek-harness — source code](https://github.com/deepseek-ai/deepseek-harness)

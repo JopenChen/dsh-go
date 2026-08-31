@@ -24,7 +24,10 @@
   --dsh-brand-deep: #3b5bdb;
   --dsh-cyan: #22d3ee;
   --dsh-cyan-rgb: 34, 211, 238;
-  --dsh-violet: #a78bfa;
+  --dsh-violet: #a78bfa;        /* 紫 */
+  --dsh-violet-rgb: 167, 139, 250;
+  --dsh-pink: #f472b6;          /* 粉 */
+  --dsh-pink-rgb: 244, 114, 182;
 
   /* 背景 / 表面 / 描边 / 文字 */
   --dsh-bg: #0b0e17;            /* 页面底色：深蓝黑 */
@@ -63,11 +66,12 @@ body {
     /* 细网格线（参考 .ds-grid-bg：90px 网格 + 径向遮罩） */
     linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    /* 顶部品牌辉光：蓝 → 青 */
+    /* 顶部品牌辉光：蓝 → 青 → 粉紫混搭 */
     radial-gradient(60rem 32rem at 50% -12%, rgba(var(--dsh-brand-rgb), 0.28), transparent 60%),
     radial-gradient(40rem 24rem at 82% 8%, rgba(var(--dsh-cyan-rgb), 0.12), transparent 60%),
-    radial-gradient(46rem 30rem at 12% 28%, rgba(167, 139, 250, 0.10), transparent 60%);
-  background-size: 90px 90px, 90px 90px, 100% 100%, 100% 100%, 100% 100%;
+    radial-gradient(46rem 30rem at 12% 28%, rgba(var(--dsh-violet-rgb), 0.14), transparent 60%),
+    radial-gradient(36rem 24rem at 78% 42%, rgba(var(--dsh-pink-rgb), 0.08), transparent 60%);
+  background-size: 90px 90px, 90px 90px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -116,15 +120,16 @@ nav a:hover {
 /* ---------------------------------------------------------------------------
  * 3. Hero：渐变标题 + 辉光徽章
  * ------------------------------------------------------------------------- */
-/* 主标题：品牌蓝 → 青渐变（覆盖 Hextra 默认灰渐变） */
+/* 主标题：品牌蓝 → 紫 → 粉渐变（覆盖 Hextra 默认灰渐变） */
 h1.not-prose.hx-text-4xl.hx-bg-clip-text,
 h1.hx-bg-clip-text.hx-bg-gradient-to-r,
 .hextra-home h1 {
-  background-image: linear-gradient(135deg, #6d8bff 0%, var(--dsh-brand) 45%, var(--dsh-cyan) 100%) !important;
+  background-image: linear-gradient(135deg, #7c93ff 0%, var(--dsh-brand) 30%, var(--dsh-violet) 62%, var(--dsh-pink) 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   color: transparent !important;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(var(--dsh-violet-rgb), 0.25));
   font-family: var(--dsh-font-display);
 }
 
@@ -406,11 +411,35 @@ a.not-prose.hx-bg-primary-600:hover::after {
 .prose h1,
 .content h1,
 main h1 {
-  background-image: linear-gradient(135deg, #9db2ff, #c9e2ff);
+  background-image: linear-gradient(135deg, #b7c6ff 0%, #dcd0ff 52%, #ffd3e9 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 6px rgba(var(--dsh-violet-rgb), 0.18));
+}
+
+/* 正文标题统一提亮，确保与深色背景有足够对比度 */
+.prose h2,
+.content h2,
+main h2 {
+  color: #f2f5ff;
+}
+.prose h3,
+.content h3,
+main h3,
+.prose h4,
+.content h4,
+main h4 {
+  color: #e6ecff;
+}
+.prose p,
+.content p,
+main p,
+.prose li,
+.content li,
+main li {
+  color: #d6dcf2;
 }
 
 /* 滚动条美化 */
@@ -438,80 +467,354 @@ main h1 {
 }
 
 /* ---------------------------------------------------------------------------
- * 11. 页脚作者微信二维码（参考 DeepSeek Harness 页脚交互）
+ * 11. 页脚作者微信二维码（直接可见卡片，不依赖 hover）
  * ------------------------------------------------------------------------- */
 .dsh-footer-wechat {
-  padding: 1rem 0 0;
+  padding: 1.25rem 0 0.25rem;
 }
 
-/* 触发区 */
-.dsh-qr-trigger {
-  position: relative;
-  display: inline-block;
-  cursor: default;
-}
-
-.dsh-wechat-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: var(--dsh-text-secondary);
-  transition: color 0.2s ease;
-}
-.dsh-wechat-label svg {
-  color: #2eae58; /* 微信绿 */
-}
-.dsh-qr-trigger:hover .dsh-wechat-label {
-  color: var(--dsh-cyan);
-}
-
-/* hover 弹出浮层（默认隐藏） */
-.dsh-qr-menu {
-  position: absolute;
-  bottom: calc(100% + 0.75rem);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-50%) translateY(6px);
-  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
-}
-.dsh-qr-trigger:hover .dsh-qr-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* 玻璃拟态二维码面板 */
-.dsh-qr-panel {
-  width: 176px;
+.dsh-wechat-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.8rem;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  width: 132px;
+  padding: 0.9rem;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 40px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.dsh-wechat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(46, 174, 88, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 20px 48px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(46, 174, 88, 0.16);
+}
+
+.dsh-wechat-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--dsh-text);
+}
+.dsh-wechat-title svg {
+  color: #2eae58; /* 微信绿 */
+}
+
+.dsh-wechat-qr {
+  width: 96px;
+  height: 96px;
+  border-radius: 8px;
+  background: #fff; /* 白底保证可扫 */
+  padding: 3px;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.dsh-wechat-caption {
+  font-size: 0.68rem;
+  color: var(--dsh-text-secondary);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+ * 12. 导航栏语言切换（右上角，玻璃拟态下拉）
+ * ------------------------------------------------------------------------- */
+.dsh-lang-switch {
+  position: relative;
+  margin-left: 0.25rem;
+}
+
+.dsh-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d6dcf2;
+  font-size: 0.8rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.dsh-lang-btn:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.16);
+  border-color: rgba(var(--dsh-brand-rgb), 0.45);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(var(--dsh-brand-rgb), 0.2);
+}
+.dsh-lang-chevron {
+  transition: transform 0.25s ease;
+}
+.dsh-lang-switch:hover .dsh-lang-chevron,
+.dsh-lang-switch[data-state="open"] .dsh-lang-chevron {
+  transform: rotate(180deg);
+}
+
+/* 下拉菜单：hover 展开 */
+.dsh-lang-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 120px;
+  padding: 0.35rem;
+  border-radius: 12px;
+  background: linear-gradient(160deg, rgba(24, 30, 48, 0.96), rgba(15, 19, 32, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(18px) saturate(160%);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 18px 48px rgba(0, 0, 0, 0.55),
-    0 0 24px rgba(var(--dsh-brand-rgb), 0.16);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 18px 48px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(var(--dsh-violet-rgb), 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
+  z-index: 60;
 }
-.dsh-qr-panel img {
-  width: 100%;
-  aspect-ratio: 1;
+.dsh-lang-switch:hover .dsh-lang-dropdown,
+.dsh-lang-switch[data-state="open"] .dsh-lang-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dsh-lang-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 8px;
-  background: #fff; /* 二维码白底，保证可扫 */
-  padding: 4px;
-  object-fit: contain;
+  font-size: 0.8rem;
+  color: #c9d1ef;
+  white-space: nowrap;
+  transition: background-color 0.16s ease, color 0.16s ease;
 }
-.dsh-qr-panel span {
-  font-size: 0.72rem;
-  color: var(--dsh-text-secondary);
-  text-align: center;
+.dsh-lang-option:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.14);
+  color: #fff;
+}
+.dsh-lang-active {
+  color: var(--dsh-pink);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+ * 13. 留白优化：让页面更透气
+ * ------------------------------------------------------------------------- */
+/* 首页 hero 与分区间距加大 */
+.hextra-home .hx-mt-10 { margin-top: 3.25rem; }
+.hextra-home .hx-mb-8  { margin-bottom: 2.75rem; }
+.hextra-home .hx-mb-10 { margin-bottom: 3.75rem; }
+.hextra-home .hx-mt-8  { margin-top: 2.5rem; }
+
+/* 首页各分区标题上下留白 */
+.hextra-home .content h2,
+.hextra-home h2 {
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 首页正文段落行距与间距 */
+.hextra-home .content p,
+.hextra-home p {
+  line-height: 1.85;
+  margin-bottom: 1.1rem;
+}
+
+/* 玻璃卡片网格间距 */
+.hextra-home .hextra-card {
+  margin-bottom: 1.25rem;
+}
+
+/* 内容页正文：更多内边距与行距 */
+.content,
+.prose {
+  line-height: 1.85;
+}
+main .content h2 {
+  margin-top: 2.75rem;
+  margin-bottom: 1.1rem;
+}
+main .content h3 {
+  margin-top: 2.25rem;
+  margin-bottom: 0.9rem;
+}
+main .content p,
+main .content li {
+  margin-bottom: 0.9rem;
+}
+main .content table {
+  margin: 1.5rem 0;
+}
+
+/* 列表项间距 */
+main .content li {
+  margin-bottom: 0.4rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * 14. 交互元素背景统一（全面排查修正）
+ *    不依赖 .dark 类，强制玻璃深色，确保任何主题下交互元素都与页面背景一致
+ * ------------------------------------------------------------------------- */
+
+/* 搜索框 */
+.search-input {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #e6ecff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.search-input::placeholder { color: #7c86ab !important; }
+.search-input:focus {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(var(--dsh-brand-rgb), 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(var(--dsh-brand-rgb), 0.12);
+}
+
+/* 搜索结果下拉 */
+.search-results {
+  background: rgba(15, 19, 32, 0.97) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+}
+.search-results a { color: #d6dcf2 !important; }
+.search-results a:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.16) !important;
+  color: #fff !important;
+}
+
+/* 键盘快捷键提示 */
+kbd {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #c9d1ef !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+/* 语言切换下拉（侧边栏/页脚） */
+.language-options {
+  background: rgba(15, 19, 32, 0.97) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+}
+.language-options a { color: #d6dcf2 !important; }
+.language-options a:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.16) !important;
+  color: #fff !important;
+}
+
+/* 底部语言 / 主题切换按钮 */
+.language-switcher,
+.theme-toggle {
+  color: #c9d1ef !important;
+}
+.language-switcher:hover,
+.theme-toggle:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.14) !important;
+  color: #fff !important;
+}
+
+/* 侧边栏 / 目录底部固定条（原 hx-bg-white，改玻璃深色） */
+div[class*="hx-sticky"][class*="hx-bottom-0"] {
+  background: rgba(13, 17, 28, 0.88) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 -12px 16px rgba(11, 14, 23, 0.85) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* 汉堡菜单 hover */
+.hamburger-menu:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 目录（TOC）面板 */
+.hextra-toc,
+aside[class*="toc"] {
+  background: rgba(13, 17, 28, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hextra-toc a,
+aside[class*="toc"] a {
+  color: #aeb8d8 !important;
+}
+.hextra-toc a:hover,
+aside[class*="toc"] a:hover {
+  color: var(--dsh-cyan) !important;
+}
+
+/* 提示框 / callout：统一玻璃深色底（保留语义色描边与文字） */
+div[class*="hx-overflow-x-auto"][class*="hx-rounded-lg"][class*="hx-border"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 徽章 */
+.hextra-badge > div {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 分页 / pager */
+a[class*="hextra-pager"],
+[class*="pager"] a {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+[class*="pager"] a:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.12) !important;
+  border-color: rgba(var(--dsh-brand-rgb), 0.4) !important;
+}
+
+/* 代码复制按钮 */
+[class*="code-copy"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #c9d1ef !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+[class*="code-copy"]:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.16) !important;
+  color: #fff !important;
+}
+
+/* 面包屑 */
+[class*="breadcrumb"] a {
+  color: #9aa3c7 !important;
+}
+[class*="breadcrumb"] a:hover {
+  color: var(--dsh-cyan) !important;
+}
+
+/* 分页/上一页下一页大按钮、Tabs 激活态也统一深色 */
+.tab-active,
+[class*="tab-active"] {
+  background: rgba(var(--dsh-brand-rgb), 0.16) !important;
+  color: #fff !important;
+  border-bottom-color: var(--dsh-pink) !important;
 }
