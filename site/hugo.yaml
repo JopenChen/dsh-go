@@ -13,7 +13,7 @@ enableRobotsTXT: true
 enableGitInfo: true
 
 # ============================================================================
-# 多语言
+# 多语言（含每语言顶部导航菜单）
 # ============================================================================
 languages:
   en:
@@ -22,12 +22,46 @@ languages:
     title: "dsh-go — In-process Go reference implementation of the DeepSeek Harness Agent"
     params:
       description: "An in-process Go reference implementation of the DeepSeek Harness Agent — learn how an Agent kernel really works."
+    menus:
+      main:
+        - name: "Docs"
+          pageRef: "/en/docs"
+          weight: 1
+        - name: "Tutorials"
+          pageRef: "/en/tutorials"
+          weight: 2
+        - name: "FAQ"
+          pageRef: "/en/faq"
+          weight: 3
+        - name: "Examples"
+          pageRef: "/en/examples"
+          weight: 4
+        - name: "GitHub"
+          url: "https://github.com/JopenChen/dsh-go"
+          weight: 5
   zh-cn:
     label: 简体中文
     weight: 2
     title: "dsh-go — DeepSeek Harness Agent 的 Go 参考实现"
     params:
       description: "进程内 Go 参考实现 — 读懂 Agent 内核"
+    menus:
+      main:
+        - name: "文档"
+          pageRef: "/zh-cn/docs"
+          weight: 1
+        - name: "教程"
+          pageRef: "/zh-cn/tutorials"
+          weight: 2
+        - name: "FAQ"
+          pageRef: "/zh-cn/faq"
+          weight: 3
+        - name: "示例"
+          pageRef: "/zh-cn/examples"
+          weight: 4
+        - name: "GitHub"
+          url: "https://github.com/JopenChen/dsh-go"
+          weight: 5
 
 # ============================================================================
 # 内容
@@ -37,27 +71,6 @@ disableKinds:
   - taxonomy
   - term
   - rss
-
-# ============================================================================
-# 菜单（顶部导航）
-# ============================================================================
-menu:
-  main:
-    - name: "Docs"
-      pageRef: "/docs"
-      weight: 1
-    - name: "Tutorials"
-      pageRef: "/tutorials"
-      weight: 2
-    - name: "FAQ"
-      pageRef: "/faq"
-      weight: 3
-    - name: "Examples"
-      pageRef: "/examples"
-      weight: 4
-    - name: "GitHub"
-      url: "https://github.com/JopenChen/dsh-go"
-      weight: 5
 
 # ============================================================================
 # 参数（Hextra 特有）

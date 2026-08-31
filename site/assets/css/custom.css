@@ -1,0 +1,88 @@
+/* ============================================================================
+ * dsh-go 文档站自定义样式（Hextra 自动加载）
+ *
+ * 设计目标：
+ *   - 首页 hero 标题：品牌蓝→青渐变（覆盖 Hextra 默认灰渐变）
+ *   - 表格更清晰（表头底色、分隔线、hover 高亮）
+ *   - 按钮 hover 微交互
+ *   - 内容节奏优化
+ * 注意：Hextra 用 Tailwind class（hx-*），custom.css 覆盖这些 class 即可。
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * 1. Hero 主标题：品牌蓝→青渐变（覆盖 hx-from-gray-900 to-gray-600）
+ * ------------------------------------------------------------------------- */
+/* 命中 Hextra 渲染的 hero h1 class 组合 */
+h1.not-prose.hx-text-4xl.hx-bg-clip-text,
+h1.hx-bg-clip-text.hx-bg-gradient-to-r {
+  background-image: linear-gradient(135deg, #2563eb 0%, #0ea5e9 55%, #06b6d4 100%) !important;
+  background-size: 100% 100% !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Hero 按钮：hover 微上浮 + 阴影
+ * ------------------------------------------------------------------------- */
+/* 命中 hero-button 渲染的链接 */
+main a[class*="hx-bg-primary-600"] {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+main a[class*="hx-bg-primary-600"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. 内容标题：底部细分隔线
+ * ------------------------------------------------------------------------- */
+main h2,
+article h2 {
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. 表格：表头底色 + 行分隔 + hover 高亮
+ *    注意：Hextra 首页 hero 布局无 <main>，正文在 div 容器内，
+ *    因此用直接 table 选择器（整站表格都在内容区）。
+ * ------------------------------------------------------------------------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+table th {
+  background: rgba(37, 99, 235, 0.08);
+  font-weight: 600;
+  text-align: left;
+}
+table td,
+table th {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.12);
+}
+table tbody tr {
+  transition: background-color 0.12s ease;
+}
+table tbody tr:hover {
+  background: rgba(14, 165, 233, 0.07);
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. callout 圆角统一
+ * ------------------------------------------------------------------------- */
+.callout,
+div[class*="hextra-callout"] {
+  border-radius: 10px !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. 暗色主题适配
+ * ------------------------------------------------------------------------- */
+html.dark table th {
+  background: rgba(255, 255, 255, 0.08);
+}
+html.dark table tbody tr:hover {
+  background: rgba(14, 165, 233, 0.12);
+}
