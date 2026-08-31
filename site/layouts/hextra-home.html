@@ -1,0 +1,17 @@
+{{- /* ==========================================================================
+   Dsh-Go 站点覆盖：Hextra 主题 hextra-home.html
+   --------------------------------------------------------------------------
+   与主题原版差异：在最外层 div 增加 .hextra-home 类、内容区增加 .content 类，
+   使自定义 CSS（custom.css）中针对首页的选择器（.hextra-home .content ...、
+   .hextra-home .hextra-cards 等）能够命中，首页留白/居中/卡片网格规则生效。
+   ========================================================================== */ -}}
+{{ define "main" }}
+  <div class='hextra-home hx-mx-auto hx-flex {{ partial "utils/page-width" . }}'>
+    {{ partial "sidebar.html" (dict "context" . "disableSidebar" true) }}
+    <div class="hx-w-full hx-break-words hx-min-h-[calc(100vh-var(--navbar-height))] hx-min-w-0 hx-pb-8 hx-pt-8 md:hx-pt-12 hx-pl-[max(env(safe-area-inset-left),1.5rem)] hx-pr-[max(env(safe-area-inset-left),1.5rem)]">
+      <div class="content hx-flex hx-flex-col hx-items-start">
+        {{ .Content }}
+      </div>
+    </div>
+  </div>
+{{ end }}

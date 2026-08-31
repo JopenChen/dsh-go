@@ -357,8 +357,7 @@ a[class*="sidebar-active"] {
 .hextra-footer {
   background: rgba(9, 12, 20, 0.6) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  /* 不设置 backdrop-filter，避免作为微信悬浮卡片的 containing block 破坏 fixed 定位 */
 }
 .hextra-footer .hx-text-gray-600,
 .hextra-footer .hx-text-xs {
@@ -485,12 +484,20 @@ main li {
 }
 
 /* ---------------------------------------------------------------------------
- * 11. 页脚作者微信二维码（右下角，直接可见卡片）
+ * 11. 作者微信二维码：始终悬浮在页面右下角
  * ------------------------------------------------------------------------- */
 .dsh-footer-wechat {
-  display: flex;
-  justify-content: flex-end; /* 右下角 */
-  padding: 1.25rem 0 0.25rem;
+  position: fixed;               /* 固定悬浮 */
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 40;
+  padding: 0;
+}
+@media (max-width: 768px) {
+  .dsh-footer-wechat {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
 }
 
 .dsh-wechat-card {
@@ -647,10 +654,28 @@ main li {
 /* 首页各分区标题上下留白 */
 .hextra-home .content h2,
 .hextra-home h2 {
-  margin-top: 3rem;
-  margin-bottom: 1.25rem;
+  margin-top: 4.5rem;
+  margin-bottom: 1.75rem;
   padding-bottom: 0.6rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* 首页首个分区标题（紧随架构图）上方留白收紧一点，避免过度空荡 */
+.hextra-home .content h2:first-of-type {
+  margin-top: 3.5rem;
+}
+
+/* 首页玻璃特性卡片：同一行三列均匀分布并居中 */
+.hextra-home .hextra-cards {
+  grid-template-columns: repeat(var(--hextra-cards-grid-cols, 3), minmax(0, 1fr)) !important;
+  justify-content: center;
+  align-items: stretch;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+@media (max-width: 768px) {
+  .hextra-home .hextra-cards {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* 首页正文段落行距与间距 */
@@ -931,7 +956,7 @@ body::after {
     radial-gradient(50rem 32rem at 68% 12%, rgba(var(--dsh-cyan-rgb), 0.10), transparent 55%),
     radial-gradient(40rem 26rem at 25% 62%, rgba(var(--dsh-brand-rgb), 0.12), transparent 55%);
   filter: blur(14px);
-  animation: dsh-wave 34s ease-in-out infinite alternate-reverse;
+  animation: dsh-wave 16s ease-in-out infinite alternate-reverse;
 }
 
 @keyframes dsh-wave {
@@ -967,8 +992,10 @@ table[class*="bg-neutral"] {
  * 19. 首页架构图：玻璃节点 + 数据流动画
  * ------------------------------------------------------------------------- */
 .dsh-arch {
-  margin: 2.5rem 0;
+  margin: 2.5rem auto;
   padding: 1.5rem;
+  max-width: 1000px;               /* 限制最大宽度，居中展示 */
+  text-align: center;
   border-radius: 18px;
   background:
     linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
@@ -980,11 +1007,13 @@ table[class*="bg-neutral"] {
     0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
-/* 架构图主体 */
+/* 架构图主体：占满容器宽度并居中 */
 .dsh-arch-svg {
   width: 100%;
+  max-width: 960px;
   height: auto;
   display: block;
+  margin: 0 auto;
 }
 
 /* 数据流沿线流动的小圆点 */
