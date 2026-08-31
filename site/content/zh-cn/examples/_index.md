@@ -4,8 +4,6 @@ description: "9 个零依赖教学示例"
 weight: 4
 ---
 
-# 示例
-
 仓库内置 **9 个可直接运行的示例**，全部零依赖可跑（除 `chat` 需 API Key）。源码在 [`examples/`](https://github.com/JopenChen/dsh-go/tree/master/examples)。
 
 ## 运行方式

@@ -11,7 +11,7 @@ layout: hextra-home
 {{< /hextra/hero-badge >}}
 
 {{< hextra/hero-headline >}}
-  读懂 Agent 内核<br/>用 Dsh-Go 动手构建
+  基于 Dsh-Go 动手构建<br/>读懂 Agent 内核
 {{< /hextra/hero-headline >}}
 
 {{< hextra/hero-subtitle >}}
@@ -74,8 +74,9 @@ Dsh-Go 只回答一个问题：**一个真实 Agent 内部到底是怎么运作�
 | `mcp` | MCP 客户端 → 工具桥 |
 | `chat` | 真实 DeepSeek 多轮对话（需 API Key） |
 
-## 从源码开始
+## 参考
 
-- [查看 GitHub 仓库](https://github.com/JopenChen/dsh-go)
-- [阅读文档](/zh-cn/docs/)
-- [新人 FAQ](/zh-cn/faq/)
+Dsh-Go 是官方 DeepSeek Harness 的进程内 Go 参考实现：
+
+- [DeepSeek Harness 官网](https://www.deepseek.com/harness/)
+- [deepseek-harness 源码仓库](https://github.com/deepseek-ai/deepseek-harness)
