@@ -2,8 +2,7 @@
 package tests
 
 import (
-	"encoding/json"
-	"strings"
+	"bytes"
 	"testing"
 
 	"github.com/JopenChen/dsh-go/pkg/tools"
@@ -232,17 +231,17 @@ func TestSchemaMarshalDeterministic(t *testing.T) {
 		t.Fatal("Marshal 输出不确定")
 	}
 
-	// properties 与 required 应字典序
-	var m map[string]any
-	if err := json.Unmarshal(b1, &m); err != nil {
-		t.Fatalf("Marshal 输出非法 JSON: %v", err)
+	// properties 与 required 应字典序：直接检查序列化字节中 alpha 出现在 zeta 之前。
+	//（encoding/json 对 map 输出本身就是字典序，此处做字节级断言，避免依赖 Go map 迭代顺序。）
+	if bytes.Index(b1, []byte("alpha")) == -1 || bytes.Index(b1, []byte("zeta")) == -1 {
+		t.Fatalf("Marshal 输出缺少 alpha/zeta: %s", b1)
 	}
-	props := m["properties"].(map[string]any)
-	keys := make([]string, 0, len(props))
-	for k := range props {
-		keys = append(keys, k)
+	if bytes.Index(b1, []byte("alpha")) > bytes.Index(b1, []byte("zeta")) {
+		t.Fatalf("properties 应字典序(alpha 在 zeta 前): %s", b1)
 	}
-	if strings.Join(keys, ",") != "alpha,zeta" {
-		t.Fatalf("properties 应字典序: %v", keys)
+	// 再验证字典序稳定（多轮均一致）。
+	b3, _ := schema.Marshal()
+	if !bytes.Equal(b1, b3) {
+		t.Fatalf("Marshal 输出不确定:\n%s\nvs\n%s", b1, b3)
 	}
 }

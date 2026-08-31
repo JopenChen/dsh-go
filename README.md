@@ -2320,7 +2320,7 @@ sort.Slice(allSkills, func(i,j int) bool { return allSkills[i].Name < allSkills[
 | N Cluster（缓存命中率对齐） | N01~N09 已全部完成 | **100%** | 前缀探针、Append-only Session、SysPrompt 纯度、Skills Catalog 稳定、Prompt Context 变更检测、反模式 Lint、E2E 命中率、CacheAlert 骤降告警、Grafana + OTel 看板 |
 | S Cluster（SHOULD，扩展能力） | S01~S16 已全部完成 | **100%** | Compaction BasicEngine、Subagent(3后端)、SessionQuery FTS5、SQLite FTS5、Session Telemetry Hooks、Authorization OAuth Flow Stub、OTel Bridge、Output Retention、MCP Client→Tool Bridge、Terminal PTY、Workspace Registry、Workflow Engine 等 |
 | **H Cluster（并发加固，HARDENING）** | **H01 ✅ H02 ✅ H03 ✅ H04 ✅ H05 ✅ H06 ✅ H07 ✅ H08 ✅** | **8 / 8 = 100%** | 详见 13.2 |
-| T Cluster（测试骨架） | **T01⏳** | **0 / 1 = 0%** | 328 条测试用例 → `_test.go` 骨架生成 |
+| **T Cluster（测试骨架）** | **T01 ✅** | **1 / 1 = 100%** | 328 条 TEST_CASES.md 用例 → 51 条未覆盖用例可编译骨架（`tests/tc_skeletons_test.go`），TC 编号一一对应；全量测试回归 100% PASS |
 
 ### 13.2 H Cluster 并发加固逐项清单（H01~H08）
 
@@ -2460,7 +2460,18 @@ sort.Slice(allSkills, func(i,j int) bool { return allSkills[i].Name < allSkills[
 4. **复用集成示例**：把 JSONL shardWriter / fsnotify / metrics exporter 改成"create → `sup.Go` → `sup.Shutdown`"，进程退出时可保证零泄漏；测试中用 ticker 型 writer 验证了该模式。
 5. **测试与安全**：`tests/h08_supervisor_lifecycle_test.go` 6 用例全覆盖：优雅关闭无泄漏（8 worker 全退出）、父 ctx 级联、幂等、拒不退出触发超时、单点 Cancel 不波及其他 worker、ticker writer 集成。
 
+### 13.10 本次 T01 实现要点速览（便于后续维护）
+
+**T01 背景**：SHOULD 任务——把 `docs/TEST_CASES.md`（基于 98 项功能点设计的 **328 条用例**）中**未覆盖**的用例落成可编译的 `_test.go` 骨架，TC 编号一一对应，供后续回填真实业务逻辑。
+
+**T01 实现**：
+1. **生成器 `cmd/gen_tc_skeletons`**：解析 `docs/TEST_CASES.md` 的 `| TC-<任务ID>-<序号> |` 表格行，识别状态含「待实现」的用例，自动生成骨架测试文件。可重复运行：
+   - `go run ./cmd/gen_tc_skeletons` → 输出 `tests/tc_skeletons_test.go`
+2. **产物 `tests/tc_skeletons_test.go`**：为 **51 条待实现用例**每个生成一个函数 `TestTC{任务ID}_{序号}`（如 `TestTCM07_04`），带中文注释（类型/名称/关联文件），默认 `t.Skip("T01 骨架占位: TC-xxx")`。TC 编号与 TEST_CASES.md 一一对应。
+3. **全量回归**：`go test ./tests -count=1` **100% PASS**（51 个骨架以 SKIP 计入，不阻塞其它真实测试）。
+4. **顺带修复一个既有 flaky 测试** `TestSchemaMarshalDeterministic`：原实现用 Go map 无序迭代断言 `properties` 字典序（本身测不准），改为对序列化字节做 `alpha`↔`zeta` 出现次序断言 + 多轮确定性比对——修复后全量稳定绿。
+
 ---
 
-**（README.md 到此结束 · v2.0 + 任务表锚点 + 竞品对比 + 缓存命中率对齐方案 + 实施计划锚点 + 实时进度跟踪 第十三章）**
+**（README.md 到此结束 · v2.0 + 任务表锚点 + 竞品对比 + 缓存命中率对齐方案 + 实施计划锚点 + 实时进度跟踪 第十三章 · 全部任务点 H 簇 8/8 + T 簇 1/1 = 100%）**
 
