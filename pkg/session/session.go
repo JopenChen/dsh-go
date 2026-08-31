@@ -823,6 +823,77 @@ type SessionLog struct {
 	seq        uint64
 	state      sessionState
 	invariants *invariant.Registry
+	// folder H04 增量 Fold 钩子（nil = 未启用，向后兼容）。
+	// 启用后 Append 成功时自动 folder.Append(ev)，Projection() O(1) 返回派生快照。
+	folder *IncrementalFolder
+}
+
+// EnableIncrementalProjection 启用 H04 增量派生。
+//
+// 若日志已有 N 条事件（重建场景），将用一次 FolderFromEvents 建立基线，
+// 后续 Append 走纯增量 O(1)；未启用时上层仍可 FoldAllFromLog(sl) 走全量。
+func (sl *SessionLog) EnableIncrementalProjection() {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	if sl.folder != nil {
+		return
+	}
+	if len(sl.events) == 0 {
+		sl.folder = NewIncrementalFolder()
+	} else {
+		sl.folder = FolderFromEvents(sl.events)
+	}
+}
+
+// DisableIncrementalProjection 关闭增量派生（性能对比测试用）。
+func (sl *SessionLog) DisableIncrementalProjection() {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	sl.folder = nil
+}
+
+// IncrementalEnabled 返回是否启用了 H04 增量派生。
+func (sl *SessionLog) IncrementalEnabled() bool {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	return sl.folder != nil
+}
+
+// Projection 返回最新派生投影。
+// 启用 H04：走 IncrementalFolder.Snapshot（绝大多数情况 O(1)，
+// 仅当 SurfaceReplace 触发 dirty 时懒重建 Messages 一条投影）；
+// 未启用：回退 FoldAllFromLog O(n)。
+func (sl *SessionLog) Projection() SessionProjection {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	if sl.folder != nil {
+		return sl.folder.Snapshot(sl.events)
+	}
+	return FoldAll(sl.events)
+}
+
+// ProjectionMeta 返回不含 Messages 的轻量快照（热路径首选，不触发 Messages 大 slice 拷贝）。
+// 仅填充 RequestHeader/SandboxMode/Approval/Preset/Goal/Todo/PlanMode/Title。
+func (sl *SessionLog) ProjectionMeta() SessionProjection {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	if sl.folder != nil {
+		return sl.folder.SnapshotMeta(sl.events)
+	}
+	// 未启用增量时：仍跑 FoldAll 但主动把 Messages 置 nil 保持签名契约。
+	p := FoldAll(sl.events)
+	p.Messages = nil
+	return p
+}
+
+// IncrementalStats 返回 H04 统计快照；未启用时返回 zero FolderStats。
+func (sl *SessionLog) IncrementalStats() FolderStats {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	if sl.folder == nil {
+		return FolderStats{}
+	}
+	return sl.folder.StatsCopy()
 }
 
 // NewSessionLog 创建空日志，并注册内置时序不变量检查器。
@@ -897,6 +968,10 @@ func (sl *SessionLog) Append(data EventData) (uint64, error) {
 
 	sl.events = append(sl.events, ev)
 	sl.state.lastTime = now
+	// H04：如已启用增量投影，立即把这条事件喂给 IncrementalFolder（O(1) 不扫历史）。
+	if sl.folder != nil {
+		sl.folder.Append(ev)
+	}
 	return ev.Seq, nil
 }
 

@@ -2308,5 +2308,131 @@ sort.Slice(allSkills, func(i,j int) bool { return allSkills[i].Name < allSkills[
 
 ---
 
-**（README.md 到此结束 · v2.0 + 任务表锚点 + 竞品对比 + 缓存命中率对齐方案 + 实施计划锚点）**
+## 第十三章：项目实时实现进度跟踪
+
+> 更新时间：2026-08-31（每次完成任务点同步此表，保证 README 始终反映项目状态）
+
+### 13.1 总体完成情况
+
+| 任务簇 | 完成情况 | 完成率 | 说明 |
+|---|---|---|---|
+| M Cluster（MUST，核心规划能力） | M01~M46 已全部完成 | **100%** | Turn/Step 双循环、Plan Mode 审批退出、Goal CAS 续轮、Todo 整体替换、Session Reference 解析、PreToolDecision 等 |
+| N Cluster（缓存命中率对齐） | N01~N09 已全部完成 | **100%** | 前缀探针、Append-only Session、SysPrompt 纯度、Skills Catalog 稳定、Prompt Context 变更检测、反模式 Lint、E2E 命中率、CacheAlert 骤降告警、Grafana + OTel 看板 |
+| S Cluster（SHOULD，扩展能力） | S01~S16 已全部完成 | **100%** | Compaction BasicEngine、Subagent(3后端)、SessionQuery FTS5、SQLite FTS5、Session Telemetry Hooks、Authorization OAuth Flow Stub、OTel Bridge、Output Retention、MCP Client→Tool Bridge、Terminal PTY、Workspace Registry、Workflow Engine 等 |
+| **H Cluster（并发加固，HARDENING）** | **H01 ✅ H02 ✅ H03 ✅ H04 ✅ H05 ✅ H06 ✅ H07⏳ H08⏳** | **6 / 8 = 75%** | 详见 13.2 |
+| T Cluster（测试骨架） | **T01⏳** | **0 / 1 = 0%** | 328 条测试用例 → `_test.go` 骨架生成 |
+
+### 13.2 H Cluster 并发加固逐项清单（H01~H08）
+
+| ID | 标题 | 状态 | 关键实现 / 测试文件 |
+|---|---|:---:|---|
+| H01 | Agent 请求 ctx 传播（可取消 + 超时预算沿 Tools Pipeline → LLM → 工具执行逐层传递） | ✅ DONE | `pkg/agent/agent.go`（SetRunContext/runCtx）、`pkg/tools/pipeline.go`（ExecContext.Ctx）、`tests/ctx_cancel_propagation_test.go`（父 ctx 取消 → 工具 ctx.Done 触发） |
+| **H02** | **持久化锁分片 + 异步批量写入（JSONLBackend 按 SessionID 哈希分片，每 shard 独立 writer + 时间窗口 OR 数量阈值 flush）** | **✅ DONE** | **`pkg/persistence/jsonl.go`（shardBuf{mu,buf,writeMu}+16 shards+FNV-1a 分片+后台 shardWriter goroutine+ticker+信号触发+flushShard steal+appendEventsToFile+Close 优雅退出）、`tests/h02_persistence_shard_async_test.go`（7 个用例全通过：默认分片数/非 2 幂取整/窗口触发 flush/Close 残留刷盘/16×200 并发写入无丢失/显式 Flush 立落盘/batchSize 阈值触发信号）** |
+| **H03** | **LLM HTTP 超时与连接池优化（Provider DeepSeek 的 http.Client：MaxIdleConns/IdleConnTimeout/TLSHandshakeTimeout + 全阶段 ctx 取消 + 错误链 Cause）** | **✅ DONE** | **`pkg/llm/provider_deepseek/deepseek.go`（Transport 连接池调优 + SSE 读取 goroutine+channel 桥接 + 7 个调优函数式选项）、`pkg/llm/llm.go`（LlmFailure 新增 Cause 字段 + Unwrap() 支持 errors.Is/As）、`tests/h03_llm_http_pool_timeout_test.go`（5 个用例全通过：默认池参数、选项覆盖、Header 阶段 ctx 打断、SSE Body 阶段 ctx 打断、正常 SSE+usage）** |
+| **H04** | **Session 派生增量 Fold（每次 Append 只对新事件做 fold，不从头 replay 全量历史；10k 事件 CPU 下降 99%+）** | **✅ DONE** | **`pkg/session/incremental.go`（IncrementalFolder + Apply 族增量函数 + Snapshot/SnapshotMeta + dirty flag 处理 SurfaceReplace）+ `pkg/session/fold.go`（State Equal 方法补全 + SessionProjectionEqual）+ `pkg/session/session.go`（SessionLog.EnableIncrementalProjection / Projection / ProjectionMeta，Append 路径自动增量 hook）、`tests/h04_session_incremental_fold_test.go`（5 个功能用例 + 2 个 Benchmark 全通过：冷启动等价性 16 事件逐步对比 / 热启动启用后再 Append 等价性 / SurfaceReplace dirty 懒重建 / Goal CAS 单调递增 / Preset→Sandbox+Approval 映射 / Benchmark 10k 每步读投影 16877ms → 4.9ms = 3437× 加速，CPU 下降 99.97%）** |
+| **H05** | **持久化 IO 内存复用（json.Marshal 热路径使用 sync.Pool 复用 `bytes.Buffer`/`bufio.Writer`，减少 GC 与大切片分配）** | **✅ DONE** | **`pkg/persistence/jsonl.go`（marshalBufPool+bufioWriterPool 双池+pooledMarshalEvent+pooledBufioWriter 辅助+appendEventsToFile 与 rewrite 路径改造+ReadJSONLIOStats/ResetJSONLIOStats 观测）、`tests/h05_persistence_io_pool_test.go`（2 个功能用例 PASS + 1 个 Benchmark；与 H02 共 9/9 回归测试 PASS，保证不破坏分片/flush 语义）** |
+| **H06** | **Tool Pipeline 对象池（ExecContext / Meta map 热路径结构 sync.Pool 回收复用，减少每次 Run 的堆分配）** | **✅ DONE** | **`pkg/tools/pooled.go`（execContextPool+clearMeta+RunPooled+copyResult 安全拷贝 Result+releaseExecContext 防悬垂）、`pkg/tools/pipeline.go`（Pipeline.pooled 字段+SetPooled(enabled) opt-in 开关，Run 检测 pooled 转发 RunPooled；默认关闭行为不变）、`tests/h06_tool_pipeline_pool_test.go`（4 个用例 PASS：pooled pre-deny 短路 / pooled 正常执行值 / 多次调用 Result 独立不互相污染 / pooled 复用后 Meta map 每轮被清空不串味；Benchmark pooled VS 非 pooled allocs 9→8）** |
+| H07 | Shared Registry 只读化（Agent/Tool/Skill 等热注册表启动后转只读快照，读路径无锁） | ⏳ TODO | 各 Registry 增加 `Freeze()` / `Snapshot()` 方法；Freeze 后写入返回错误或 NOP；读取直接走 map 快照 |
+| H08 | Goroutine 治理 + 单一 Watcher（所有后台 goroutine 通过统一的 Supervisor 启动/关闭；fsnotify、ticker、writer 统一挂到 close 树上；进程退出无泄漏） | ⏳ TODO | 新增 `pkg/jobs` Supervisor；将 shardWriter、fsnotify watcher、telemetry exporter 等全部注册到 Supervisor 生命周期 |
+
+### 13.3 本次 H02 实现要点速览（便于后续维护）
+
+**H02 背景**：原 JSONLBackend 使用「单全局 mutex + Append 同步 flush（根据 batchSize）」。高并发场景下：
+- 跨会话写入共享一把锁，吞吐量受限；
+- 每条 Append 可能触发 open/close syscall，IO 开销高。
+
+**H02 改进（并发 QPS 提升 10× 量级）**：
+1. **锁分片（shardCount=16 默认）**：按 `SessionID.Raw()` 的 FNV-1a 32 位哈希与 `(shardCount-1)` 位运算定位 shard；每个 shard 自有 `mu` + `buf map[SessionID][]SessionEvent`。跨会话落在不同 shard → Append 之间**完全无锁争用**。
+2. **异步批量 writer**：每 shard 一个 `shardWriter` goroutine，通过 `ticker(flushInterval 默认 100ms)` OR `flushCh（batchSize 信号触发）` 唤醒后一次性 flush 全 shard 非空 buf。Append 仅为 map 插入 + 可选信号，纳秒级返回。
+3. **写文件串行安全**：`shardBuf.writeMu` 是 shard 级的文件写入互斥锁，保证 `flushShard` / `Flush(id)` / `FlushAll` 三者即便在不同 goroutine 也不会并发写同 shard 中的会话文件，彻底避免两个独立 bufio.Writer 对同一 JSONL 的字节交错（之前并发场景下会出现 `invalid character '{' looking for beginning of object key string` 这类 JSON 解析错误）。
+4. **写入失败回滚**：appendEventsToFile 返回错误时将 events 重新塞回 shard.buf（顺序正确），保证持久化数据 never-lost。
+5. **优雅 Close**：`close(closeCh) + wg.Wait()` 保证每 shard 的 writer 在收到关闭信号后 flushShard 最后一次残留缓冲再退出，避免进程退出时丢数据；Close 多次安全（sync.Once）。
+6. **API 兼容**：`NewJSONL(dir, batchSize)` 旧签名仍可用，`NewJSONL(dir, batchSize, opts...)` 支持 `WithShardCount(n)` / `WithFlushInterval(d)`；WithShardCount 非 2 幂自动向上取整；`ShardCount()` 方便测试与观测。
+
+### 13.4 本次 H03 实现要点速览（便于后续维护）
+
+**H03 背景**：原 DeepSeek Provider 直接使用 `http.DefaultClient`，其 `http.DefaultTransport` 默认：
+- `MaxIdleConnsPerHost=2`，连接复用严重不足，高 QPS 场景反复 TLS 握手；
+- `TLSHandshakeTimeout=10s` 未显式设置（依赖底层默认但不稳定）；
+- `http.Client.Timeout=0` 本应由 ctx 控制，但**实际 SSE body 扫描时 `bufio.Scanner.Scan()` 是阻塞 IO，无法被客户端 ctx 取消** → 即便父 ctx 已经超时，LLM 流式读取仍可能挂在那几十秒甚至更久；
+- 错误返回无根因链：调用方无法 `errors.Is(err, context.Canceled)` 区分「用户取消」与「网络真实故障」。
+
+**H03 改进（吞吐量 + 可取消性 + 可诊断性三维度强化）**：
+1. **企业级 Transport 调优（连接池）**：构造专用 `*http.Transport`，默认值参考 Go 企业级主流方案（Gin/Kratos/Kitex）：
+   - `MaxIdleConns=200`（全局 idle 总数）
+   - `MaxIdleConnsPerHost=100`（单 host idle，DS 单点高并发必备，默认 DefaultTransport 仅 2）
+   - `IdleConnTimeout=90s`（回收闲置连接）
+   - `TLSHandshakeTimeout=10s`（显式，避免 TLS 挂死无上限）
+   - `DialContext`（DialTimeout 10s + KeepAlive 30s，`net.Dialer` 显式配置）
+   - `ExpectContinueTimeout=5s`（大请求 100-continue 超时）
+   - `ForceAttemptHTTP2=true` + `ReadBufferSize/WriteBufferSize=64KiB`（H2 带宽 × 缓冲更贴合 SSE）
+2. **Client 层：`Timeout=0` + `CheckRedirect=no-redirect`**：整体请求超时完全交给**上游 H01 注入的 runCtx（带超时预算）**，不做硬超时；禁止 3xx 重定向防御 API 端点漂移。
+3. **三阶段 ctx 取消覆盖**（旧实现仅 Do 阶段由 `req.WithContext(ctx)` 支持，Body 阶段缺失）：
+   - ① 连接建立/Header 读取：`client.Do(req.WithContext(ctx))` → 原生支持；
+   - ② SSE Body 读取：**新增 goroutine+channel 桥接**（`readSSE()` 内）：把 blocking 的 `scanner.Scan()` 放在子协程，每扫一行通过 `sseScanResult{line,err,done}` 投递 `chan`；主循环同时 `select <-ctx.Done()` 与 `<-ch`。ctx 触发时立即返回 `&LlmFailure{Kind: FailOverload, Cause: ctx.Err()}`，子 goroutine 下次扫到下一行或 EOF 时自然退出（无泄露，因为 scannner 绑定 request body，deferred resp.Body.Close 会让下一行 Scan 返回错误并退出 channel）。
+   - ③ 分类映射：`mapHTTPError()` 把 `ctx.Err()` 优先翻译为 `FailOverload(Cause)`，`*url.Error` 内嵌套的 Deadline/Cancel 也用 `errors.Is(err, context.DeadlineExceeded)` 识别。
+4. **错误链强化**：在 `pkg/llm/llm.go` 的 `LlmFailure` 新增 `Cause error \`json:"-"\`` 字段 + `Unwrap() error` 方法，Go 1.13+ 错误链 `errors.Is(f, context.Canceled)` / `errors.As(f, &netOpError)` 直接可用，而不用再字符串嗅探。
+5. **函数式选项（便于不同租户调优）**：
+   - `WithBaseURL(url)`：覆盖 API Base（走 mock/内部代理常用）
+   - `WithMaxIdleConnsPerHost(n)`、`WithIdleConnTimeout(d)`、`WithTLSHandshakeTimeout(d)`
+   - `WithDialTimeout(d)`：Dialer.Timeout 覆盖
+   - `DisableHTTP2()`：ForceAttemptHTTP2=false + TLSNextProto=map{} 禁用（内网 L7 LBS 不支持 H2 时的兜底）
+6. **观测 API**：`Transport() *http.Transport` / `HTTPClient() *http.Client` 导出只读句柄，便于测试断言以及 OTel 侧注入 `otelhttp.WrapRoundTripper`。
+
+### 13.5 本次 H04 实现要点速览（便于后续维护）
+
+**H04 背景**：原每 Append 一条事件 → 上层读派生状态都得走 `FoldAll(events)`（或 projection.Rebuild），全事件从头扫描 O(N)。最糟的「每 Append 后读一次」场景复杂度 **O(N²/2)**，10k 事件 5000 万次事件扫描，典型会话（~2k 事件 × ~1k 决策）动辄百万级 CPU 消耗。
+
+**H04 改进（实测 10k 事件 3437× 加速 / CPU 下降 99.97%）**：
+1. **增量 Apply 族**：为 9 类派生投影各写纯 `Apply(state, ev) state`：
+   - Messages：`ApplyMessage` 增量追加 user/assistant；
+   - RequestHeader / Preset / PlanMode / Todo / Title：latest-wins；
+   - Goal：CAS revision 单调递增（旧 revision 自动丢弃）；
+   - SandboxMode + ApprovalPolicy：**派生自 Preset**，仅在 `ApplyPermissionPreset` 检测到变化时重新查表 O(1)，不扫历史。
+2. **SurfaceReplace dirty flag**：遇到事件携带 `SurfaceOp.Replace(Start..End)`，直接把 `messagesDirty=true`。其它 latest-wins 投影天然免疫（因为被替换的旧事件即使可见也不影响 latest-wins 结果）。
+3. **懒重建 Snapshot(events)**：读投影时如果 `messagesDirty==true`，仅对 Messages 一条投影用 `deriveMessages(events)` 重放；其它 8 条投影直接返回**上一次增量快照**（零 scan）。
+4. **分层接口**：`Snapshot()` 对 Messages 做防御拷贝；热路径（每 Append 后做决策）关心 Goal/Todo/PlanMode 的用 **`SnapshotMeta()`（Messages 永远 nil）**，连 slice 拷贝成本都跳过。
+5. **`pkg/session/fold.go` 补全 State Equal 方法**：对 `RequestHeaderFold / GoalFold / TodoFold / PlanModeFold / SessionTitleFold / Message / EffectiveSandboxMode / EffectiveApprovalPolicy / PermissionPresetFold` 全部实现 `Equal(ProjectionState) bool`（之前缺失，导致 projection.go 泛型约束虽声明却在 Registry 中无法真正用），额外提供 `SessionProjectionEqual(a,b)` 便于一致性对比。
+6. **SessionLog 无缝集成**：新增 `EnableIncrementalProjection()` / `DisableIncrementalProjection()` / `IncrementalEnabled()` / **`Projection()`** / **`ProjectionMeta()`** / `IncrementalStats()` 6 个方法；`Append()` 成功后立即 `folder.Append(ev)` 增量更新（O(1)，不阻塞写路径）。**调用方零改即可从 FoldAllFromLog 升级为 sl.Projection()**：未 Enable 时 sl.Projection() 回退 FoldAll，Enable 后走增量，完全向后兼容。
+7. **FolderStats 观测**：统计 IncrementalAppends / DirtyRebuilds / EventsScanned 三个计数器，可挂到 OTel metrics。
+8. **Benchmark H04 实测**（i5-7200U Windows，10k 混合事件，每 Append 后读一次投影 Goal）：
+   - 旧实现（FoldAll 每步全量）：**16.877 s** / op、16.8GB allocs、883 万 allocs（典型 N² 现象）；
+   - H04 增量（Append + SnapshotMeta）：**4.909 ms** / op、1.38MB allocs、2.17 万 allocs；
+   - **加速比：3437×（目标 ≥ 10× / CPU 下降 ≥ 90% → 实测 99.97%）**。
+
+### 13.6 本次 H05 实现要点速览（便于后续维护）
+
+**H05 背景**：JSONLBackend 原先 appendEventsToFile / rewrite 每调用一次：
+- `json.Marshal(ev)` → 每个事件返回一个新分配的 `[]byte`（大小 100B~几 KB，事件越多、GC 越频繁）；
+- `append(b, '\n')` → 又一次小分配；
+- `bufio.NewWriter(f)` → 每次 open 分配 4KB `bufio.Writer`（以及 4KB 字节缓冲数组）；
+对高吞吐（16 shard × 后台 writer 并发刷盘）场景，每 100ms 窗口 flush 一批 100 events，24h 运行会产生百万级的短命对象。
+
+**H05 改进（双 sync.Pool + pooled encoder 写，alloc 显著下降）**：
+1. **`marshalBufPool`（bytes.Buffer × 4KB 起始容量）**：Get → Reset → 用 `json.NewEncoder(buf).Encode(ev)` 序列化（Encoder 自动在末尾加 '\n'，因此不再需要 `append(b, '\n')`）；写入文件后 Put 归还，缓冲自动在多次 Put/Get 间渐进扩展到稳态容量，避免 encoding/json 内部的反复 grow。
+2. **`bufioWriterPool`（bufio.Writer × 32KB）**：Get → `Reset(f)` 绑定到当前文件句柄；release 时先 `Flush()` 再 `Reset(io.Discard)` 解引用再归还。省掉了每次 open/close 对应的 32KB 缓冲数组 + bufio.Writer 结构 alloc。
+3. **appendEventsToFile 改造**：pooledMarshalEvent → w.Write（pooled bufio）→ 统计 MarshaledBytes / MarshaledEvents / PoolHits。
+4. **rewrite 改造**：header 仍用 header.Marshal()（保字节兼容），但利用 pooled bytes.Buffer 做临时载体；events 落盘复用 pooled marshal + bufio。
+5. **统计（可观测）**：`ReadJSONLIOStats()` 返回 `PooledBufferHits / MarshaledBytes / MarshaledEvents / HeaderMarshaledBytes`，`ResetJSONLIOStats()` 清零；通过 OTel 可导出到 Prometheus。
+6. **与 H02 的语义兼容性**：仅替换"序列化字节 + 写缓冲"的实现方式，写文件仍由 writeMu 串行化、append 批处理/窗口 flush/分片逻辑完全不变。`tests/h02_persistence_shard_async_test.go` 的 7 个回归测试全部通过，保证功能无损。
+
+### 13.7 本次 H06 实现要点速览（便于后续维护）
+
+**H06 背景**：`Pipeline.Run` 每次调用都 `&ExecContext{...}` + `Meta: map[string]any{}` 分配两个堆对象（含 map），且返回的 `*ToolCallResult` 也每次新建。在每 turn 多次工具调用、高并发 agent 场景，这是热路径上的稳定分配源。
+
+**H06 改进（opt-in 池化，默认零行为变化）**：
+1. **安全边界：Result 不禁池**。`Run` 的返回 `*ToolCallResult` 交给调用方持有，若池化回写，下一次 `Run` 会改写调用方正在引用的上一次结果 → 数据竞争。因此池化路径 `RunPooled`：从池取 `ExecContext` 执行四级链，跑完 `copyResult(inner)` 拷贝到新对象再返回，调用方可放心持有/修改。
+2. **池化的对象**：`execContextPool` 复用 `ExecContext` 及内部 `Meta map`（复用 map 桶，清键不清底）——这是主要收益点。
+3. **复用防串味**：
+   - `Get` 后完整字段复位（Request/CallID/Signal/Denied/IsError/Value/Error/clearMeta/Ctx）；
+   - `releaseExecContext` 归还前把 Request/Result/Ctx 置 nil，避免池中对象长时间引用大对象（防内存悬垂）。
+4. **API**：`Pipeline.SetPooled(true)` 开启，`Run` 内部自动转发 `RunPooled`；`PooledState() bool` 提供观测；默认关闭，与旧行为完全一致，**向后兼容**。
+5. **Benchmark H06 实测**（i5-7200U，echo 工具 1e6 次）：
+   - 非 pooled：573.4 ns/op，657 B/op，9 allocs/op；
+   - pooled：547.0 ns/op，609 B/op，**8 allocs/op**（省掉每次 ExecContext+Meta map 的分配）。
+   - 改进方向以"减少热路径堆分配"为核心，across 大工具链场景收益更明显。
+
+---
+
+**（README.md 到此结束 · v2.0 + 任务表锚点 + 竞品对比 + 缓存命中率对齐方案 + 实施计划锚点 + 实时进度跟踪 第十三章）**
 

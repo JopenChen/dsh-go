@@ -170,12 +170,20 @@ const (
 type LlmFailure struct {
 	Kind    LlmFailureKind `json:"kind"`
 	Message string         `json:"message"`
+	// Cause 携带底层根因（例如 context.DeadlineExceeded / *net.OpError 等），
+	// 便于调用方 errors.Is 进行诊断；JSON 序列化时不输出（避免循环引用或敏感信息泄露）。
+	// H03 新增：LLM provider 在 ctx 取消 / 网络错误时统一填 Cause，
+	// 调用方 errors.Is(f, context.Canceled) 即可区分"用户取消"和"真正网络故障"。
+	Cause error `json:"-"`
 }
 
 // Error 实现 error 接口。
 func (e *LlmFailure) Error() string {
 	return fmt.Sprintf("llm failure [%s]: %s", e.Kind, e.Message)
 }
+
+// Unwrap 支持 errors.Is / errors.As 沿 Cause 链下钻（H03 + Go 1.13+ 错误链）。
+func (e *LlmFailure) Unwrap() error { return e.Cause }
 
 // ClassifyLlmError 将任意 error 归类为 LlmFailure；无法归类时返回 unknown。
 func ClassifyLlmError(err error) *LlmFailure {

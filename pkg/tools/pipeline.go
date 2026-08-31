@@ -89,6 +89,17 @@ type Pipeline struct {
 	execute *waterfall.Chain[ExecContext]
 	post    *waterfall.Chain[ExecContext]
 	result  *waterfall.Chain[ExecContext]
+	// pooled H06：是否启用对象池（Run 内部复用 ExecContext/Meta map）。
+	// 默认 false（与旧行为完全一致）；SetPooled(true) 后 Run 走池化路径。
+	pooled bool
+}
+
+// SetPooled 设置是否启用 H06 对象池回收（opt-in，默认关闭）。
+// 开启后 Run 复用 ExecContext 及其 Meta map，降低 GC；返回的 Result 仍为每次新建，
+// 调用方可安全持有。
+func (p *Pipeline) SetPooled(enabled bool) *Pipeline {
+	p.pooled = enabled
+	return p
 }
 
 // NewPipeline 构建空流水线（各阶段均可追加中间件）。
@@ -126,7 +137,11 @@ func (p *Pipeline) UseResult(h ...waterfall.Handler[ExecContext]) *Pipeline {
 }
 
 // Run 执行一次工具调用，走完四级流水线，返回结果。
+// 若已通过 SetPooled(true) 启用对象池，则内部走 RunPooled（等价语义，复用热结构）。
 func (p *Pipeline) Run(ctx context.Context, req *ToolCallRequest, tool *Tool) *ToolCallResult {
+	if p.pooled {
+		return p.RunPooled(ctx, req, tool)
+	}
 	ec := &ExecContext{
 		Request: req,
 		Result:  &ToolCallResult{CallID: req.CallID},
