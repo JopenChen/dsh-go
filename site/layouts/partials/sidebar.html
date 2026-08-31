@@ -62,22 +62,7 @@
       </ul>
     {{ end -}}
   </div>
-  {{/* Hide theme switch when sidebar is disabled */}}
-  {{ $switchesClass := cond $disableSidebar "md:hx-hidden" "" -}}
-  {{ $displayThemeToggle := (site.Params.theme.displayToggle | default true) -}}
-
-  {{ if or hugo.IsMultilingual $displayThemeToggle }}
-    <div class="{{ $switchesClass }} {{ with hugo.IsMultilingual }}hx-justify-end{{ end }} hx-sticky hx-bottom-0 hx-bg-white dark:hx-bg-dark hx-mx-4 hx-py-4 hx-shadow-[0_-12px_16px_#fff] hx-flex hx-items-center hx-gap-2 dark:hx-border-neutral-800 dark:hx-shadow-[0_-12px_16px_#111] contrast-more:hx-border-neutral-400 contrast-more:hx-shadow-none contrast-more:dark:hx-shadow-none hx-border-t" data-toggle-animation="show">
-      {{- with hugo.IsMultilingual -}}
-        {{- partial "language-switch" (dict "context" $context "grow" true) -}}
-        {{- with $displayThemeToggle }}{{ partial "theme-toggle" (dict "hideLabel" true) }}{{ end -}}
-      {{- else -}}
-        {{- with $displayThemeToggle -}}
-          <div class="hx-flex hx-grow hx-flex-col">{{ partial "theme-toggle" }}</div>
-        {{- end -}}
-      {{- end -}}
-    </div>
-  {{- end -}}
+  {{- /* Dsh-Go 定制：移除底部语言/主题切换条（语言切换已移到导航栏右上角，主题切换已移到导航栏） */ -}}
 </aside>
 
 {{- define "sidebar-main" -}}

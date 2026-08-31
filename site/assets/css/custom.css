@@ -149,6 +149,24 @@ h1.hx-bg-clip-text.hx-bg-gradient-to-r,
   color: var(--dsh-text-secondary) !important;
 }
 
+/* 首页 hero 品牌图标：玻璃圆角 + 辉光 */
+.dsh-hero-icon {
+  width: 104px;
+  height: 104px;
+  margin-bottom: 1.25rem;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 48px rgba(0, 0, 0, 0.5),
+    0 0 36px rgba(var(--dsh-brand-rgb), 0.30);
+  animation: dsh-icon-float 6s ease-in-out infinite;
+}
+@keyframes dsh-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
 /* ---------------------------------------------------------------------------
  * 4. 玻璃卡片（hextra-card / hextra-feature-card）
  * ------------------------------------------------------------------------- */
@@ -467,9 +485,11 @@ main li {
 }
 
 /* ---------------------------------------------------------------------------
- * 11. 页脚作者微信二维码（直接可见卡片，不依赖 hover）
+ * 11. 页脚作者微信二维码（右下角，直接可见卡片）
  * ------------------------------------------------------------------------- */
 .dsh-footer-wechat {
+  display: flex;
+  justify-content: flex-end; /* 右下角 */
   padding: 1.25rem 0 0.25rem;
 }
 
@@ -817,4 +837,177 @@ a[class*="hextra-pager"],
   background: rgba(var(--dsh-brand-rgb), 0.16) !important;
   color: #fff !important;
   border-bottom-color: var(--dsh-pink) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 15. 页脚底部 DeepSeek Harness 官方引用
+ * ------------------------------------------------------------------------- */
+.dsh-footer-refs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--dsh-text-dim);
+}
+.dsh-footer-refs a {
+  color: #7ea2ff;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+.dsh-footer-refs a:hover {
+  color: var(--dsh-pink);
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------------
+ * 16. 导航栏主题切换按钮（右上角，玻璃胶囊，与语言切换统一）
+ * ------------------------------------------------------------------------- */
+nav .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #d6dcf2 !important;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+nav .theme-toggle:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.16) !important;
+  border-color: rgba(var(--dsh-brand-rgb), 0.45) !important;
+  color: #fff !important;
+  box-shadow: 0 0 16px rgba(var(--dsh-brand-rgb), 0.2);
+}
+nav .theme-toggle svg {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * 17. 背景波浪缓慢动效 + 颜色混搭加深
+ *    （在 body 的固定背景之上叠加两层缓慢流动的径向光晕）
+ * ------------------------------------------------------------------------- */
+body {
+  /* 加深混搭：提高各辉光色不透明度与尺寸 */
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(64rem 36rem at 50% -12%, rgba(var(--dsh-brand-rgb), 0.34), transparent 60%),
+    radial-gradient(46rem 28rem at 84% 8%, rgba(var(--dsh-cyan-rgb), 0.16), transparent 60%),
+    radial-gradient(52rem 34rem at 10% 30%, rgba(var(--dsh-violet-rgb), 0.20), transparent 60%),
+    radial-gradient(40rem 28rem at 80% 45%, rgba(var(--dsh-pink-rgb), 0.13), transparent 60%);
+  background-size: 90px 90px, 90px 90px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+
+/* 波浪动效层：缓慢上下漂浮的双层光晕 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20% -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42rem 26rem at 22% 18%, rgba(var(--dsh-brand-rgb), 0.16), transparent 55%),
+    radial-gradient(46rem 30rem at 78% 34%, rgba(var(--dsh-violet-rgb), 0.18), transparent 55%),
+    radial-gradient(36rem 24rem at 45% 78%, rgba(var(--dsh-pink-rgb), 0.12), transparent 55%);
+  filter: blur(10px);
+  animation: dsh-wave 26s ease-in-out infinite alternate;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20% -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(50rem 32rem at 68% 12%, rgba(var(--dsh-cyan-rgb), 0.10), transparent 55%),
+    radial-gradient(40rem 26rem at 25% 62%, rgba(var(--dsh-brand-rgb), 0.12), transparent 55%);
+  filter: blur(14px);
+  animation: dsh-wave 34s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes dsh-wave {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(3%, -2%, 0) scale(1.06); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.02); }
+}
+
+/* ---------------------------------------------------------------------------
+ * 18. 表格：彻底统一为玻璃深色（修复白色突兀背景）
+ * ------------------------------------------------------------------------- */
+table {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+table thead th {
+  background: rgba(var(--dsh-brand-rgb), 0.18) !important;
+  color: #e6ecff !important;
+  border-bottom: 1px solid rgba(var(--dsh-brand-rgb), 0.32) !important;
+}
+table td,
+table th {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+/* 兼容 Hextra 可能给表格加的暗色透明类 */
+table[class*="bg-white"],
+table[class*="bg-gray"],
+table[class*="bg-neutral"] {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 19. 首页架构图：玻璃节点 + 数据流动画
+ * ------------------------------------------------------------------------- */
+.dsh-arch {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* 架构图主体 */
+.dsh-arch-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 数据流沿线流动的小圆点 */
+.dsh-flow {
+  animation: dsh-dash 2.6s linear infinite;
+}
+.dsh-flow.dsh-flow-reverse {
+  animation-direction: reverse;
+}
+
+@keyframes dsh-dash {
+  0%   { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
+}
+
+/* 节点呼吸辉光 */
+.dsh-node {
+  animation: dsh-node-glow 3.5s ease-in-out infinite;
+}
+.dsh-node.dsh-node-2 { animation-delay: 0.6s; }
+.dsh-node.dsh-node-3 { animation-delay: 1.2s; }
+
+@keyframes dsh-node-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(var(--dsh-brand-rgb), 0.35)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(var(--dsh-brand-rgb), 0.65)); }
 }

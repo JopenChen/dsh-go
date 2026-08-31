@@ -1,0 +1,101 @@
+<!-- ========== 架构图：玻璃节点 + 数据流动画 ========== -->
+<div class="dsh-arch">
+  <svg class="dsh-arch-svg" viewBox="0 0 920 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dsh-Go architecture: event sourcing, fold projection, agent loop, tools, LLM">
+    <defs>
+      <linearGradient id="dshGlass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+      </linearGradient>
+      <linearGradient id="dshGlassActive" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="rgba(77,107,254,0.28)"/>
+        <stop offset="100%" stop-color="rgba(34,211,238,0.10)"/>
+      </linearGradient>
+      <linearGradient id="dshLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(124,147,255,0.05)"/>
+        <stop offset="50%" stop-color="rgba(124,147,255,0.7)"/>
+        <stop offset="100%" stop-color="rgba(244,114,182,0.05)"/>
+      </linearGradient>
+    </defs>
+
+    <!-- 连接线 -->
+    <g stroke="rgba(124,147,255,0.45)" stroke-width="2" stroke-linecap="round">
+      <!-- User -> Session -->
+      <path id="dshEdge1" d="M150 40 C 150 70, 150 80, 150 110"/>
+      <!-- Session -> Fold -->
+      <path id="dshEdge2" d="M150 210 C 150 225, 150 228, 150 240"/>
+      <!-- Session -> Prompt -->
+      <path id="dshEdge3" d="M285 160 C 380 150, 420 170, 470 210"/>
+      <!-- Fold -> Prompt -->
+      <path id="dshEdge4" d="M285 280 C 380 270, 430 250, 470 235"/>
+      <!-- Prompt -> Agent Loop -->
+      <path id="dshEdge5" d="M470 235 L 520 235"/>
+      <!-- Agent Loop -> Tools -->
+      <path id="dshEdge6" d="M670 235 C 700 235, 720 210, 730 180"/>
+      <!-- Tools -> LLM -->
+      <path id="dshEdge7" d="M730 130 C 740 170, 745 250, 735 290"/>
+      <!-- LLM -> Agent Loop (返回) -->
+      <path id="dshEdge8" d="M700 330 C 640 370, 570 330, 560 285"/>
+    </g>
+
+    <!-- 数据流动点 -->
+    <g>
+      <circle r="4" fill="#22d3ee"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#dshEdge1"/></animateMotion></circle>
+      <circle r="4" fill="#7c93ff"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#dshEdge2"/></animateMotion></circle>
+      <circle r="4" fill="#a78bfa"><animateMotion dur="3.0s" repeatCount="indefinite"><mpath href="#dshEdge3"/></animateMotion></circle>
+      <circle r="4" fill="#a78bfa"><animateMotion dur="3.0s" repeatCount="indefinite" begin="0.5s"><mpath href="#dshEdge4"/></animateMotion></circle>
+      <circle r="4" fill="#4d6bfe"><animateMotion dur="2.0s" repeatCount="indefinite"><mpath href="#dshEdge5"/></animateMotion></circle>
+      <circle r="4" fill="#22d3ee"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#dshEdge6"/></animateMotion></circle>
+      <circle r="4" fill="#f472b6"><animateMotion dur="2.8s" repeatCount="indefinite"><mpath href="#dshEdge7"/></animateMotion></circle>
+      <circle r="4" fill="#f472b6"><animateMotion dur="2.8s" repeatCount="indefinite" begin="0.4s"><mpath href="#dshEdge8"/></animateMotion></circle>
+    </g>
+
+    <!-- 节点 -->
+    <!-- User -->
+    <g class="dsh-node">
+      <rect x="60" y="16" width="180" height="52" rx="26" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+      <text x="150" y="47" text-anchor="middle" fill="#f2f5ff" font-size="15" font-weight="600">User</text>
+    </g>
+
+    <!-- Session / Event Log -->
+    <g class="dsh-node">
+      <rect x="30" y="120" width="240" height="88" rx="16" fill="url(#dshGlassActive)" stroke="rgba(77,107,254,0.6)" stroke-width="1.5"/>
+      <text x="150" y="152" text-anchor="middle" fill="#e6ecff" font-size="15" font-weight="700">Session · Event Sourcing</text>
+      <text x="150" y="176" text-anchor="middle" fill="#9aa3c7" font-size="11.5">append-only log · replayable</text>
+    </g>
+
+    <!-- Fold / Projection -->
+    <g class="dsh-node dsh-node-2">
+      <rect x="30" y="250" width="240" height="88" rx="16" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+      <text x="150" y="282" text-anchor="middle" fill="#e6ecff" font-size="15" font-weight="700">Fold / Projection</text>
+      <text x="150" y="306" text-anchor="middle" fill="#9aa3c7" font-size="11.5">state = f(events) · O(N)</text>
+    </g>
+
+    <!-- Prompt Assembly -->
+    <g class="dsh-node dsh-node-3">
+      <rect x="30" y="360" width="240" height="60" rx="16" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+      <text x="150" y="395" text-anchor="middle" fill="#e6ecff" font-size="14" font-weight="600">Prompt Assembly</text>
+    </g>
+
+    <!-- Agent Turn/Step Loop -->
+    <g class="dsh-node dsh-node-2">
+      <rect x="470" y="175" width="200" height="120" rx="18" fill="url(#dshGlassActive)" stroke="rgba(34,211,238,0.55)" stroke-width="1.5"/>
+      <text x="570" y="222" text-anchor="middle" fill="#f2f5ff" font-size="16" font-weight="700">Agent Loop</text>
+      <text x="570" y="246" text-anchor="middle" fill="#9aa3c7" font-size="11.5">Turn / Step 双循环</text>
+      <text x="570" y="266" text-anchor="middle" fill="#9aa3c7" font-size="11.5">Goal · 取消 · 重试</text>
+    </g>
+
+    <!-- Tool Waterfall -->
+    <g class="dsh-node">
+      <rect x="620" y="120" width="220" height="88" rx="16" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+      <text x="730" y="152" text-anchor="middle" fill="#e6ecff" font-size="15" font-weight="700">Tool Waterfall</text>
+      <text x="730" y="176" text-anchor="middle" fill="#9aa3c7" font-size="11.5">pre → execute → post → result</text>
+    </g>
+
+    <!-- LLM -->
+    <g class="dsh-node dsh-node-3">
+      <rect x="620" y="300" width="220" height="76" rx="16" fill="url(#dshGlass)" stroke="rgba(244,114,182,0.4)" stroke-width="1.5"/>
+      <text x="730" y="332" text-anchor="middle" fill="#e6ecff" font-size="15" font-weight="700">LLM · DeepSeek</text>
+      <text x="730" y="354" text-anchor="middle" fill="#9aa3c7" font-size="11.5">streaming · retry · cache</text>
+    </g>
+  </svg>
+</div>
