@@ -1,16 +1,17 @@
-# dsh-go 文档站 Hugo 配置（Hextra 主题）
+# Dsh-Go 文档站 Hugo 配置（Hextra 主题）
 # 构建产物发布到 GitHub Pages: https://JopenChen.github.io/dsh-go/
 
 # ============================================================================
 # 站点基础
 # ============================================================================
 baseURL: https://JopenChen.github.io/dsh-go/
-title: "dsh-go"
+title: "Dsh-Go"
 theme: hextra
 defaultContentLanguage: en
 defaultContentLanguageInSubdir: false
 enableRobotsTXT: true
 enableGitInfo: true
+canonifyURLs: true
 
 # ============================================================================
 # 多语言（含每语言顶部导航菜单）
@@ -19,7 +20,7 @@ languages:
   en:
     label: English
     weight: 1
-    title: "dsh-go — In-process Go reference implementation of the DeepSeek Harness Agent"
+    title: "Dsh-Go — In-process Go reference implementation of the DeepSeek Harness Agent"
     params:
       description: "An in-process Go reference implementation of the DeepSeek Harness Agent — learn how an Agent kernel really works."
     menus:
@@ -42,7 +43,7 @@ languages:
   zh-cn:
     label: 简体中文
     weight: 2
-    title: "dsh-go — DeepSeek Harness Agent 的 Go 参考实现"
+    title: "Dsh-Go — DeepSeek Harness Agent 的 Go 参考实现"
     params:
       description: "进程内 Go 参考实现 — 读懂 Agent 内核"
     menus:
@@ -76,9 +77,9 @@ disableKinds:
 # 参数（Hextra 特有）
 # ============================================================================
 params:
-  # 主题外观
+  # 主题外观（默认暗色，DeepSeek Harness 玻璃拟态风格）
   theme:
-    default: system
+    default: dark
     displayToggle: true
 
   # 搜索（Hextra 内置全文搜索）
@@ -90,7 +91,7 @@ params:
   footer:
     displayPoweredBy: false
     displayCopyright: true
-    copyright: "© 2026 dsh-go — DeepSeek Harness Agent 的 Go 参考实现"
+    copyright: "© 2026 Dsh-Go — DeepSeek Harness Agent 的 Go 参考实现"
 
   # 编辑链接（跳到 GitHub 源文件）
   editURL:

@@ -6,7 +6,7 @@ weight: 2
 
 # Tutorials
 
-教学区是 dsh-go 的核心价值所在。我们按"从零理解 Agent 内核"设计了三步渐进路径，每一步都有可运行的代码示例（`examples/tutorial`）与源码对照。
+教学区是 Dsh-Go 的核心价值所在。我们按"从零理解 Agent 内核"设计了三步渐进路径，每一步都有可运行的代码示例（`examples/tutorial`）与源码对照。
 
 ## 三步路径
 

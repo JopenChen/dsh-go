@@ -24,7 +24,7 @@ weight: 20
    └─ fold → 投影C（会话标题）
 ```
 
-## 在 dsh-go 中
+## 在 Dsh-Go 中
 
 ```go
 proj := session.FoldAll(sl.Events())
@@ -50,4 +50,4 @@ for _, m := range proj.Messages {
 
 ## 下一步
 
-→ [学习 Goal 状态机](goal-state-machine/)：Agent 如何规划并驱动执行
+→ [学习 Goal 状态机](../goal-state-machine/)：Agent 如何规划并驱动执行

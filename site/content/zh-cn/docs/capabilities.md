@@ -6,7 +6,7 @@ weight: 30
 
 # 能力包总览
 
-dsh-go 的每个能力包都遵循 **Capability Seam** 模式：`服务定义 + Provider`，替换 Provider 即改变整体行为。以下按功能域分组。
+Dsh-Go 的每个能力包都遵循 **Capability Seam** 模式：`服务定义 + Provider`，替换 Provider 即改变整体行为。以下按功能域分组。
 
 ## 核心运行时
 

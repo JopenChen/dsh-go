@@ -23,7 +23,7 @@ weight: 30
 
 与官方 `error.ts` 对齐的 9 个稳定 `GOAL_*` 错误码（如 `GOAL_INVALID_MAX_ROUNDS`、`GOAL_STALE_REVISION`、`GOAL_NOT_FOUND`）。错误按稳定串路由，绝不解析 message 文本。
 
-## 在 dsh-go 中
+## 在 Dsh-Go 中
 
 ```go
 ts := goal.NewGoalToolset(sl) // 绑定到会话日志

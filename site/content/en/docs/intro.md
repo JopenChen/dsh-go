@@ -1,6 +1,6 @@
 ---
 title: "项目介绍"
-description: "dsh-go 是什么、为什么存在、它不是什么"
+description: "Dsh-Go 是什么、为什么存在、它不是什么"
 weight: 10
 ---
 
@@ -8,7 +8,7 @@ weight: 10
 
 ## 它是什么
 
-**dsh-go** 是一份纯 Go、进程内的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**。
+**Dsh-Go** 是一份纯 Go、进程内的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**。
 
 它把官方 DSH 的 Turn/Step 双循环、事件溯源、Goal 规划、工具治理等核心能力接缝，**逐词对译为 Go 代码**——不是又一个 ReAct 骨架，而是对官方语义体系的一套可阅读、可调试、可复刻的翻译。
 
@@ -21,7 +21,7 @@ weight: 10
 ## 它不是什么
 
 {{< callout emoji="⚠️" >}}
-dsh-go **不是**生产级框架，**不是** LangChain / Eino / 官方 DSH 的替代品。生态、背书、多模型适配均非本项目目标。当参考实现与学习素材，它很称职；别指望它替代成熟框架。
+Dsh-Go **不是**生产级框架，**不是** LangChain / Eino / 官方 DSH 的替代品。生态、背书、多模型适配均非本项目目标。当参考实现与学习素材，它很称职；别指望它替代成熟框架。
 {{< /callout >}}
 
 ## 三条核心主线
@@ -34,6 +34,6 @@ dsh-go **不是**生产级框架，**不是** LangChain / Eino / 官方 DSH 的�
 
 ## 下一步
 
-- 阅读[架构](architecture/)了解设计
+- 阅读[架构](../architecture/)了解设计
 - 从[教程](/en/tutorials/)开始动手
 - 查看[FAQ](/en/faq/)解决疑问

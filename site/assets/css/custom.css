@@ -1,88 +1,517 @@
 /* ============================================================================
- * dsh-go 文档站自定义样式（Hextra 自动加载）
+ * Dsh-Go 文档站自定义主题
+ * ----------------------------------------------------------------------------
+ * 风格参考：https://www.deepseek.com/harness/
+ *   - 3D 玻璃拟态（Glassmorphism）：半透明表面 + backdrop blur + 内高光
+ *   - 暗色 + 明媚：深蓝黑底 + 品牌蓝 #4D6BFE / 青 #22d3ee 高亮
+ *   - 网格背景 + 辉光光斑 + 旋转渐变描边 + hover 抬升交互动画
  *
- * 设计目标：
- *   - 首页 hero 标题：品牌蓝→青渐变（覆盖 Hextra 默认灰渐变）
- *   - 表格更清晰（表头底色、分隔线、hover 高亮）
- *   - 按钮 hover 微交互
- *   - 内容节奏优化
- * 注意：Hextra 用 Tailwind class（hx-*），custom.css 覆盖这些 class 即可。
+ * 说明：
+ *   - 该文件在 head-css.html 中以常规 <link> 注入，优先级高于主题样式；
+ *   - 为保持「暗色 + 明媚」的统一观感，多数规则不区分 light/dark，
+ *     即使切换主题也保持玻璃暗色视觉。
  * ========================================================================== */
 
 /* ---------------------------------------------------------------------------
- * 1. Hero 主标题：品牌蓝→青渐变（覆盖 hx-from-gray-900 to-gray-600）
+ * 0. 字体与设计令牌（对齐 DeepSeek Harness）
  * ------------------------------------------------------------------------- */
-/* 命中 Hextra 渲染的 hero h1 class 组合 */
+@import url("https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  /* 品牌色：DeepSeek Harness 主蓝 #4D6BFE（--ds-rgb-primary: 77,107,254） */
+  --dsh-brand: #4d6bfe;
+  --dsh-brand-rgb: 77, 107, 254;
+  --dsh-brand-deep: #3b5bdb;
+  --dsh-cyan: #22d3ee;
+  --dsh-cyan-rgb: 34, 211, 238;
+  --dsh-violet: #a78bfa;
+
+  /* 背景 / 表面 / 描边 / 文字 */
+  --dsh-bg: #0b0e17;            /* 页面底色：深蓝黑 */
+  --dsh-bg-soft: #0f1420;       /* 次级表面 */
+  --dsh-surface: rgba(255, 255, 255, 0.055);      /* 玻璃面 */
+  --dsh-surface-hover: rgba(255, 255, 255, 0.09); /* 玻璃面 hover */
+  --dsh-border: rgba(255, 255, 255, 0.10);        /* 玻璃描边 */
+  --dsh-border-strong: rgba(255, 255, 255, 0.18);
+  --dsh-text: #e8edff;          /* 主文字：蓝白 */
+  --dsh-text-secondary: #9aa3c7;
+  --dsh-text-dim: #6b759e;
+
+  /* 字体栈 */
+  --dsh-font-display: "Host Grotesk", "DM Sans", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --dsh-font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --dsh-font-mono: "Fragment Mono", ui-monospace, "SF Mono", "JetBrains Mono",
+    "Consolas", monospace;
+}
+
+/* ---------------------------------------------------------------------------
+ * 1. 全局基底：暗色 + 网格 + 辉光光斑
+ * ------------------------------------------------------------------------- */
+html {
+  /* 全站统一使用玻璃暗色风格，忽略主题切换产生的浅色背景 */
+  background-color: var(--dsh-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--dsh-font-sans);
+  color: var(--dsh-text);
+  background-color: var(--dsh-bg);
+  background-image:
+    /* 细网格线（参考 .ds-grid-bg：90px 网格 + 径向遮罩） */
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    /* 顶部品牌辉光：蓝 → 青 */
+    radial-gradient(60rem 32rem at 50% -12%, rgba(var(--dsh-brand-rgb), 0.28), transparent 60%),
+    radial-gradient(40rem 24rem at 82% 8%, rgba(var(--dsh-cyan-rgb), 0.12), transparent 60%),
+    radial-gradient(46rem 30rem at 12% 28%, rgba(167, 139, 250, 0.10), transparent 60%);
+  background-size: 90px 90px, 90px 90px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* 亮色主题下也强制暗色视觉 */
+html.light body,
+html:not(.dark) body {
+  background-color: var(--dsh-bg);
+  color: var(--dsh-text);
+}
+
+/* 文字渲染 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--dsh-font-display);
+  color: var(--dsh-text);
+  letter-spacing: -0.01em;
+}
+
+a {
+  transition: color 0.18s ease;
+}
+
+/* 选区高亮（对齐参考站 ::selection） */
+::selection {
+  background-color: var(--dsh-brand);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. 顶部导航栏：玻璃拟态
+ * ------------------------------------------------------------------------- */
+/* 导航条底部模糊层 */
+.nav-container-blur {
+  background: rgba(11, 14, 23, 0.62) !important;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* 导航内链接 hover 高亮 */
+nav a:hover {
+  color: var(--dsh-cyan) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Hero：渐变标题 + 辉光徽章
+ * ------------------------------------------------------------------------- */
+/* 主标题：品牌蓝 → 青渐变（覆盖 Hextra 默认灰渐变） */
 h1.not-prose.hx-text-4xl.hx-bg-clip-text,
-h1.hx-bg-clip-text.hx-bg-gradient-to-r {
-  background-image: linear-gradient(135deg, #2563eb 0%, #0ea5e9 55%, #06b6d4 100%) !important;
-  background-size: 100% 100% !important;
+h1.hx-bg-clip-text.hx-bg-gradient-to-r,
+.hextra-home h1 {
+  background-image: linear-gradient(135deg, #6d8bff 0%, var(--dsh-brand) 45%, var(--dsh-cyan) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--dsh-font-display);
+}
+
+/* 首页 hero-badge：玻璃胶囊 + 呼吸绿点 */
+.hextra-home .hx-rounded-full.hx-bg-gray-100,
+.hextra-home a.not-prose.hx-rounded-full {
+  background: rgba(var(--dsh-brand-rgb), 0.12) !important;
+  border: 1px solid rgba(var(--dsh-brand-rgb), 0.35) !important;
+  color: #cfd8ff !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px rgba(var(--dsh-brand-rgb), 0.18);
+}
+
+/* hero-subtitle */
+.hextra-home .hx-text-xl {
+  color: var(--dsh-text-secondary) !important;
 }
 
 /* ---------------------------------------------------------------------------
- * 2. Hero 按钮：hover 微上浮 + 阴影
+ * 4. 玻璃卡片（hextra-card / hextra-feature-card）
  * ------------------------------------------------------------------------- */
-/* 命中 hero-button 渲染的链接 */
-main a[class*="hx-bg-primary-600"] {
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+.hextra-card,
+.hextra-feature-card {
+  position: relative;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)) !important;
+  border: 1px solid var(--dsh-border) !important;
+  border-radius: 1rem !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
+  will-change: transform;
+  transform: translateZ(0);
 }
-main a[class*="hx-bg-primary-600"]:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+
+/* 卡片头部内高光（3D 玻璃质感） */
+.hextra-card::before,
+.hextra-feature-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* hover：抬升 + 品牌辉光 + 青色描边 */
+.hextra-card:hover,
+.hextra-feature-card:hover {
+  transform: translateY(-5px) translateZ(0);
+  border-color: rgba(var(--dsh-brand-rgb), 0.55) !important;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 24px 56px rgba(0, 0, 0, 0.5),
+    0 0 32px rgba(var(--dsh-brand-rgb), 0.22);
+}
+
+/* 卡片标题 / 副标题配色 */
+.hextra-card-icon {
+  color: var(--dsh-text) !important;
+}
+.hextra-card-icon svg {
+  color: var(--dsh-brand);
+}
+.hextra-card-subtitle,
+.hextra-feature-card p {
+  color: var(--dsh-text-secondary) !important;
+}
+
+/* 特性卡片（feature-card）：首行标题 */
+.hextra-feature-card h3 {
+  color: var(--dsh-text);
+}
+.hextra-feature-card h3 svg {
+  color: var(--dsh-brand);
 }
 
 /* ---------------------------------------------------------------------------
- * 3. 内容标题：底部细分隔线
- * ------------------------------------------------------------------------- */
-main h2,
-article h2 {
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.18);
-}
-
-/* ---------------------------------------------------------------------------
- * 4. 表格：表头底色 + 行分隔 + hover 高亮
- *    注意：Hextra 首页 hero 布局无 <main>，正文在 div 容器内，
- *    因此用直接 table 选择器（整站表格都在内容区）。
+ * 5. 表格：玻璃质感 + hover 行
  * ------------------------------------------------------------------------- */
 table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--dsh-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.3);
 }
-table th {
-  background: rgba(37, 99, 235, 0.08);
+
+table thead th {
+  background: rgba(var(--dsh-brand-rgb), 0.14);
+  color: #dce3ff;
+  font-family: var(--dsh-font-display);
   font-weight: 600;
-  text-align: left;
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid rgba(var(--dsh-brand-rgb), 0.28);
 }
+
 table td,
 table th {
-  padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.12);
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
+
 table tbody tr {
-  transition: background-color 0.12s ease;
+  transition: background-color 0.18s ease;
 }
 table tbody tr:hover {
-  background: rgba(14, 165, 233, 0.07);
+  background: rgba(var(--dsh-brand-rgb), 0.08);
+}
+table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* ---------------------------------------------------------------------------
- * 5. callout 圆角统一
+ * 6. 代码块 / 行内代码：暗色玻璃 + 品牌点缀
  * ------------------------------------------------------------------------- */
-.callout,
-div[class*="hextra-callout"] {
-  border-radius: 10px !important;
+/* 行内代码 */
+code:not(pre code) {
+  background: rgba(var(--dsh-brand-rgb), 0.14) !important;
+  border: 1px solid rgba(var(--dsh-brand-rgb), 0.22);
+  color: #bcd0ff !important;
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  font-family: var(--dsh-font-mono);
+}
+
+/* 代码块 */
+pre {
+  background: #0a0e18 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+pre code {
+  font-family: var(--dsh-font-mono);
 }
 
 /* ---------------------------------------------------------------------------
- * 6. 暗色主题适配
+ * 7. 链接 / 按钮
  * ------------------------------------------------------------------------- */
-html.dark table th {
-  background: rgba(255, 255, 255, 0.08);
+/* 正文链接：品牌蓝 + 下划线滑入动画 */
+.prose a:not(.not-prose),
+main a:not(.not-prose) {
+  color: #7ea2ff !important;
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: color 0.18s ease, background-size 0.28s ease;
 }
-html.dark table tbody tr:hover {
-  background: rgba(14, 165, 233, 0.12);
+.prose a:not(.not-prose):hover,
+main a:not(.not-prose):hover {
+  color: var(--dsh-cyan) !important;
+  background-size: 100% 1px;
+}
+
+/* 主题 / 语言切换等小按钮 hover */
+button:hover,
+.language-switcher:hover,
+.theme-toggle:hover {
+  color: var(--dsh-cyan) !important;
+  background: rgba(var(--dsh-brand-rgb), 0.12) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 8. 侧边栏：玻璃 + 激活项辉光
+ * ------------------------------------------------------------------------- */
+.sidebar-container {
+  background: rgba(13, 17, 28, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 侧边栏激活项 */
+.sidebar-active-item,
+a[class*="sidebar-active"] {
+  background: rgba(var(--dsh-brand-rgb), 0.16) !important;
+  color: #cfe0ff !important;
+  border: 1px solid rgba(var(--dsh-brand-rgb), 0.3);
+  box-shadow: 0 0 16px rgba(var(--dsh-brand-rgb), 0.14);
+}
+
+/* 侧边栏普通项 hover */
+.sidebar-container a:hover {
+  color: var(--dsh-cyan) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. 页脚
+ * ------------------------------------------------------------------------- */
+.hextra-footer {
+  background: rgba(9, 12, 20, 0.6) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.hextra-footer .hx-text-gray-600,
+.hextra-footer .hx-text-xs {
+  color: var(--dsh-text-dim) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 10. 交互动画：进场 / 呼吸 / 旋转描边
+ * ------------------------------------------------------------------------- */
+
+/* 首页 hero 内容淡入上移 */
+.hextra-home .hx-flex.hx-flex-col.hx-items-start > * {
+  animation: dsh-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.hextra-home .hx-flex.hx-flex-col.hx-items-start > *:nth-child(2) { animation-delay: 0.08s; }
+.hextra-home .hx-flex.hx-flex-col.hx-items-start > *:nth-child(3) { animation-delay: 0.16s; }
+
+@keyframes dsh-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 主 CTA 按钮：品牌渐变 + 悬浮扫光 */
+a.not-prose.hx-bg-primary-600 {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--dsh-brand-deep), var(--dsh-brand) 55%, #5a7cff) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 28px rgba(var(--dsh-brand-rgb), 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+a.not-prose.hx-bg-primary-600:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(var(--dsh-brand-rgb), 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+/* 扫光动画 */
+a.not-prose.hx-bg-primary-600::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+}
+a.not-prose.hx-bg-primary-600:hover::after {
+  left: 130%;
+}
+
+/* 特性卡片：呼吸辉光（玻璃拟态中的「明媚」点缀） */
+.hextra-feature-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(28rem 12rem at 50% -20%, rgba(var(--dsh-brand-rgb), 0.16), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.hextra-feature-card:hover::after {
+  opacity: 1;
+}
+
+/* 页面标题轻微渐变（文档页 h1，内容容器为 .content 而非 .prose） */
+.prose h1,
+.content h1,
+main h1 {
+  background-image: linear-gradient(135deg, #9db2ff, #c9e2ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 100px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--dsh-brand-rgb), 0.45);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* 移动端：避免固定背景导致滚动卡顿 */
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 11. 页脚作者微信二维码（参考 DeepSeek Harness 页脚交互）
+ * ------------------------------------------------------------------------- */
+.dsh-footer-wechat {
+  padding: 1rem 0 0;
+}
+
+/* 触发区 */
+.dsh-qr-trigger {
+  position: relative;
+  display: inline-block;
+  cursor: default;
+}
+
+.dsh-wechat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--dsh-text-secondary);
+  transition: color 0.2s ease;
+}
+.dsh-wechat-label svg {
+  color: #2eae58; /* 微信绿 */
+}
+.dsh-qr-trigger:hover .dsh-wechat-label {
+  color: var(--dsh-cyan);
+}
+
+/* hover 弹出浮层（默认隐藏） */
+.dsh-qr-menu {
+  position: absolute;
+  bottom: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+}
+.dsh-qr-trigger:hover .dsh-qr-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 玻璃拟态二维码面板 */
+.dsh-qr-panel {
+  width: 176px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 18px 48px rgba(0, 0, 0, 0.55),
+    0 0 24px rgba(var(--dsh-brand-rgb), 0.16);
+}
+.dsh-qr-panel img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #fff; /* 二维码白底，保证可扫 */
+  padding: 4px;
+  object-fit: contain;
+}
+.dsh-qr-panel span {
+  font-size: 0.72rem;
+  color: var(--dsh-text-secondary);
+  text-align: center;
 }

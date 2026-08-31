@@ -1,20 +1,20 @@
 ---
 title: "FAQ"
-description: "关于 dsh-go 的常见问题"
+description: "关于 Dsh-Go 的常见问题"
 weight: 3
 ---
 
 # FAQ
 
-关于 dsh-go 的高频问题。完整内容见 [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md)。
+关于 Dsh-Go 的高频问题。完整内容见 [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md)。
 
-## Q1. dsh-go 到底是什么？
+## Q1. Dsh-Go 到底是什么？
 
 一份纯 Go、进程内的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**——把官方 DSH 的 Turn/Step 双循环、事件溯源、Goal 规划、工具治理等核心能力接缝，逐词对译为 Go 代码。
 
 ## Q2. 和 Eino / LangChain 是什么关系？
 
-**不同物种**。Eino/LangChain 是"拿来用的框架"（通用 LLM 编排）；dsh-go 是"拿来读的参考实现"（对 DSH 的对译），不打算也没能力替代前者。
+**不同物种**。Eino/LangChain 是"拿来用的框架"（通用 LLM 编排）；Dsh-Go 是"拿来读的参考实现"（对 DSH 的对译），不打算也没能力替代前者。
 
 ## Q3. 相对它们有什么优势？
 
@@ -22,7 +22,7 @@ weight: 3
 
 ## Q4. 成熟框架做不到合规审计吗？
 
-能做到。"能不能审计"不是独有能力；差异在**能力归属与证据强度**：成熟框架审计靠外挂（回调/自行落库），dsh-go 审计是内建（append-only 事件即真相，可回放中间态）。
+能做到。"能不能审计"不是独有能力；差异在**能力归属与证据强度**：成熟框架审计靠外挂（回调/自行落库），Dsh-Go 审计是内建（append-only 事件即真相，可回放中间态）。
 
 ## Q5. 适合什么企业场景？
 
