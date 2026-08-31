@@ -199,6 +199,24 @@ func (s *Store) Count(ctx context.Context, sessionID brand.SessionID) (int, erro
 	return n, err
 }
 
+// ListSessions 返回全部出现过会话 ID（按字典序，确定性；供 Session Query 枚举）。
+func (s *Store) ListSessions(ctx context.Context) ([]string, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT DISTINCT session_id FROM session_events ORDER BY session_id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}
+
 // ============================================================================
 // 搜索
 // ============================================================================
