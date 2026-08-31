@@ -1,0 +1,37 @@
+{
+  "title": "dsh-go 缓存命中率看板 (dsh-cache)",
+  "uid": "dsh-cache-dashboard",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "24h 平均缓存命中率",
+      "datasource": "prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.5, sum(rate(dsh_cache_hit_ratio_count[5m])) by (le))", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "按 preset 拆分命中率",
+      "datasource": "prometheus",
+      "targets": [
+        { "expr": "avg by (preset) (dsh_cache_hit_ratio)", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "破窗事件率",
+      "datasource": "prometheus",
+      "targets": [
+        { "expr": "rate(dsh_cache_broken_count[5m])", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 }
+    }
+  ]
+}

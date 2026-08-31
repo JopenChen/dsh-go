@@ -12,6 +12,7 @@ package llm
 
 import (
 	"fmt"
+	"sync"
 )
 
 // CacheStats 是一次或累计的 prefix cache 用量聚合。
@@ -58,4 +59,127 @@ func CacheLogLine(u Usage) string {
 // RecordCacheUsage 简便地把一次用量记入累计 stats（供 tokenmeter/观测聚合）。
 func (c *CacheStats) RecordUsage(u Usage) {
 	c.Add(u.PromptCacheHitTokens, u.PromptCacheMissTokens)
+}
+
+// ============================================================================
+// N08：缓存破窗告警（CacheAlert）
+// ============================================================================
+
+// AlertLevel 是告警级别。
+type AlertLevel string
+
+// 告警级别。
+const (
+	AlertWarn  AlertLevel = "warn"
+	AlertError AlertLevel = "error"
+)
+
+// Alert 是一次缓存破窗告警。
+type Alert struct {
+	// Level 级别。
+	Level AlertLevel `json:"level"`
+	// Message 告警内容（含 session.id / current / previous）。
+	Message string `json:"message"`
+	// Webhook 是否应触发 webhook 通知（连续破窗时）。
+	Webhook bool `json:"webhook,omitempty"`
+}
+
+// AlertSink 是告警输出回调（日志/webhook）。
+type AlertSink func(a Alert)
+
+// CacheAlert 检测缓存命中率破窗并分级告警。
+//
+//   - 单次命中率突降 > DropWarn 相比上一次 → warn（记录 session/current/previous）；
+//   - 连续 consecutiveFails 次命中率 < Threshold → error + 可选 webhook；
+//   - 命中率恢复（≥ Threshold）→ consecutiveFails 重置为 0。
+type CacheAlert struct {
+	// Threshold 低命中率阈值（默认 0.5）。
+	Threshold float64
+	// DropWarn 单次相对骤降阈值（默认 0.3）。
+	DropWarn float64
+	// ConsecutiveFails 连续低于阈值触发 error 的次数（默认 5）。
+	ConsecutiveFails int
+	// Sink 告警输出。
+	Sink AlertSink
+
+	mu               sync.Mutex
+	prevRatio        float64
+	consecutiveFails int
+	hasPrev          bool
+	alerts           []Alert
+}
+
+// NewCacheAlert 创建默认配置的破窗告警。
+func NewCacheAlert(sink AlertSink) *CacheAlert {
+	return &CacheAlert{
+		Threshold:        0.5,
+		DropWarn:         0.3,
+		ConsecutiveFails: 5,
+		Sink:             sink,
+	}
+}
+
+// Observe 记录一次命中率并判定是否告警。
+// sessionID 用于告警上下文。
+func (a *CacheAlert) Observe(sessionID string, ratio float64) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	// 单次骤降告警（相对上一次）。
+	if a.hasPrev && a.prevRatio-ratio > a.DropWarn {
+		alert := Alert{Level: AlertWarn,
+			Message: "cache hit ratio dropped: session=" + sessionID +
+				" current=" + ft(ratio) + " previous=" + ft(a.prevRatio)}
+		a.emit(alert, false)
+	}
+
+	// 连续低命中率告警。
+	if ratio < a.Threshold {
+		a.consecutiveFails++
+		if a.consecutiveFails >= a.ConsecutiveFails {
+			alert := Alert{Level: AlertError,
+				Message: "cache hit ratio persistently low: session=" + sessionID +
+					" consecutive=" + itoa2(a.consecutiveFails) + " ratio=" + ft(ratio)}
+			a.emit(alert, true)
+			a.consecutiveFails = 0 // 每次 error 重置（或按需保持）
+		}
+	} else {
+		a.consecutiveFails = 0
+	}
+
+	a.prevRatio = ratio
+	a.hasPrev = true
+}
+
+func (a *CacheAlert) emit(al Alert, webhook bool) {
+	al.Webhook = webhook
+	a.alerts = append(a.alerts, al)
+	if a.Sink != nil {
+		a.Sink(al)
+	}
+}
+
+// Alerts 返回累计告警快照。
+func (a *CacheAlert) Alerts() []Alert {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return append([]Alert(nil), a.alerts...)
+}
+
+func ft(f float64) string {
+	return fmt.Sprintf("%.3f", f)
+}
+
+func itoa2(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	var b [20]byte
+	i := len(b)
+	for n > 0 {
+		i--
+		b[i] = byte('0' + n%10)
+		n /= 10
+	}
+	return string(b[i:])
 }
