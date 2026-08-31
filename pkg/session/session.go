@@ -329,13 +329,24 @@ func (PlanApprovalData) EventType() EventType { return EventPlanApproval }
 // GoalPhase 目标阶段。
 type GoalPhase string
 
+// GoalBlockReason 是阻塞目标的稳定原因（R06：对齐官方 GoalBlockReason{code,message}）。
+// 由 goal 域设置并与 goal/change 事件一并持久化。
+type GoalBlockReason struct {
+	// Code 稳定的 lower-kebab-case 分类。
+	Code string `json:"code"`
+	// Message 非空的面向人/模型的说明。
+	Message string `json:"message"`
+}
+
 // GoalChangeData goal/change：目标变更（CAS revision）。
 type GoalChangeData struct {
-	GoalID      string     `json:"goalId"`
-	Phase       GoalPhase  `json:"phase"`
-	Description string     `json:"description,omitempty"`
-	MaxRounds   int        `json:"maxRounds,omitempty"`
-	Revision    uint64     `json:"revision"`
+	GoalID      string           `json:"goalId"`
+	Phase       GoalPhase        `json:"phase"`
+	Description string           `json:"description,omitempty"`
+	MaxRounds   int              `json:"maxRounds,omitempty"`
+	Revision    uint64           `json:"revision"`
+	// BlockReason 仅 phase=blocked 时存在；随事件持久化（R06）。
+	BlockReason *GoalBlockReason `json:"blockedReason,omitempty"`
 }
 
 func (GoalChangeData) EventType() EventType { return EventGoalChange }

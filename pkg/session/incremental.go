@@ -112,12 +112,25 @@ func (g GoalFold) Equal(o ProjectionState) bool {
 	if !ok {
 		return false
 	}
-	return g.Present == other.Present &&
-		g.GoalID == other.GoalID &&
-		g.Phase == other.Phase &&
-		g.Description == other.Description &&
-		g.MaxRounds == other.MaxRounds &&
-		g.Revision == other.Revision
+	if g.Present != other.Present ||
+		g.GoalID != other.GoalID ||
+		g.Phase != other.Phase ||
+		g.Description != other.Description ||
+		g.MaxRounds != other.MaxRounds ||
+		g.Revision != other.Revision {
+		return false
+	}
+	// BlockReason 指针比较（R06）。
+	if (g.BlockReason == nil) != (other.BlockReason == nil) {
+		return false
+	}
+	if g.BlockReason != nil {
+		if g.BlockReason.Code != other.BlockReason.Code ||
+			g.BlockReason.Message != other.BlockReason.Message {
+			return false
+		}
+	}
+	return true
 }
 
 // Equal 对 TodoFold。
@@ -235,6 +248,7 @@ func ApplyGoalChange(s GoalFold, ev SessionEvent) GoalFold {
 				Description: d.Description,
 				MaxRounds:   d.MaxRounds,
 				Revision:    d.Revision,
+				BlockReason: d.BlockReason,
 			}
 		}
 	}

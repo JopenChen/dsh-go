@@ -59,13 +59,26 @@ func FromLog(sl *session.SessionLog) (Goal, bool) {
 	if !fold.Present {
 		return Goal{}, false
 	}
-	return Goal{
+	g := Goal{
 		ID:          fold.GoalID,
 		Phase:       phaseFrom(fold.Phase),
 		Description: fold.Description,
 		MaxRounds:   fold.MaxRounds,
 		Revision:    fold.Revision,
-	}, true
+	}
+	// 阻塞原因从持久化事件映射回（R06）。
+	if fold.BlockReason != nil {
+		g.BlockReason = &GoalBlockReason{Code: fold.BlockReason.Code, Message: fold.BlockReason.Message}
+	}
+	return g, true
+}
+
+// toSessionBlockReason 把 goal 域 BlockReason 转成 session 持久化结构。
+func toSessionBlockReason(r *GoalBlockReason) *session.GoalBlockReason {
+	if r == nil {
+		return nil
+	}
+	return &session.GoalBlockReason{Code: r.Code, Message: r.Message}
 }
 
 // phaseFrom 转换 fold 阶段。
@@ -81,6 +94,7 @@ func writeGoal(sl *session.SessionLog, g Goal) error {
 		Description: g.Description,
 		MaxRounds:   g.MaxRounds,
 		Revision:    g.Revision,
+		BlockReason: toSessionBlockReason(g.BlockReason),
 	})
 	return err
 }

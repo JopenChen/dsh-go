@@ -108,11 +108,11 @@ func TestR06ToolValidationCodes(t *testing.T) {
 func TestR06ReportBlockerWritesBlockReason(t *testing.T) {
 	sl := newGoalLog(t)
 	fn := pickTool(t, sl, "goal_report_blocker")
-	out, err := fn.Execute(context.Background(), map[string]any{"blocker": "missing api key"})
+	_, err := fn.Execute(context.Background(), map[string]any{"blocker": "missing api key"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	// 持久化的 goal 阶段=blocked（session 事件已写入 phase）。
+	// 持久化的 goal 阶段=blocked，且 BlockReason 随事件持久化可读回（R06）。
 	g, ok := goal.FromLog(sl)
 	if !ok {
 		t.Fatal("after report_blocker, goal should still exist")
@@ -120,14 +120,8 @@ func TestR06ReportBlockerWritesBlockReason(t *testing.T) {
 	if g.Phase != goal.PhaseBlocked {
 		t.Fatalf("持久化 phase = %q, want blocked", g.Phase)
 	}
-	// BlockReason 在工具返回值中携带（内存态；session 事件暂不持久化该字段）。
-	br, has := out.(map[string]any)["blockReason"]
-	if !has {
-		t.Fatalf("工具返回值应携带 blockReason, got %+v", out)
-	}
-	rb, okBr := br.(*goal.GoalBlockReason)
-	if !okBr || rb.Message != "missing api key" || rb.Code == "" {
-		t.Fatalf("blockReason 异常: %#v", br)
+	if g.BlockReason == nil || g.BlockReason.Message != "missing api key" || g.BlockReason.Code == "" {
+		t.Fatalf("持久化后 BlockReason 应从日志读回, got %+v", g.BlockReason)
 	}
 }
 

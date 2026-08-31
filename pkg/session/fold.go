@@ -227,12 +227,14 @@ func FoldEffectiveApprovalPolicy(events []SessionEvent) EffectiveApprovalPolicy 
 
 // GoalFold 是目标状态投影（CAS revision 用于并发保护）。
 type GoalFold struct {
-	Present     bool      `json:"present"`
-	GoalID      string    `json:"goalId,omitempty"`
-	Phase       GoalPhase `json:"phase,omitempty"`
-	Description string    `json:"description,omitempty"`
-	MaxRounds   int       `json:"maxRounds,omitempty"`
-	Revision    uint64    `json:"revision,omitempty"`
+	Present     bool            `json:"present"`
+	GoalID      string          `json:"goalId,omitempty"`
+	Phase       GoalPhase       `json:"phase,omitempty"`
+	Description string          `json:"description,omitempty"`
+	MaxRounds   int             `json:"maxRounds,omitempty"`
+	Revision    uint64          `json:"revision,omitempty"`
+	// BlockReason 最新阻塞原因（R06：随 goal/change 持久化，latest-wins）。
+	BlockReason *GoalBlockReason `json:"blockedReason,omitempty"`
 }
 
 // foldGoalChange 折叠出最新目标状态（last-write-wins + revision 单调递增）。
@@ -252,6 +254,7 @@ func foldGoalChange(events []SessionEvent) GoalFold {
 					Description: d.Description,
 					MaxRounds:   d.MaxRounds,
 					Revision:    d.Revision,
+					BlockReason: d.BlockReason,
 				}
 			}
 		}
