@@ -11,7 +11,6 @@ package goal
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/JopenChen/dsh-go/pkg/session"
 	"github.com/JopenChen/dsh-go/pkg/tools"
@@ -24,22 +23,34 @@ import (
 // Phase 是目标阶段。
 type Phase string
 
-// 阶段枚举。
+// 阶段枚举（对齐官方 packages/goal/goal/src/types.ts 四态）。
 const (
-	PhaseActive    Phase = "active"
-	PhaseInProgress Phase = "in-progress"
-	PhaseBlocked   Phase = "blocked"
-	PhaseComplete  Phase = "complete"
+	PhaseActive   Phase = "active"
+	PhasePaused   Phase = "paused"
+	PhaseBlocked  Phase = "blocked"
+	PhaseComplete Phase = "complete"
 )
+
+// Valid 返回该阶段是否为合法的四态之一（官方 GoalPhase）。
+func (p Phase) Valid() bool {
+	switch p {
+	case PhaseActive, PhasePaused, PhaseBlocked, PhaseComplete:
+		return true
+	default:
+		return false
+	}
+}
 
 // Goal 是目标运行状态。
 type Goal struct {
-	ID          string   `json:"id"`
-	Phase       Phase    `json:"phase"`
-	Description string   `json:"description"`
-	MaxRounds   int      `json:"maxRounds"`
-	Revision    uint64   `json:"revision"`
-	Blockers    []string `json:"blockers,omitempty"`
+	ID          string            `json:"id"`
+	Phase       Phase             `json:"phase"`
+	Description string            `json:"description"`
+	MaxRounds   int               `json:"maxRounds"`
+	Revision    uint64            `json:"revision"`
+	Blockers    []string          `json:"blockers,omitempty"`
+	// BlockReason 仅在 phase=blocked 时存在（官方 GoalSnapshot.blockedReason）。
+	BlockReason *GoalBlockReason  `json:"blockedReason,omitempty"`
 }
 
 // FromLog 从日志派生最新目标状态（CAS：revision 单增取最新）。
@@ -98,11 +109,12 @@ func NewRoundDriver() *RoundDriver {
 // 返回是否需要续轮。
 func (d *RoundDriver) OnTurnStopping(sl *session.SessionLog, round int) bool {
 	g, ok := FromLog(sl)
-	if !ok || g.Phase == PhaseComplete {
-		// 无目标或已完成：停止续轮
+	// 仅 active 目标自动续轮（官方 goal-round-driver 语义：
+	// paused / blocked / complete 都不继续）。
+	if !ok || g.Phase != PhaseActive {
 		return false
 	}
-	// 目标 active 且轮次未超上限：继续
+	// 轮次未超上限：继续
 	if round < g.MaxRounds {
 		// 写 goal/round 事件
 		_, _ = sl.Append(session.GoalRoundData{Round: round + 1})
@@ -168,7 +180,11 @@ func (g *GoalToolset) goalSetPhase(ctx context.Context, input map[string]any) (a
 	phase, _ := input["phase"].(string)
 	cur, ok := g.current()
 	if !ok {
-		return nil, fmt.Errorf("goal: no active goal")
+		return nil, NewGoalError(ErrorNotFound, "no active goal", nil)
+	}
+	// 校验非法阶段（官方 GOAL_INVALID_TRANSITION）。
+	if !Phase(phase).Valid() {
+		return nil, NewGoalError(ErrorInvalidTransition, "invalid phase: "+phase, nil)
 	}
 	cur.Phase = Phase(phase)
 	cur.Revision++
@@ -183,7 +199,7 @@ func (g *GoalToolset) goalSetDescription(ctx context.Context, input map[string]a
 	desc, _ := input["description"].(string)
 	cur, ok := g.current()
 	if !ok {
-		return nil, fmt.Errorf("goal: no active goal")
+		return nil, NewGoalError(ErrorNotFound, "no active goal", nil)
 	}
 	cur.Description = desc
 	cur.Revision++
@@ -198,7 +214,11 @@ func (g *GoalToolset) goalSetMaxRounds(ctx context.Context, input map[string]any
 	rounds, _ := input["maxRounds"].(float64)
 	cur, ok := g.current()
 	if !ok {
-		return nil, fmt.Errorf("goal: no active goal")
+		return nil, NewGoalError(ErrorNotFound, "no active goal", nil)
+	}
+	// 校验非正数（官方 GOAL_INVALID_MAX_ROUNDS）。
+	if int(rounds) <= 0 {
+		return nil, NewGoalError(ErrorInvalidMaxRounds, "maxRounds must be positive", nil)
 	}
 	cur.MaxRounds = int(rounds)
 	cur.Revision++
@@ -213,7 +233,11 @@ func (g *GoalToolset) goalAddBlocker(ctx context.Context, input map[string]any) 
 	blocker, _ := input["blocker"].(string)
 	cur, ok := g.current()
 	if !ok {
-		return nil, fmt.Errorf("goal: no active goal")
+		return nil, NewGoalError(ErrorNotFound, "no active goal", nil)
+	}
+	// 校验阻塞原因非空（官方 GOAL_INVALID_BLOCK_REASON）。
+	if blocker == "" {
+		return nil, NewGoalError(ErrorInvalidBlockReason, "blocker required", nil)
 	}
 	cur.Blockers = append(cur.Blockers, blocker)
 	cur.Revision++
@@ -232,10 +256,18 @@ func (g *GoalToolset) goalReportBlocker(ctx context.Context, input map[string]an
 	}
 	cur, ok := g.current()
 	if !ok {
-		return nil, fmt.Errorf("goal: no active goal")
+		return nil, NewGoalError(ErrorNotFound, "no active goal", nil)
+	}
+	// 阻塞必须说明原因（GOAL_INVALID_BLOCK_REASON）。
+	if blocker == "" {
+		return nil, NewGoalError(ErrorInvalidBlockReason, "blocker reason required", nil)
 	}
 	cur.Phase = phase
 	cur.Blockers = append(cur.Blockers, blocker)
+	// blocked 时带稳定 BlockReason。
+	if phase == PhaseBlocked {
+		cur.BlockReason = &GoalBlockReason{Code: "user-reported", Message: blocker}
+	}
 	cur.Revision++
 	if err := writeGoal(g.sl, cur); err != nil {
 		return nil, err
@@ -244,5 +276,9 @@ func (g *GoalToolset) goalReportBlocker(ctx context.Context, input map[string]an
 	if conclude := tools.ConcludeFrom(ctx); conclude != nil {
 		conclude("goal-blocker")
 	}
-	return map[string]any{"ok": true, "phase": phase, "blockers": cur.Blockers}, nil
+	out := map[string]any{"ok": true, "phase": phase, "blockers": cur.Blockers}
+	if cur.BlockReason != nil {
+		out["blockReason"] = cur.BlockReason
+	}
+	return out, nil
 }
