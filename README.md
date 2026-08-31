@@ -2316,7 +2316,7 @@ sort.Slice(allSkills, func(i,j int) bool { return allSkills[i].Name < allSkills[
 
 | 任务簇 | 完成情况 | 完成率 | 说明 |
 |---|---|---|---|
-| M Cluster（MUST，核心规划能力） | M01~M46 已全部完成 | **100%** | Turn/Step 双循环、Plan Mode 审批退出、Goal CAS 续轮、Todo 整体替换、Session Reference 解析、PreToolDecision 等 |
+| M Cluster（MUST，核心规划能力） | M01~M48 已全部完成 | **100%** | Turn/Step 双循环、Plan Mode 审批退出、Goal CAS 续轮、Todo 整体替换、Session Reference 解析、PreToolDecision 等 |
 | N Cluster（缓存命中率对齐） | N01~N09 已全部完成 | **100%** | 前缀探针、Append-only Session、SysPrompt 纯度、Skills Catalog 稳定、Prompt Context 变更检测、反模式 Lint、E2E 命中率、CacheAlert 骤降告警、Grafana + OTel 看板 |
 | S Cluster（SHOULD，扩展能力） | S01~S16 已全部完成 | **100%** | Compaction BasicEngine、Subagent(3后端)、SessionQuery FTS5、SQLite FTS5、Session Telemetry Hooks、Authorization OAuth Flow Stub、OTel Bridge、Output Retention、MCP Client→Tool Bridge、Terminal PTY、Workspace Registry、Workflow Engine 等 |
 | **H Cluster（并发加固，HARDENING）** | **H01 ✅ H02 ✅ H03 ✅ H04 ✅ H05 ✅ H06 ✅ H07 ✅ H08 ✅** | **8 / 8 = 100%** | 详见 13.2 |
