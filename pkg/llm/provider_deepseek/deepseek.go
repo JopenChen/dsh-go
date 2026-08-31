@@ -514,10 +514,14 @@ func parseArgs(args string) map[string]any {
 // ============================================================================
 
 // mapHTTPError 将 HTTP 状态码映射为稳定的 LlmFailure 分类。
+// R04：401/403 → invalid-credential（官方 INVALID_CREDENTIAL）；其余对齐 rate-limit/overload。
+// 若能从响应 body 拿到 provider detail，可用 llm.NewProviderFailure(detail) 做更精确分类。
 func (d *DeepSeek) mapHTTPError(status int) *llm.LlmFailure {
 	switch {
 	case status == 429:
 		return &llm.LlmFailure{Kind: llm.FailRateLimit, Message: fmt.Sprintf("http %d rate limited", status)}
+	case status == 401:
+		return &llm.LlmFailure{Kind: llm.FailInvalidCredential, Message: fmt.Sprintf("http %d invalid credential / unauthorized", status)}
 	case status >= 500:
 		return &llm.LlmFailure{Kind: llm.FailOverload, Message: fmt.Sprintf("http %d server overload", status)}
 	case status == 400 || status == 422:

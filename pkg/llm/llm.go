@@ -7,12 +7,15 @@
 //   - Message/ContentBlock 覆盖 text/tool_use/tool_result/image 四类内容块；
 //   - StreamChunk 承载 text / reasoning / tool-call / done 流式分片；
 //   - LlmFailure 对模型侧错误做稳定分类（overload / rate-limit / response-refusal /
-//     context-overflow），供重试（S15）与 request-error 瀑布（M34）消费。
+//     context-overflow / quota / empty-response / invalid-credential），供重试（S15）与
+//     request-error 瀑布（M34）消费；分类器对齐官方 error.ts 的 provider 文本判别语义。
 package llm
 
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 // ============================================================================
@@ -155,6 +158,10 @@ type Usage struct {
 type LlmFailureKind string
 
 // 失败分类枚举。
+//
+// 对应官方 packages/llm/llm/src/error.ts 的稳定 HarnessError.code：
+// CONTEXT_WINDOW_EXCEEDED / QUOTA / EMPTY_RESPONSE / INVALID_CREDENTIAL /
+// RATE_LIMIT / (overload) 等。路由一律按 Kind（稳定串），绝不解析 message 文本。
 const (
 	// FailOverload 服务过载（建议重试）。
 	FailOverload LlmFailureKind = "overload"
@@ -164,7 +171,27 @@ const (
 	FailResponseRefusal LlmFailureKind = "response-refusal"
 	// FailContextOverflow 上下文超长（需压缩）。
 	FailContextOverflow LlmFailureKind = "context-overflow"
+	// FailQuota 账户配额/余额耗尽（官方 code QUOTA）。终态，default retry 不重试。
+	FailQuota LlmFailureKind = "quota"
+	// FailEmptyResponse 响应正常结束但无任何内容块（官方 code EMPTY_RESPONSE）。
+	// 退化完成（终态 stop 且 0 输出），不产生助手消息；可安全重试。
+	FailEmptyResponse LlmFailureKind = "empty-response"
+	// FailInvalidCredential 凭证格式非法（官方 code INVALID_CREDENTIAL）。
+	// 区别于"缺失凭证"：修复方式为改贮存值而非补值；不在默认可重试集内。
+	FailInvalidCredential LlmFailureKind = "invalid-credential"
 )
+
+// Retryable 返回该分类是否属于"可重试"（与官方默认 retryable 集对齐）：
+//   - 可重试：overload / rate-limit / context-overflow（压缩后再试）/ empty-response；
+//   - 不可重试：response-refusal / quota / invalid-credential 及未知。
+func (f LlmFailureKind) Retryable() bool {
+	switch f {
+	case FailOverload, FailRateLimit, FailContextOverflow, FailEmptyResponse:
+		return true
+	default:
+		return false
+	}
+}
 
 // LlmFailure 是携带稳定分类的模型调用失败。
 type LlmFailure struct {
@@ -195,6 +222,82 @@ func ClassifyLlmError(err error) *LlmFailure {
 	}
 	// 兜底：归为 unknown 并保留原始消息
 	return &LlmFailure{Kind: "unknown", Message: err.Error()}
+}
+
+// ============================================================================
+// Provider 错误文本/明细分类器（对齐官方 packages/llm/llm/src/error.ts）
+// ============================================================================
+
+// providerDetail 匹配辅助：把 provider 的 error code/type/message/body 拼成的单串，
+// 归一到小写后交给正则判别。官方 isContextWindowExceededError / isQuotaExceededError
+// 即对 detail 做此类文本判别；Go 侧同样"分类靠判别器、路由靠稳定 Kind"。
+var (
+	// 上下文界限超限（对应官方 CONTEXT_WINDOW_EXCEEDED）。
+	// 忠实复刻官方 error.ts：STRUCTURED_CONTEXT_OVERFLOW / maximum context (length|window) /
+	// TOO_LARGE_FOR_CONTEXT / "too (long|large) for (this|the) model" 等模式族。
+	reContextWindow = regexp.MustCompile(
+		`(?:^|[^a-z0-9])context[\s_-](?:length|window)[\s_-](?:exceed(?:ed|s)?|overflow(?:ed)?|limit[\s_-]exceeded)(?:$|[^a-z0-9])` +
+			`|(?:maximum|max)[\s_-]*(?:allowed|supported)?[\s_-]*context[\s_-]+(?:length|window)` +
+			`|(?:^|[^a-z0-9])(?:prompt|input|request|messages?)[\s_-](?:too[\s_-](?:long|large)|exceed(?:ed)?)[\s_-]for[\s_-](?:the[\s_-])?(?:model)?(?:[^a-z0-9]|$)` +
+			`|(?:^|[^a-z0-9])(?:input|prompt|request)[\s_-]+(?:is[\s_-]+)?too[\s_-](?:long|large)[\s_-]+for[\s_-]+(?:this|the)[\s_-]+model(?:[^a-z0-9]|$)`,
+	)
+	// 配额/余额/额度耗尽（对应官方 QUOTA）。
+	reQuota = regexp.MustCompile(
+		`insufficient[\s_-]+(?:quota|balance|credits?)` +
+			`|(?:quota|usage[\s_-]+limit)[\s_-]+(?:exceeded|exhausted|reached)` +
+			`|(?:out[\s_-]+of|not[\s_-]+enough)[\s_-]+(?:credits?|budget|quota|balance)` +
+			`|don.t[\s_-]+have[\s_-]+enough[\s_-]*(?:api[\s_-]+)?credits?` +
+			`|(?:balance|credits?)[\s_-]+(?:exhausted|depleted)`,
+	)
+	// 凭证非法/不匹配（对应官方 INVALID_CREDENTIAL）——区别于"缺失"。
+	reInvalidCred = regexp.MustCompile(
+		`(?:invalid|wrong|incorrect|bad|unauthorized|auth)[\s_-]+(?:api[\s_-]?key|credential|token|secret)` +
+			`|(?:api[\s_-]?key|credential)[\s_-]+(?:invalid|revoked|mismatch)` +
+			`|401[\s_-]*(?:invalid|authentication)`,
+	)
+	// 速率受限（对应官方 RATE_LIMIT）。
+	reRateLimit = regexp.MustCompile(`rate[\s_-]*limit|too[\s_-]+many[\s_-]+requests|\b429\b`)
+	// 空响应：正常终态但无任何内容（对应官方 EMPTY_RESPONSE）。
+	reEmptyResponse = regexp.MustCompile(`empty[\s_-]+response|no[\s_-]+content|empty[\s_-]+completion|zero[\s_-]+output`)
+	// 模型拒绝（对应响应拒绝）。
+	reRefusal = regexp.MustCompile(`(?:refus|declin)[e\w]*|cannot[\s_-]+(?:answer|comply)|policy[\s_-]+(?:refus|declin)`)
+)
+
+// ClassifyProviderDetail 把 provider 提供的错误细节（code/type/message 拼接串，小写化前判别）
+// 映射到稳定 LlmFailureKind；无法识别返回 ""（调用方可归为 unknown）。
+// 语义忠实复刻官方 error.ts 的 isContextWindowExceededError / isQuotaExceededError 判别族。
+func ClassifyProviderDetail(detail string) LlmFailureKind {
+	d := strings.ToLower(strings.TrimSpace(detail))
+	if d == "" {
+		return ""
+	}
+	switch {
+	case reContextWindow.MatchString(d):
+		return FailContextOverflow
+	case reQuota.MatchString(d):
+		return FailQuota
+	case reInvalidCred.MatchString(d):
+		return FailInvalidCredential
+	case reRateLimit.MatchString(d):
+		return FailRateLimit
+	case reEmptyResponse.MatchString(d):
+		return FailEmptyResponse
+	case reRefusal.MatchString(d):
+		return FailResponseRefusal
+	default:
+		return ""
+	}
+}
+
+// NewProviderFailure 根据 provider detail 构造 *LlmFailure：
+//   - detail 无法识别 → Kind=unknown；
+//   - 识别成功 → 对应稳定分类，Message 保留原始 detail 便于诊断。
+func NewProviderFailure(detail string) *LlmFailure {
+	kind := ClassifyProviderDetail(detail)
+	if kind == "" {
+		kind = "unknown"
+	}
+	return &LlmFailure{Kind: kind, Message: detail}
 }
 
 // ============================================================================
