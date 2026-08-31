@@ -12,6 +12,8 @@
 package skills
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -242,6 +244,69 @@ func (r *SkillRegistry) Hash() string {
 	// 简化：返回有序 name+len 串联（内容变化会影响 len）。
 	return sb.String()
 }
+
+// ============================================================================
+// N04（D3 纪律）：Skills catalog 稳定序列化 + change-only 注入
+// ============================================================================
+
+// CatalogText 生成 <available_skills> 目录稳定文本：按 name 字典序、字段顺序固定，
+// 无随机 / 无时间戳，跨调用逐字节相同。
+func (r *SkillRegistry) CatalogText() string {
+	list := r.List() // 已按 name 字典序
+	if len(list) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	sb.WriteString("<available_skills>\n")
+	for _, s := range list {
+		sb.WriteString("- ")
+		sb.WriteString(s.Name)
+		sb.WriteString(" (rank ")
+		sb.WriteString(fmt.Sprint(s.Rank))
+		sb.WriteString("): ")
+		sb.WriteString(strings.TrimSpace(s.Description))
+		sb.WriteString("\n")
+	}
+	sb.WriteString("</available_skills>")
+	return sb.String()
+}
+
+// CatalogHash 返回 CatalogText 的稳定 sha256 十六进制。
+func (r *SkillRegistry) CatalogHash() string {
+	return catalogHashOf(r.CatalogText())
+}
+
+func catalogHashOf(text string) string {
+	sum := sha256.Sum256([]byte(text))
+	return hex.EncodeToString(sum[:])
+}
+
+// Injector 是 change-only 注入器：仅在 catalog hash 变化时返回注入内容。
+// 50 轮对话中 skills 不变 → 只注入 1 次（首次）；变化才重新注入。
+type Injector struct {
+	registry   *SkillRegistry
+	lastHash   string
+	injects    int
+}
+
+// NewInjector 创建变更注入器。
+func NewInjector(r *SkillRegistry) *Injector {
+	return &Injector{registry: r, lastHash: ""}
+}
+
+// MaybeInject 对比上次 hash：若 catalog 变化（或首次），返回注入文本并计数；否则不注入。
+func (in *Injector) MaybeInject() (content string, injected bool) {
+	hash := in.registry.CatalogHash()
+	if hash == in.lastHash {
+		return "", false
+	}
+	in.lastHash = hash
+	in.injects++
+	return in.registry.CatalogText(), true
+}
+
+// InjectCount 返回累计注入次数。
+func (in *Injector) InjectCount() int { return in.injects }
 
 // ============================================================================
 // 变更观察（skills/change）
