@@ -19,8 +19,8 @@ layout: hextra-home
 </div>
 
 <div class="hx-mb-6">
-{{< hextra/hero-button text="Quick Start" link="en/tutorials" >}}
-{{< hextra/hero-button text="FAQ" link="en/faq" >}}
+{{< hextra/hero-button text="Quick Start" link="/en/tutorials/" >}}
+{{< hextra/hero-button text="FAQ" link="/en/faq/" >}}
 {{< hextra/hero-button text="GitHub" link="https://github.com/JopenChen/dsh-go" >}}
 </div>
 
@@ -30,9 +30,9 @@ layout: hextra-home
 
 | Track | What you learn | Tutorial |
 |---|---|---|
-| **Event Sourcing** | Append-only events, replayable anytime | [Start](en/tutorials/event-sourcing) |
-| **Fold Projection** | State = pure function of events, O(N) | [Start](en/tutorials/fold-projection) |
-| **Goal State Machine** | 4-phase planning + stable error codes | [Start](en/tutorials/goal-state-machine) |
+| **Event Sourcing** | Append-only events, replayable anytime | [Start](/en/tutorials/event-sourcing/) |
+| **Fold Projection** | State = pure function of events, O(N) | [Start](/en/tutorials/fold-projection/) |
+| **Goal State Machine** | 4-phase planning + stable error codes | [Start](/en/tutorials/goal-state-machine/) |
 
 ## 9 zero-dependency examples
 
@@ -41,5 +41,5 @@ All in [`examples/`](https://github.com/JopenChen/dsh-go/tree/master/examples). 
 ## From source
 
 - [GitHub repository](https://github.com/JopenChen/dsh-go)
-- [Documentation](en/docs/)
-- [FAQ](en/faq/)
+- [Documentation](/en/docs/)
+- [FAQ](/en/faq/)
