@@ -1,0 +1,101 @@
+# dsh-go 文档站 Hugo 配置（Hextra 主题）
+# 构建产物发布到 GitHub Pages: https://JopenChen.github.io/dsh-go/
+
+# ============================================================================
+# 站点基础
+# ============================================================================
+baseURL: https://JopenChen.github.io/dsh-go/
+title: "dsh-go"
+theme: hextra
+defaultContentLanguage: en
+defaultContentLanguageInSubdir: false
+enableRobotsTXT: true
+enableGitInfo: true
+
+# ============================================================================
+# 多语言
+# ============================================================================
+languages:
+  en:
+    label: English
+    weight: 1
+    title: "dsh-go — In-process Go reference implementation of the DeepSeek Harness Agent"
+    params:
+      description: "An in-process Go reference implementation of the DeepSeek Harness Agent — learn how an Agent kernel really works."
+  zh-cn:
+    label: 简体中文
+    weight: 2
+    title: "dsh-go — DeepSeek Harness Agent 的 Go 参考实现"
+    params:
+      description: "进程内 Go 参考实现 — 读懂 Agent 内核"
+
+# ============================================================================
+# 内容
+# ============================================================================
+# 目录结构即侧边导航（leaf bundle 组织）
+disableKinds:
+  - taxonomy
+  - term
+  - rss
+
+# ============================================================================
+# 菜单（顶部导航）
+# ============================================================================
+menu:
+  main:
+    - name: "Docs"
+      pageRef: "/docs"
+      weight: 1
+    - name: "Tutorials"
+      pageRef: "/tutorials"
+      weight: 2
+    - name: "FAQ"
+      pageRef: "/faq"
+      weight: 3
+    - name: "Examples"
+      pageRef: "/examples"
+      weight: 4
+    - name: "GitHub"
+      url: "https://github.com/JopenChen/dsh-go"
+      weight: 5
+
+# ============================================================================
+# 参数（Hextra 特有）
+# ============================================================================
+params:
+  # 主题外观
+  theme:
+    default: system
+    displayToggle: true
+
+  # 搜索（Hextra 内置全文搜索）
+  search:
+    enable: true
+    type: flexsearch
+
+  # 页脚
+  footer:
+    displayPoweredBy: false
+    displayCopyright: true
+    copyright: "© 2026 dsh-go — DeepSeek Harness Agent 的 Go 参考实现"
+
+  # 编辑链接（跳到 GitHub 源文件）
+  editURL:
+    enable: true
+    base: "https://github.com/JopenChen/dsh-go/edit/master/site/content"
+
+  # 代码高亮
+  highlight:
+    default: true
+
+# ============================================================================
+# 代码高亮（Go 语法等）
+# ============================================================================
+markup:
+  highlight:
+    noClasses: false
+    lineNos: true
+    lineNumbersInTable: false
+  goldmark:
+    renderer:
+      unsafe: true # 允许内容里写原生 HTML（如示例表格）
