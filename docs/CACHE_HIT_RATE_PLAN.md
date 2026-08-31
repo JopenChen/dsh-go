@@ -1,10 +1,10 @@
-# dsh-go 缓存命中率对齐方案 · 实施计划
+# Dsh-Go 缓存命中率对齐方案 · 实施计划
 
-> **目标**：将 dsh-go 实现的 DeepSeek API prefix cache 命中率对齐到 dsh 官方水平（**97-99%**）。
+> **目标**：将 Dsh-Go 实现的 DeepSeek API prefix cache 命中率对齐到 dsh 官方水平（**97-99%**）。
 >
 > **依据文档**：[README.md 第十二章](../README.md#十二竞品对比--deepseek-缓存命中率对齐方案-)（竞品对比 & 4 项工程纪律 + 4 类反模式 + 验收方法）。
 >
-> **核心原则**：dsh 官方能跑到 97-99% **没有黑魔法**，只是「**没有意外破坏 prefix cache**」；本计划的所有纪律、检测、验收，都是在确保 dsh-go **不引入新的「破缓存」行为**。
+> **核心原则**：dsh 官方能跑到 97-99% **没有黑魔法**，只是「**没有意外破坏 prefix cache**」；本计划的所有纪律、检测、验收，都是在确保 Dsh-Go **不引入新的「破缓存」行为**。
 >
 > **关联任务表**：[tasks.json](./tasks.json) 中标记为 `cache-affinity` 标签的所有任务 + [TASKS.md](./TASKS.md) 同标签任务。
 
@@ -87,7 +87,7 @@
 ## 1. 阶段 0 · 缓存探针埋点基础设施（前置，1 周）
 
 ### 1.1 目标
-让 dsh-go **每一次 LLM 请求都能精确记录** DeepSeek 返回的 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`，作为后续所有阶段验收的「数据基线」。
+让 Dsh-Go **每一次 LLM 请求都能精确记录** DeepSeek 返回的 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`，作为后续所有阶段验收的「数据基线」。
 
 ### 1.2 涉及包
 - `pkg/llm/types.go` — `TokenUsage` 字段增强（M34 子项）
@@ -1238,7 +1238,7 @@ func TestE2E_ToolCount_HitRateStable(t *testing.T) {
 ## 8. 阶段 7 · 监控 + 看板（1 周）
 
 ### 8.1 目标
-提供生产级缓存命中率实时监控 + 破窗告警，确保 dsh-go 上线后持续保持 97%+ 命中率。
+提供生产级缓存命中率实时监控 + 破窗告警，确保 Dsh-Go 上线后持续保持 97%+ 命中率。
 
 ### 8.2 涉及包
 - `internal/telemetry/cache_metrics.go`（S05）

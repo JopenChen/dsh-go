@@ -1,4 +1,4 @@
-# dsh-go 功能实现任务表（一次性复刻到位 · v2.0）
+# Dsh-Go 功能实现任务表（一次性复刻到位 · v2.0）
 
 > 本文件与 [tasks.json](./tasks.json) **同步维护**，两者表达同一套任务：
 >
@@ -294,9 +294,9 @@ git log --oneline cd5ef81481..origin/master -- docs/subsystems packages/\*/src p
 >
 > **依据**：[README.md 第十二章](../README.md#十二竞品对比--deepseek-缓存命中率对齐方案-) · 4 项工程纪律 D1-D4 + 4 类反模式 + 5 项验收方法
 >
-> **目标**：将 dsh-go 实现的 DeepSeek API prefix cache 命中率对齐到 dsh 官方水平（**97-99%**）。
+> **目标**：将 Dsh-Go 实现的 DeepSeek API prefix cache 命中率对齐到 dsh 官方水平（**97-99%**）。
 >
-> **核心原则**：dsh 官方能跑到 97-99% **没有黑魔法**，只是「**没有意外破坏 prefix cache**」；本簇所有任务都是确保 dsh-go **不引入新的「破缓存」行为**。
+> **核心原则**：dsh 官方能跑到 97-99% **没有黑魔法**，只是「**没有意外破坏 prefix cache**」；本簇所有任务都是确保 Dsh-Go **不引入新的「破缓存」行为**。
 
 ### 6.1 任务一览（9 项：7 MUST + 2 SHOULD）
 
@@ -391,7 +391,7 @@ git log --oneline cd5ef81481..origin/master -- docs/subsystems packages/\*/src p
 > 项目根目录**只保留主文档 README.md**，所有其他详细文档（任务表、trace 记录、详细实施计划、ADR 等）统一进入 `docs/` 子目录。
 
 ```
-dsh-go/                                   # 项目根目录（极简）
+Dsh-Go/                                   # 项目根目录（极简）
 ├── README.md             ✅ 根目录（**唯一**主文档入口）
 ├── go.mod / go.sum       ✅ 根目录（Go 依赖）
 ├── pkg/                  ✅ Go 源码包

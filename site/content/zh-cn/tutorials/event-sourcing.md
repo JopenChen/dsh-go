@@ -19,12 +19,12 @@ weight: 10
 | 审计/回放 | 只有当前值，历史靠外部日志 | 完整历史即数据，天然可回放 |
 | 派生状态 | 存一份 | 随时 fold 算一份 |
 
-## 在 dsh-go 中
+## 在 Dsh-Go 中
 
 ```go
 sl := session.NewSessionLog(brand.NewSessionID("demo"))
 sl.Append(session.UserMessageData{Content: "你好"})
-sl.Append(session.AssistantMessageData{Content: "你好，我是 dsh-go。"})
+sl.Append(session.AssistantMessageData{Content: "你好，我是 Dsh-Go。"})
 
 evs := sl.Events() // 读出这条"不可变事实日志"
 ```
@@ -52,4 +52,4 @@ evs := sl.Events() // 读出这条"不可变事实日志"
 
 ## 下一步
 
-→ [学习 fold 投影](fold-projection/)：状态如何从事件"算"出来
+→ [学习 fold 投影](../fold-projection/)：状态如何从事件"算"出来

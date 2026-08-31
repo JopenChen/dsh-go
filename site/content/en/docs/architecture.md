@@ -40,5 +40,5 @@ Session (Event Sourcing) ──► fold / Projection ──► Prompt Assemble �
 
 ## 相关
 
-- [能力包总览](capabilities/)
+- [能力包总览](../capabilities/)
 - [性能数据](https://github.com/JopenChen/dsh-go#-performance)

@@ -1,0 +1,4 @@
+# Dsh-Go 站点 i18n 覆盖（en）
+# 覆盖 Hextra 主题默认的页脚版权文案
+copyright: "© 2026 Dsh-Go — In-process Go reference implementation of the DeepSeek Harness Agent"
+poweredBy: ""

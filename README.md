@@ -1,10 +1,10 @@
-# dsh-go
+# Dsh-Go
 
 <div align="center">
 
 **把 DeepSeek Agent 规划能力嵌入 Go 后端的进程内参考实现 · An in-process Go reference implementation of the DeepSeek Harness Agent**
 
-<img src="assets/dsh-cover.jpg" alt="dsh-go — 面向 DeepSeek Agent 规划的 Go 参考实现" width="100%" />
+<img src="assets/dsh-cover.jpg" alt="Dsh-Go — 面向 DeepSeek Agent 规划的 Go 参考实现" width="100%" />
 
 [![Go 1.25](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![DSH compat](https://img.shields.io/badge/DeepSeek_Harness-cd5ef81-blue)](#compatibility)
@@ -18,7 +18,7 @@
 
 ---
 
-> **dsh-go** 是一份纯 Go、**进程内**的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**——它把官方 DSH 的 Turn/Step 双循环、事件溯源、Goal 规划、工具治理等核心能力接缝，逐词对译为 Go 代码，**让开发者可以阅读、调试、复刻一个真实 Agent 的内部运作**。
+> **Dsh-Go** 是一份纯 Go、**进程内**的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**——它把官方 DSH 的 Turn/Step 双循环、事件溯源、Goal 规划、工具治理等核心能力接缝，逐词对译为 Go 代码，**让开发者可以阅读、调试、复刻一个真实 Agent 的内部运作**。
 >
 > 它定位为**参考实现与学习素材**，而非与 LangChain / Eino / 官方 DSH 竞争的生产级框架：生态、背书与多模型适配均非本文目标，本文目标是"**读懂 Agent 内核**"。
 
@@ -26,7 +26,7 @@
 
 ## 📖 Table of Contents
 
-- [Why dsh-go](#-why-dsh-go)
+- [Why Dsh-Go](#-why-dsh-go)
 - [Features](#-features)
 - [Quick Start](#-quick-start)
 - [Examples](#-examples)
@@ -38,7 +38,7 @@
 - [Contributing](#-contributing)
 - [License](#-license)
 
-## 📌 Why dsh-go
+## 📌 Why Dsh-Go
 
 - **可读的 Agent 内核**：官方仅有 TS 主仓与 Python minimal 版；本文用 Go 给出**逐词对译**的完整能力接缝，模块小而独立，适合**(对照源码)读懂**一个 Agent 的真实运作。
 - **三条学习主线**：事件溯源 → fold 派生投影 → Goal 状态机，配合 [`examples/tutorial`](#-examples) 三步渐进示例，是一条清晰的内核学习路径。
@@ -151,7 +151,7 @@ Session (Event Sourcing) ──► fold / Projection ──► Prompt Assemble �
 
 ## 📚 Documentation
 
-- 🌐 **在线文档站（GitHub Pages）**：https://JopenChen.github.io/dsh-go/ —— 中英双语、全文搜索、教程与示例导航（源码在 [`site/`](./site)）。
+- 🌐 **在线文档站（GitHub Pages）**：https://JopenChen.github.io/dsh-go/ —— 中英双语、全文搜索、教程与示例导航；基于 Hugo + Hextra，采用 **DeepSeek Harness 风格 3D 玻璃拟态暗色主题**（源码在 [`site/`](./site)）。
 - [Docs index](./docs) —— 详细设计、任务表、缓存方案、测试用例矩阵。
 - [`docs/FAQ.md`](./docs/FAQ.md) —— **新手 FAQ**：本项目是什么、与 Eino / LangChain / 官方 DSH 的关系、审计算不算独有、适合什么场景、值不值得用。
 - [`docs/TASKS.md`](./docs/TASKS.md) · [`docs/tasks.json`](./docs/tasks.json) —— 结构化任务表（机器 + 人可读）。

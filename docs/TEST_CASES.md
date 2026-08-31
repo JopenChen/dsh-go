@@ -1,6 +1,6 @@
-# dsh-go 全面测试用例表 (TEST_CASES.md)
+# Dsh-Go 全面测试用例表 (TEST_CASES.md)
 
-> 本文件基于 [tasks.json](./tasks.json) 的 **98 项功能点**逐一分析生成，是 dsh-go 项目的**全量测试用例设计表**。
+> 本文件基于 [tasks.json](./tasks.json) 的 **98 项功能点**逐一分析生成，是 Dsh-Go 项目的**全量测试用例设计表**。
 >
 > - 覆盖范围：M01-M48（MUST）/ S01-S16（SHOULD）/ C01-C17（COULD）/ N01-N09（缓存命中率）/ H01-H08（并发加固），共 98 项。
 > - 用例编号：`TC-<任务ID>-<序号>`，如 `TC-M01-01` 表示 M01 任务的第 1 条用例。

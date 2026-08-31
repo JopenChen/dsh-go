@@ -1,12 +1,12 @@
 ---
 title: "文档"
-description: "了解 dsh-go 的架构、能力与设计哲学"
+description: "了解 Dsh-Go 的架构、能力与设计哲学"
 weight: 1
 ---
 
 # 文档
 
-欢迎阅读 dsh-go 文档。本项目定位为 **DeepSeek Harness Agent 的进程内 Go 参考实现**，目标是让开发者读懂、调试、复刻一个真实 Agent 的内部运作。
+欢迎阅读 Dsh-Go 文档。本项目定位为 **DeepSeek Harness Agent 的进程内 Go 参考实现**，目标是让开发者读懂、调试、复刻一个真实 Agent 的内部运作。
 
 ## 从这里开始
 

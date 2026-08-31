@@ -1,11 +1,11 @@
 # FAQ · 常见问题
 
-> 本文回答关于 **dsh-go** 定位、价值、以及它与主流 Agent 框架关系的高频问题。
+> 本文回答关于 **Dsh-Go** 定位、价值、以及它与主流 Agent 框架关系的高频问题。
 > 定位：参考实现与学习素材（详见 [README](../README.md)）。
 
 ---
 
-## Q1. dsh-go 到底是什么？
+## Q1. Dsh-Go 到底是什么？
 
 一句话：**一份纯 Go、进程内的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent 参考实现**。
 
@@ -19,11 +19,11 @@
 |---|---|---|
 | Eino（字节）/ LangChain·LangGraph | 通用 **LLM 应用编排框架** | 用代码编排任意 LLM 应用（Agent / RAG / Workflow） |
 | 官方 DeepSeek Harness | DeepSeek 官方的 Agent 实现（TS） | DeepSeek 官方 Agent 产品 |
-| **dsh-go（本文）** | 对 DSH 的 **Go 参考实现** | 让开发者**读懂** Agent 内核 |
+| **Dsh-Go（本文）** | 对 DSH 的 **Go 参考实现** | 让开发者**读懂** Agent 内核 |
 
-一句话区分：**Eino/LangChain 是"拿来用的框架"，dsh-go 是"拿来读的参考实现"。** 它不打算、也没能力替代前者。
+一句话区分：**Eino/LangChain 是"拿来用的框架"，Dsh-Go 是"拿来读的参考实现"。** 它不打算、也没能力替代前者。
 
-## Q3. 那 dsh-go 相对 Eino/LangChain 有什么优势？
+## Q3. 那 Dsh-Go 相对 Eino/LangChain 有什么优势？
 
 优势不是"可用性/生态"，而是**三块非对称的硬实力**：
 
@@ -35,11 +35,11 @@
 
 ## Q4. 用成熟的 Agent 框架（Eino/LangChain）做不到合规审计吗？
 
-**能做到。** "能不能审计"不是 dsh-go 的独占能力——成熟框架靠回调/中间件、Checkpoint 持久化、外部落库完全可以做"外审计"。
+**能做到。** "能不能审计"不是 Dsh-Go 的独占能力——成熟框架靠回调/中间件、Checkpoint 持久化、外部落库完全可以做"外审计"。
 
 真正的差异在**能力归属与证据强度**：
 
-| | 成熟框架 | dsh-go |
+| | 成熟框架 | Dsh-Go |
 |---|---|---|
 | 审计是内建还是外挂 | 外挂（回调/中间件/业务自行落库） | 内建（append-only 事件即 source of truth） |
 | 能否重放历史中间态 | 通常只能还原最终态 + 业务自己的日志 | 可回放任一时间点的完整派生状态（fold） |
@@ -47,7 +47,7 @@
 | 韧性 | 依赖业务正确接好钩子并落库 | 内置时序不变量 + 崩溃修复 |
 
 **判断准则**：
-- 只需"外审计"（记录谁做了啥、出问题能查） → 成熟框架足够，没必要为此引入 dsh-go。
+- 只需"外审计"（记录谁做了啥、出问题能查） → 成熟框架足够，没必要为此引入 Dsh-Go。
 - 需要"内审计 + 强回放"（监管级逐帧重放、日志即真相的不可抵赖、金融/医疗全量留痕） → 事件溯源才有**结构性优势**。
 
 ## Q5. 它适合什么企业级业务场景？
@@ -72,7 +72,7 @@
    - 若你要（自用 / 当教材内容持续运营 / 当作品集·研究产出）→ 有持续价值；
    - 若只是要一个能上生产的 Agent 内核 → 请用 Eino/LangChain/官方 DSH。
 
-**结论**：dsh-go 的价值是"验证性 + 参考性"的，不是"外部生产采纳性"的。当学习素材与参考实现，它很称职；别指望它替代成熟框架。
+**结论**：Dsh-Go 的价值是"验证性 + 参考性"的，不是"外部生产采纳性"的。当学习素材与参考实现，它很称职；别指望它替代成熟框架。
 
 ## Q7. 想入门，推荐的学习路径是什么？
 
@@ -82,7 +82,7 @@
 4. 想更深入：`pkg/agent`（Turn/Step 双循环）、`pkg/tools`（四级流水线）、`pkg/llm/provider_deepseek`（SSE + 失败分类）；
 5. 最后看工程加固（`pkg/session/incremental.go` 增量投影、`pkg/persistence/jsonl.go` 分片异步落盘、`pkg/llm/cache.go` 前缀缓存探针）。
 
-## Q8. 我想复刻/二次实现 Agent，dsh-go 对我有什么用？
+## Q8. 我想复刻/二次实现 Agent，Dsh-Go 对我有什么用？
 
 它是一份**现成的对译范本**：官方能力的**每个接缝都拆成了独立小模块**，配合注释与测试，基本等于一份"Agent 内核实现的拆解说明书"。你想用 TS/C++/Rust 重新实现一份 Agent 时，可直接对照它来对齐语义与边界条件。
 
@@ -97,7 +97,7 @@
 | 审计/回放 | 只有当前值，历史靠外部日志 | 完整历史即数据，天然可回放 |
 | 派生状态 | 存一份 | 随时 fold 算一份 |
 
-在 dsh-go 里（见 [教程第 1 步](../examples/tutorial/main.go)）：`sl.Append(UserMessageData{...})` 就是追加事件，`sl.Events()` 读出这条"不可变事实日志"。官方叫 **append-only event log**，且引擎强制**时序不变量**（turn 开闭配对、tool call↔result 匹配等），写坏会立刻被抓。
+在 Dsh-Go 里（见 [教程第 1 步](../examples/tutorial/main.go)）：`sl.Append(UserMessageData{...})` 就是追加事件，`sl.Events()` 读出这条"不可变事实日志"。官方叫 **append-only event log**，且引擎强制**时序不变量**（turn 开闭配对、tool call↔result 匹配等），写坏会立刻被抓。
 
 > 好处：可审计、可回放、可 fork/compact；代价：日志越来越长，需要压缩和投影来读状态。
 
@@ -117,7 +117,7 @@
    └─ fold → 投影C（会话标题）
 ```
 
-在 dsh-go 里：`session.FoldAll(events)` 把整个日志折叠成 `SessionProjection`（内含 `Messages` / `Goal` / `Todo` / `PlanMode` 子投影）；H04 将其做成**增量 fold**，O(N) 增量维护，相对 O(N²) 实测约 **3437×** 加速。
+在 Dsh-Go 里：`session.FoldAll(events)` 把整个日志折叠成 `SessionProjection`（内含 `Messages` / `Goal` / `Todo` / `PlanMode` 子投影）；H04 将其做成**增量 fold**，O(N) 增量维护，相对 O(N²) 实测约 **3437×** 加速。
 
 ## Q11. 除了 DeepSeek，还支持其他大模型吗？怎么用？
 
