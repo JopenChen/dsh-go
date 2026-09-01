@@ -1,6 +1,6 @@
 <!-- ========== 架构图：玻璃节点 + 数据流动画 ========== -->
 <div class="dsh-arch">
-  <svg class="dsh-arch-svg" viewBox="0 0 920 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dsh-Go architecture: event sourcing, fold projection, agent loop, tools, LLM">
+  <svg class="dsh-arch-svg" viewBox="0 0 985 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dsh-Go architecture: event sourcing, fold projection, agent loop, tools, LLM">
     <defs>
       <linearGradient id="dshGlass" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
@@ -24,17 +24,17 @@
       <!-- Session -> Fold -->
       <path id="dshEdge2" d="M150 210 C 150 225, 150 228, 150 240"/>
       <!-- Session -> Prompt -->
-      <path id="dshEdge3" d="M285 160 C 380 150, 420 170, 470 210"/>
+      <path id="dshEdge3" d="M285 160 C 380 150, 420 170, 495 210"/>
       <!-- Fold -> Prompt -->
-      <path id="dshEdge4" d="M285 280 C 380 270, 430 250, 470 235"/>
+      <path id="dshEdge4" d="M285 280 C 380 270, 430 250, 495 235"/>
       <!-- Prompt -> Agent Loop -->
-      <path id="dshEdge5" d="M470 235 L 520 235"/>
+      <path id="dshEdge5" d="M495 235 L 545 235"/>
       <!-- Agent Loop -> Tools -->
-      <path id="dshEdge6" d="M670 235 C 700 235, 720 210, 730 180"/>
+      <path id="dshEdge6" d="M695 235 C 706 235, 715 210, 730 190"/>
       <!-- Tools -> LLM -->
-      <path id="dshEdge7" d="M730 130 C 740 170, 745 250, 735 290"/>
+      <path id="dshEdge7" d="M840 160 C 840 200, 840 260, 838 300"/>
       <!-- LLM -> Agent Loop (返回) -->
-      <path id="dshEdge8" d="M700 330 C 640 370, 570 330, 560 285"/>
+      <path id="dshEdge8" d="M840 330 C 700 380, 640 320, 620 285"/>
     </g>
 
     <!-- 数据流动点 -->
@@ -63,6 +63,13 @@
       <text x="150" y="176" text-anchor="middle" fill="#9aa3c7" font-size="13">append-only log · replayable</text>
     </g>
 
+    <!-- Persistence（事件溯源落地点） -->
+    <g class="dsh-node dsh-node-3">
+      <rect x="285" y="176" width="150" height="52" rx="26" fill="url(#dshGlass)" stroke="rgba(167,139,250,0.5)" stroke-width="1.5"/>
+      <text x="360" y="200" text-anchor="middle" fill="#e6ecff" font-size="14" font-weight="600">Persistence</text>
+      <text x="360" y="218" text-anchor="middle" fill="#9aa3c7" font-size="11">JSONL · SQLite</text>
+    </g>
+
     <!-- Fold / Projection -->
     <g class="dsh-node dsh-node-2">
       <rect x="30" y="250" width="240" height="88" rx="16" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
@@ -78,24 +85,24 @@
 
     <!-- Agent Turn/Step Loop -->
     <g class="dsh-node dsh-node-2">
-      <rect x="470" y="175" width="200" height="120" rx="18" fill="url(#dshGlassActive)" stroke="rgba(34,211,238,0.55)" stroke-width="1.5"/>
-      <text x="570" y="222" text-anchor="middle" fill="#f2f5ff" font-size="18" font-weight="700">Agent Loop</text>
-      <text x="570" y="248" text-anchor="middle" fill="#9aa3c7" font-size="13">Turn / Step 双循环</text>
-      <text x="570" y="268" text-anchor="middle" fill="#9aa3c7" font-size="13">Goal · 取消 · 重试</text>
+      <rect x="495" y="175" width="200" height="120" rx="18" fill="url(#dshGlassActive)" stroke="rgba(34,211,238,0.55)" stroke-width="1.5"/>
+      <text x="595" y="222" text-anchor="middle" fill="#f2f5ff" font-size="18" font-weight="700">Agent Loop</text>
+      <text x="595" y="248" text-anchor="middle" fill="#9aa3c7" font-size="13">Turn / Step 双循环</text>
+      <text x="595" y="268" text-anchor="middle" fill="#9aa3c7" font-size="13">Goal · 取消 · 重试</text>
     </g>
 
     <!-- Tool Waterfall -->
     <g class="dsh-node">
-      <rect x="620" y="120" width="220" height="88" rx="16" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-      <text x="730" y="152" text-anchor="middle" fill="#e6ecff" font-size="17" font-weight="700">Tool Waterfall</text>
-      <text x="730" y="176" text-anchor="middle" fill="#9aa3c7" font-size="13">pre → execute → post → result</text>
+      <rect x="730" y="120" width="220" height="88" rx="16" fill="url(#dshGlass)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+      <text x="840" y="152" text-anchor="middle" fill="#e6ecff" font-size="17" font-weight="700">Tool Waterfall</text>
+      <text x="840" y="176" text-anchor="middle" fill="#9aa3c7" font-size="13">pre → execute → post → result</text>
     </g>
 
     <!-- LLM -->
     <g class="dsh-node dsh-node-3">
-      <rect x="620" y="300" width="220" height="76" rx="16" fill="url(#dshGlass)" stroke="rgba(244,114,182,0.4)" stroke-width="1.5"/>
-      <text x="730" y="332" text-anchor="middle" fill="#e6ecff" font-size="17" font-weight="700">LLM · DeepSeek</text>
-      <text x="730" y="354" text-anchor="middle" fill="#9aa3c7" font-size="13">streaming · retry · cache</text>
+      <rect x="730" y="300" width="220" height="76" rx="16" fill="url(#dshGlass)" stroke="rgba(244,114,182,0.4)" stroke-width="1.5"/>
+      <text x="840" y="332" text-anchor="middle" fill="#e6ecff" font-size="17" font-weight="700">LLM · DeepSeek</text>
+      <text x="840" y="354" text-anchor="middle" fill="#9aa3c7" font-size="13">streaming · retry · cache</text>
     </g>
   </svg>
 </div>

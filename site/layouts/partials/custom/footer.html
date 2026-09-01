@@ -1,9 +1,20 @@
 {{- /* ==========================================================================
-   Dsh-Go 站点自定义页脚：作者微信二维码（直接可见，不依赖 hover）
+   Dsh-Go 站点自定义页脚：作者微信二维码（右下角悬浮，hover 放大）
    --------------------------------------------------------------------------
-   展示微信图标 + 二维码图片 + 引导文案，用户无需 hover 即可扫码。
+   展示微信图标 + 二维码图片 + 引导文案，用户 hover 二维码时放大便于扫码。
+   注意：多语言结构下 zh 子页会被绑定到 en 站点，{{ T }} 会取错语言；
+   这里根据 URL 前缀（/zh-cn/）判断当前语言，手动选择中英文文案。
    样式见 site/assets/css/custom.css 中 .dsh-footer-wechat 系列。
    ========================================================================== */ -}}
+
+{{- /* 根据当前页 URL 前缀判定语言（context 由父模板传入） */ -}}
+{{- $isZh := hasPrefix .context.RelPermalink "/zh-cn/" -}}
+{{- $wechatTitle := "Author WeChat" -}}
+{{- $wechatHint := "Scan to chat about Agent · Go" -}}
+{{- if $isZh -}}
+  {{- $wechatTitle = "作者微信" -}}
+  {{- $wechatHint = "扫码加作者，交流 Agent · Go" -}}
+{{- end -}}
 
 <div class="dsh-footer-wechat">
   <div class="dsh-wechat-card">
@@ -12,10 +23,10 @@
       <svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M6 1.6C2.688 1.6 0 3.752 0 6.4c0 1.512.864 2.848 2.224 3.728L1.6 12l2-1.2c.712.248 1.496.4 2.328.4.214 0 .422-.01.628-.028A5.2 5.2 0 0 1 5.6 9.6c0-2.648 2.504-4.8 5.6-4.8.152 0 .304.008.448.024C10.832 2.952 8.624 1.6 6 1.6Zm-2.4 2a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6Zm4 0a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6ZM11.2 5.6c-2.648 0-4.8 1.792-4.8 4s2.152 4 4.8 4c.536 0 1.048-.064 1.528-.2L14.4 14.4l-.496-1.496C15.16 12.176 16 10.968 16 9.6c0-2.208-2.152-4-4.8-4Zm-1.6 2a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6Zm3.2 0a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6Z" fill="currentColor"/>
       </svg>
-      <span>作者微信</span>
+      <span>{{ $wechatTitle }}</span>
     </div>
-    <!-- 二维码图片：始终可见 -->
-    <img class="dsh-wechat-qr" src="{{ "img/wechat.png" | relURL }}" alt="作者微信二维码" width="104" height="104" loading="lazy" />
-    <span class="dsh-wechat-caption">扫码加作者，交流 Agent · Go</span>
+    <!-- 二维码图片：hover 放大便于扫码 -->
+    <img class="dsh-wechat-qr" src="{{ "img/wechat.png" | relURL }}" alt="{{ $wechatTitle }}" width="96" height="96" loading="lazy" />
+    <span class="dsh-wechat-caption">{{ $wechatHint }}</span>
   </div>
 </div>
