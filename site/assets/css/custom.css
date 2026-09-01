@@ -539,18 +539,21 @@ main li {
 }
 
 .dsh-wechat-qr {
-  width: 96px;
-  height: 96px;
-  border-radius: 8px;
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 10px;
   background: #fff; /* 白底保证可扫 */
-  padding: 3px;
+  padding: 4px;
   object-fit: contain;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease;
 }
-/* hover 放大二维码，便于扫码识别 */
+/* hover 放大二维码：放大并提亮阴影，便于扫码识别 */
 .dsh-wechat-card:hover .dsh-wechat-qr {
-  transform: scale(1.35);
+  transform: scale(1.8);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(46, 174, 88, 0.25);
+  z-index: 5;
 }
 
 .dsh-wechat-caption {

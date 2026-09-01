@@ -1,0 +1,58 @@
+{{- /* ==========================================================================
+   Dsh-Go 站点自定义 head-end 注入
+   --------------------------------------------------------------------------
+   语言偏好全局记忆：用户在导航栏右上角选择的语言会写入 localStorage
+   （key: dsh-lang）。本脚本在每次页面加载时读取该偏好，若当前页面 URL 的
+   语言前缀（/en/ 或 /zh-cn/）与偏好不一致，则自动重定向到偏好的语言版本，
+   从而保证在子页面之间跳转时语言设置保持一致，而不是每页独立按默认语言渲染。
+   ========================================================================== */ -}}
+
+{{- if hugo.IsMultilingual -}}
+{{- $langList := slice }}
+{{- range site.Languages }}{{ $langList = $langList | append .Lang }}{{ end }}
+{{- $defaultLang := site.Language.Lang }}
+<script>
+  (function () {
+    // 站点支持的语言代码（与 hugo.yaml languages 一致）
+    var langs = [{{ range $langList }}"{{ . }}",{{ end }}];
+    var defaultLang = "{{ $defaultLang }}";
+
+    var saved = null;
+    try { saved = localStorage.getItem("dsh-lang"); } catch (e) {}
+    if (langs.indexOf(saved) === -1) return; // 无有效偏好，不打扰
+
+    var path = location.pathname;
+
+    // 定位当前 URL 中的语言段（兼容子路径部署，如 /dsh-go/en/docs/）。
+    // 语言段 pattern 自带斜杠边界（"/en/"），天然匹配独立 URL 段。
+    var cur = null;
+    var segStart = -1;
+    for (var i = 0; i < langs.length; i++) {
+      var lang = langs[i];
+      // 匹配 "…/lang/" 或 结尾 "…/lang"
+      var idx = path.indexOf("/" + lang + "/");
+      var isTail = path === "/" + lang || path.indexOf("/" + lang) === path.length - lang.length - 1;
+      if (idx !== -1) { cur = lang; segStart = idx; break; }
+      if (isTail) { cur = lang; segStart = path.length - lang.length - 1; break; }
+    }
+
+    // 情况 A：路径含语言段
+    if (cur) {
+      if (saved === cur) return;            // 已一致
+      // 保留子路径 base（语言段之前的部分），替换语言段
+      var base = path.slice(0, segStart);
+      var rest = path.slice(segStart + cur.length + 1); // 去掉 "/lang/"
+      var target = base + "/" + saved + "/" + rest;
+      location.replace(location.origin + target + location.search + location.hash);
+      return;
+    }
+
+    // 情况 B：路径无语言段（子路径 base 首页，如 /dsh-go/）
+    // 按默认语言看待：偏好默认语言则无需跳转；偏好其它语言则补语言段
+    if (saved === defaultLang) return;
+    var baseClean = path.replace(/\/+$/, "");      // 去掉尾部斜杠
+    var target = baseClean + "/" + saved + "/";
+    location.replace(location.origin + target + location.search + location.hash);
+  })();
+</script>
+{{- end -}}
