@@ -41,8 +41,9 @@
       if (saved === cur) return;            // 已一致
       // 保留子路径 base（语言段之前的部分），替换语言段
       var base = path.slice(0, segStart);
-      var rest = path.slice(segStart + cur.length + 1); // 去掉 "/lang/"
-      var target = base + "/" + saved + "/" + rest;
+      // rest：语言段后的路径（去掉前导斜杠，避免拼接出 "//"）
+      var rest = path.slice(segStart + cur.length + 1).replace(/^\/+/, "");
+      var target = (base + "/" + saved + "/" + rest).replace(/\/{2,}/g, "/");
       location.replace(location.origin + target + location.search + location.hash);
       return;
     }
