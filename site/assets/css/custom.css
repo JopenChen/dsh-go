@@ -546,6 +546,11 @@ main li {
   padding: 3px;
   object-fit: contain;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* hover 放大二维码，便于扫码识别 */
+.dsh-wechat-card:hover .dsh-wechat-qr {
+  transform: scale(1.35);
 }
 
 .dsh-wechat-caption {
@@ -974,6 +979,13 @@ table {
   table-layout: auto;
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+/* 首页表格：居中显示、填满容器、不留右侧空白 */
+.hextra-home table {
+  width: 100% !important;
+  display: table;
+  margin-left: 0;
+  margin-right: 0;
 }
 table thead th {
   background: rgba(var(--dsh-brand-rgb), 0.18) !important;
