@@ -1,12 +1,12 @@
 ---
-title: "架构"
-description: "事件溯源 + Turn/Step 双循环 + 工具流水线"
+title: "Architecture"
+description: "Event Sourcing + Turn/Step Loop + Tool Waterfall"
 weight: 20
 ---
 
-# 架构
+# Architecture
 
-## 总体流程
+## Overall Flow
 
 ```
 Session (Event Sourcing) ──► fold / Projection ──► Prompt Assemble ──► Agent Turn/Step Loop
@@ -14,31 +14,31 @@ Session (Event Sourcing) ──► fold / Projection ──► Prompt Assemble �
                         Tool Waterfall (pre → execute → post → result) ◄─┘
 ```
 
-## 三大支柱
+## Three Pillars
 
-### 1. 事件溯源（Event Sourcing）
+### 1. Event Sourcing
 
-- 会话状态完全由**追加式事件日志**派生
-- 每次写入都是 append 一条不可变事件，引擎强制时序不变量（turn 开闭配对、tool call↔result 匹配）
-- 任何时刻可回放、可 fork、可压缩、可持久化
+- Session state is fully derived from an **append-only event log**
+- Every write appends one immutable event; the engine enforces ordering invariants (turn open/close pairing, tool call↔result matching)
+- At any moment the log can be replayed, forked, compacted, and persisted
 
-### 2. Turn/Step 双循环（Agent Loop）
+### 2. Turn/Step Loop (Agent Loop)
 
-- **Turn**：一次完整对话回合（用户消息 → Agent 处理 → 结束）
-- **Step**：Turn 内的工具续步（模型请求工具 → 执行 → 把结果喂回模型）
-- 取消 / 超时 / 追踪经 ctx 逐层传播到工具与 LLM
+- **Turn**: one complete conversational round-trip (user message → Agent processing → end)
+- **Step**: a tool continuation within a Turn (the model requests a tool → execute → feed the result back to the model)
+- Cancellation, timeouts, and tracing are propagated layer by layer through `ctx` to both tools and the LLM
 
-### 3. 工具流水线（Tool Waterfall）
+### 3. Tool Waterfall
 
-- 四级链：`pre → execute → post → result`
-- 每级是可插拔中间件：审批、沙箱、token 预算、限制等都可挂载
-- 支持对象池、只读注册表等并发加固
+- A four-stage chain: `pre → execute → post → result`
+- Each stage is a pluggable middleware: approval, sandbox, token budget, and limits can all be mounted
+- Supports concurrency hardening such as object pools and read-only registries
 
-## 能力接缝（Capability Seam）
+## Capability Seam
 
-每项能力都是 **服务定义 + Provider** 结构：替换 Provider 即改变整体行为，与官方设计一致。
+Every capability is a **service definition + provider** structure: replacing the provider changes the overall behavior, consistent with the official design.
 
-## 相关
+## Related
 
-- [能力包总览](../capabilities/)
-- [性能数据](https://github.com/JopenChen/dsh-go#-performance)
+- [Capability Overview](../capabilities/)
+- [Performance data](https://github.com/JopenChen/dsh-go#-performance)

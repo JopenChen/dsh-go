@@ -1,37 +1,37 @@
 ---
-title: "Goal 状态机（Goal State Machine）"
-description: "四态规划 + 稳定错误码 + 续轮驱动"
+title: "Goal State Machine"
+description: "Four-state planning + stable error codes + round continuation"
 weight: 30
 ---
 
-# Goal 状态机（Goal State Machine）
+# Goal State Machine
 
-## 一句话
+## In One Sentence
 
-**Agent 的"规划能力"核心是一个状态机：一个目标（Goal）有生命周期，从一个阶段流转到下一个；Agent 驱动它续轮执行，直到达成或阻塞。**
+**The core of an Agent's "planning capability" is a state machine: a Goal has a lifecycle and transitions from one phase to the next; the Agent drives it with round continuation until it is reached or blocked.**
 
-## 四态（对齐官方）
+## The Four States (Aligned with the Official)
 
-| 状态 | 含义 | 是否自动续轮 |
+| State | Meaning | Auto round continuation |
 |---|---|---|
-| `active` | 进行中 | ✅ 是（RoundDriver 继续） |
-| `paused` | 暂停 | ❌ 否（等待恢复） |
-| `blocked` | 被阻塞（blocker 未解决） | ❌ 否 |
-| `complete` | 已完成 | ❌ 否 |
+| `active` | In progress | ✅ Yes (RoundDriver continues) |
+| `paused` | Paused | ❌ No (waiting to resume) |
+| `blocked` | Blocked (blocker unresolved) | ❌ No |
+| `complete` | Completed | ❌ No |
 
-## 稳定错误码
+## Stable Error Codes
 
-与官方 `error.ts` 对齐的 9 个稳定 `GOAL_*` 错误码（如 `GOAL_INVALID_MAX_ROUNDS`、`GOAL_STALE_REVISION`、`GOAL_NOT_FOUND`）。错误按稳定串路由，绝不解析 message 文本。
+Nine stable `GOAL_*` error codes aligned with the official `error.ts` (e.g. `GOAL_INVALID_MAX_ROUNDS`, `GOAL_STALE_REVISION`, `GOAL_NOT_FOUND`). Errors are routed by stable string, never by parsing message text.
 
-## 在 Dsh-Go 中
+## In Dsh-Go
 
 ```go
-ts := goal.NewGoalToolset(sl) // 绑定到会话日志
-// 6 个工具：goal_list / goal_set_phase / goal_set_description
-//          / goal_set_max_rounds / goal_add_blocker / goal_report_blocker
+ts := goal.NewGoalToolset(sl) // bound to the session log
+// 6 tools: goal_list / goal_set_phase / goal_set_description
+//         / goal_set_max_rounds / goal_add_blocker / goal_report_blocker
 ```
 
-示例中可以看到稳定错误码如何被干净地表达：
+The example shows how a stable error code is expressed cleanly:
 
 ```go
 if _, err := call(ts, "goal_set_max_rounds", map[string]any{"maxRounds": float64(-1)}); err != nil {
@@ -41,13 +41,13 @@ if _, err := call(ts, "goal_set_max_rounds", map[string]any{"maxRounds": float64
 }
 ```
 
-## 对照源码
+## Source Reference
 
-- `pkg/goal/goal.go` —— Goal 状态机与 6 工具
-- `pkg/goal/errors.go` —— 9 个稳定错误码 + GoalError
-- 可运行示例：[`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) 第 3 步
+- `pkg/goal/goal.go` — the Goal state machine and its 6 tools
+- `pkg/goal/errors.go` — 9 stable error codes + GoalError
+- Runnable example: [`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) step 3
 
-## 下一步
+## Next Steps
 
-- 探索[更多教程](../)或[示例](/en/examples/)
-- 查看[FAQ](/en/faq/)
+- Explore [more tutorials](../) or [examples](/en/examples/)
+- Check out the [FAQ](/en/faq/)

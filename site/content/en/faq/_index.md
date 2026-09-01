@@ -1,55 +1,55 @@
 ---
 title: "FAQ"
-description: "关于 Dsh-Go 的常见问题"
+description: "Frequently asked questions about Dsh-Go"
 weight: 3
 ---
 
-关于 Dsh-Go 的高频问题。完整内容见 [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md)。
+Frequently asked questions about Dsh-Go. The full version is available in [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md).
 
-## Q1. Dsh-Go 到底是什么？
+## Q1. What exactly is Dsh-Go?
 
-一份纯 Go、进程内的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**——把官方 DSH 的 Turn/Step 双循环、事件溯源、Goal 规划、工具治理等核心能力接缝，逐词对译为 Go 代码。
+A pure-Go, in-process [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **reference implementation** — it translates the official DSH's Turn/Step dual loop, Event Sourcing, Goal planning, tool governance, and other core capabilities seam by seam into Go code.
 
-## Q2. 和 Eino / LangChain 是什么关系？
+## Q2. How does it relate to Eino / LangChain?
 
-**不同物种**。Eino/LangChain 是"拿来用的框架"（通用 LLM 编排）；Dsh-Go 是"拿来读的参考实现"（对 DSH 的对译），不打算也没能力替代前者。
+**Different species.** Eino/LangChain is a "framework to use" (general LLM orchestration); Dsh-Go is a "reference implementation to read" (a transcription of DSH). It neither intends to nor is capable of replacing the former.
 
-## Q3. 相对它们有什么优势？
+## Q3. What advantages does it have over them?
 
-三块非对称硬实力：**① 与官方语义逐词对齐**（事件/错误码/Goal 四态）；**② 事件溯源 + fold 投影**（结构性差异，增量 3437×）；**③ 前缀缓存亲和**（DeepSeek 降本）。
+Three asymmetric hard strengths: **① word-for-word alignment with the official semantics** (events/error codes/Goal four states); **② Event Sourcing + fold projection** (a structural difference, 3437× incremental); **③ prefix-cache friendly** (DeepSeek cost reduction).
 
-## Q4. 成熟框架做不到合规审计吗？
+## Q4. Can't mature frameworks do compliance auditing?
 
-能做到。"能不能审计"不是独有能力；差异在**能力归属与证据强度**：成熟框架审计靠外挂（回调/自行落库），Dsh-Go 审计是内建（append-only 事件即真相，可回放中间态）。
+They can. "Being auditable" is not a unique capability; the difference lies in **capability ownership and strength of evidence**: mature frameworks rely on external hooks (callbacks/manual persistence), while Dsh-Go auditing is built-in (append-only events are the source of truth, intermediate states can be replayed).
 
-## Q5. 适合什么企业场景？
+## Q5. What enterprise scenarios is it suitable for?
 
-主战场 = **审计回放 + DeepSeek 降本 + 受控工具执行** 三要素叠加、且锚定 DeepSeek 的规划型 Agent 平台。
+Primary battlefield = **audit replay + DeepSeek cost reduction + controlled tool execution**, compounded, and anchored on planning-based Agent platforms built on DeepSeek.
 
-## Q6. 本项目到底有没有真实价值？
+## Q6. Does this project have real value?
 
-技术价值真实（逐词复刻 + 基准数据），但 ≠ 外部生产采纳价值（生态 0、无背书）。它是**验证性 + 参考性**价值，适合自用/教学/作品集，不适合当生产替代。
+The technical value is real (word-for-word reproduction + benchmark data), but it ≠ external production-adoption value (zero ecosystem, no endorsement). It is **verification + reference** value — suitable for personal use, teaching, or a portfolio, not as a production replacement.
 
-## Q7. 想入门，推荐的学习路径？
+## Q7. Recommended learning path to get started?
 
-先跑 [`examples/tutorial`](/en/tutorials/)，再对照 `pkg/session` / `pkg/goal` 精读，然后深入 `pkg/agent` / `pkg/tools` / `pkg/llm`。
+Start with [`examples/tutorial`](/en/tutorials/), then read through `pkg/session` / `pkg/goal`, and finally dive into `pkg/agent` / `pkg/tools` / `pkg/llm`.
 
-## Q8. 想复刻/二次实现 Agent，有什么用？
+## Q8. Useful for replicating / re-implementing an Agent?
 
-它是一份**现成的对译范本**：每个接缝拆成独立小模块 + 注释 + 测试，等于一份"Agent 内核实现的拆解说明书"。
+It is a **ready-made transcription template**: every seam is split into independent small modules + comments + tests — effectively a "disassembly manual of an Agent core implementation".
 
-## Q9. 什么是事件溯源？
+## Q9. What is Event Sourcing?
 
-见[教程：事件溯源](/en/tutorials/event-sourcing/)。
+See [Tutorial: Event Sourcing](/en/tutorials/event-sourcing/).
 
-## Q10. 什么是 fold 投影？
+## Q10. What is fold projection?
 
-见[教程：fold 投影](/en/tutorials/fold-projection/)。
+See [Tutorial: fold projection](/en/tutorials/fold-projection/).
 
-## Q11. 除了 DeepSeek 支持其他模型吗？
+## Q11. Does it support models other than DeepSeek?
 
-目前仅内置 `provider_deepseek`；但 `LLMAdapter` 接缝可扩展，实现 3 个方法即可接入（OpenAI 兼容 provider 思路见 [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md) Q11）。
+Currently only `provider_deepseek` is built in; however, the `LLMAdapter` seam is extensible — implementing 3 methods is enough to connect a model (an OpenAI-compatible provider approach is described in [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md) Q11).
 
 ---
 
-> 完整版（含对比表、代码、判断准则）见 [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md)。
+> The full version (including comparison tables, code, and criteria) is available in [docs/FAQ.md](https://github.com/JopenChen/dsh-go/blob/master/docs/FAQ.md).
