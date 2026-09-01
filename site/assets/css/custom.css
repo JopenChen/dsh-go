@@ -967,19 +967,45 @@ body::after {
 
 /* ---------------------------------------------------------------------------
  * 18. 表格：彻底统一为玻璃深色（修复白色突兀背景）
+ *     强制 width:100% 填满容器避免右侧空白；提亮文字对比度
  * ------------------------------------------------------------------------- */
 table {
+  width: 100% !important;
+  table-layout: auto;
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 table thead th {
   background: rgba(var(--dsh-brand-rgb), 0.18) !important;
-  color: #e6ecff !important;
+  color: #eef1ff !important;
+  font-weight: 700;
   border-bottom: 1px solid rgba(var(--dsh-brand-rgb), 0.32) !important;
 }
 table td,
 table th {
   border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  color: #d6dcf2 !important;
+  border-color: rgba(255, 255, 255, 0.10) !important; /* 覆盖 Hextra 斑马纹/边框 */
+}
+table tbody td {
+  color: #d6dcf2 !important;
+}
+/* 覆盖 Hextra 偶数行浅灰斑马纹（even:bg-gray-100），强制深色玻璃 */
+table tr,
+table tbody tr,
+table tr:nth-child(even),
+table tbody tr:nth-child(even) {
+  background: transparent !important;
+}
+table td strong,
+table th strong {
+  color: #ffffff !important;
+}
+/* 表格内链接提亮 */
+table td a,
+table th a {
+  color: #8fb0ff !important;
+  font-weight: 500;
 }
 /* 兼容 Hextra 可能给表格加的暗色透明类 */
 table[class*="bg-white"],
