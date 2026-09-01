@@ -1,39 +1,39 @@
 ---
-title: "项目介绍"
-description: "Dsh-Go 是什么、为什么存在、它不是什么"
+title: "Introduction"
+description: "What Dsh-Go is, why it exists, and what it is not"
 weight: 10
 ---
 
-# 项目介绍
+# Introduction
 
-## 它是什么
+## What It Is
 
-**Dsh-Go** 是一份纯 Go、进程内的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent **参考实现**。
+**Dsh-Go** is a pure-Go, in-process **reference implementation** of the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Agent.
 
-它把官方 DSH 的 Turn/Step 双循环、事件溯源、Goal 规划、工具治理等核心能力接缝，**逐词对译为 Go 代码**——不是又一个 ReAct 骨架，而是对官方语义体系的一套可阅读、可调试、可复刻的翻译。
+It **word-for-word re-expresses** the official DSH's core capability seams — the Turn/Step Loop, Event Sourcing, Goal planning, and tool governance — as Go code. It is not just another ReAct skeleton, but a readable, debuggable, and reproducible translation of the official semantic system.
 
-## 它为什么存在
+## Why It Exists
 
-- 官方仅有 TS 主仓与 Python minimal 版，缺少可读的 Go 对译
-- 事件溯源、fold 投影、Goal 状态机这些核心概念，需要一份**小而独立、带注释**的实现来理解
-- 可作为二次实现 Agent 时的**语义对照范本**
+- The official project only ships a TypeScript main repository and a Python minimal version; a readable Go counterpart is missing
+- Core concepts such as Event Sourcing, fold Projection, and the Goal State Machine need a **small, self-contained, well-commented** implementation to understand
+- It serves as a **semantic reference** when re-implementing an Agent
 
-## 它不是什么
+## What It Is Not
 
 {{< callout emoji="⚠️" >}}
-Dsh-Go **不是**生产级框架，**不是** LangChain / Eino / 官方 DSH 的替代品。生态、背书、多模型适配均非本项目目标。当参考实现与学习素材，它很称职；别指望它替代成熟框架。
+Dsh-Go is **not** a production-grade framework, and it is **not** a replacement for LangChain / Eino / the official DSH. Ecosystem, endorsement, and multi-model adaptation are all out of scope. As a reference implementation and learning material it is well suited; don't expect it to replace mature frameworks.
 {{< /callout >}}
 
-## 三条核心主线
+## Three Core Threads
 
-| 主线 | 核心机制 | 教学示例 |
+| Thread | Core Mechanism | Teaching Example |
 |---|---|---|
-| 事件溯源 | append-only 事件日志 + 时序不变量 | [tutorial](/en/tutorials/event-sourcing/) |
-| fold 投影 | 状态 = 事件的纯函数，增量 O(N) | [tutorial](/en/tutorials/fold-projection/) |
-| Goal 状态机 | 四态 + 稳定错误码 + 续轮驱动 | [tutorial](/en/tutorials/goal-state-machine/) |
+| Event Sourcing | append-only event log + ordering invariants | [tutorial](/en/tutorials/event-sourcing/) |
+| fold Projection | state = pure function of events, incremental O(N) | [tutorial](/en/tutorials/fold-projection/) |
+| Goal State Machine | four states + stable error codes + continuation-loop driving | [tutorial](/en/tutorials/goal-state-machine/) |
 
-## 下一步
+## Next Steps
 
-- 阅读[架构](../architecture/)了解设计
-- 从[教程](/en/tutorials/)开始动手
-- 查看[FAQ](/en/faq/)解决疑问
+- Read the [architecture](../architecture/) to learn about the design
+- Get hands-on with the [tutorials](/en/tutorials/)
+- Check the [FAQ](/en/faq/) to resolve questions

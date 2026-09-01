@@ -1,30 +1,30 @@
 ---
-title: "fold 投影（fold / Projection）"
-description: "状态 = 事件日志的纯函数"
+title: "fold Projection"
+description: "State = a pure function of the event log"
 weight: 20
 ---
 
-# fold 投影（fold / Projection）
+# fold Projection
 
-## 一句话
+## In One Sentence
 
-**定义"如何从一条事件日志算出一个视图"的纯函数就是 fold；算出来的那个视图就是投影（Projection）。**
+**The pure function that defines "how to compute a view from an event log" is the fold; the view it produces is the Projection.**
 
-## 拆开讲
+## Breaking It Down
 
-- **fold（折叠/规约）**：把一条条事件累积成一个结果。输入 = 全部事件，输出 = 一个派生状态，**纯函数、无副作用**。
-- **投影（Projection）**：fold 得到的视图，如"当前对话消息列表""Goal 状态""会话标题"，每种都是一份投影。
+- **fold (fold/reduce)**: accumulates events one by one into a result. Input = all events, output = a derived state, **a pure function with no side effects**.
+- **Projection**: the view produced by a fold, such as "the current conversation message list", "the Goal state", or "the session title" — each is one projection.
 
-## 核心哲学
+## Core Philosophy
 
 ```
-事件日志（唯一真相 Source of Truth）
-   ├─ fold → 投影A（消息列表）
-   ├─ fold → 投影B（Goal 状态）
-   └─ fold → 投影C（会话标题）
+Event log (the single Source of Truth)
+   ├─ fold → Projection A (message list)
+   ├─ fold → Projection B (Goal state)
+   └─ fold → Projection C (session title)
 ```
 
-## 在 Dsh-Go 中
+## In Dsh-Go
 
 ```go
 proj := session.FoldAll(sl.Events())
@@ -33,21 +33,21 @@ for _, m := range proj.Messages {
 }
 ```
 
-- `FoldAll` 把整个日志折叠成 `SessionProjection`（内含 `Messages` / `Goal` / `Todo` / `PlanMode` 子投影）
-- **增量 fold（H04）**：不是每次读都重算，而是 O(N) 增量维护
+- `FoldAll` folds the entire log into a `SessionProjection` (containing the `Messages` / `Goal` / `Todo` / `PlanMode` sub-projections)
+- **Incremental fold (H04)**: instead of recomputing on every read, it is maintained incrementally in O(N)
 
-## 性能数据
+## Performance Data
 
 {{< callout emoji="⚡" >}}
-增量 fold 相对暴力重算：**16.9s → 4.9ms，≈ 3437×**（10k 事件，每步读）
+Incremental fold vs. brute-force recompute: **16.9s → 4.9ms, ≈ 3437×** (10k events, read per step)
 {{< /callout >}}
 
-## 对照源码
+## Source Reference
 
-- `pkg/session/fold.go` —— 投影函数族
-- `pkg/session/incremental.go` —— 增量投影（H04）
-- 可运行示例：[`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) 第 2 步
+- `pkg/session/fold.go` — the projection function family
+- `pkg/session/incremental.go` — incremental projection (H04)
+- Runnable example: [`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) step 2
 
-## 下一步
+## Next Steps
 
-→ [学习 Goal 状态机](../goal-state-machine/)：Agent 如何规划并驱动执行
+→ [Learn the Goal State Machine](../goal-state-machine/): how an Agent plans and drives execution

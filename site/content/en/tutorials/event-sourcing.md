@@ -1,55 +1,55 @@
 ---
-title: "事件溯源（Event Sourcing）"
-description: "不存状态，只追加不可变事件"
+title: "Event Sourcing"
+description: "Don't store state; append immutable events only"
 weight: 10
 ---
 
-# 事件溯源（Event Sourcing）
+# Event Sourcing
 
-## 一句话
+## In One Sentence
 
-**不直接存"当前状态"，只不断"追加"一条条不可变的事件；任何时候需要状态，就从这些事件里重新算出来。**
+**Instead of directly storing the "current state", repeatedly "append" one immutable event after another; any time you need state, recompute it from those events.**
 
-## 对比传统做法
+## Compared with the Traditional Approach
 
-| | 传统（状态快照） | 事件溯源 |
+| | Traditional (State Snapshot) | Event Sourcing |
 |---|---|---|
-| 存什么 | 存"现在的样子"（如 turn=3），改一次覆盖一次 | 存"发生过什么"（append 一条条事件），永不删除 |
-| 崩溃/写坏 | 覆盖后旧状态找不回 | 事件日志还在，可重放回任意时刻 |
-| 审计/回放 | 只有当前值，历史靠外部日志 | 完整历史即数据，天然可回放 |
-| 派生状态 | 存一份 | 随时 fold 算一份 |
+| What is stored | The "current shape" (e.g. `turn=3`), overwritten on every change | "What happened" (one event appended at a time), never deleted |
+| Crash / corrupted write | The old state is unrecoverable after an overwrite | The event log survives and can be replayed back to any point in time |
+| Audit / replay | Only the current value exists; history relies on external logs | The full history is the data itself, naturally replayable |
+| Derived state | Kept as a single snapshot | Fold one out on demand at any time |
 
-## 在 Dsh-Go 中
+## In Dsh-Go
 
 ```go
 sl := session.NewSessionLog(brand.NewSessionID("demo"))
-sl.Append(session.UserMessageData{Content: "你好"})
-sl.Append(session.AssistantMessageData{Content: "你好，我是 Dsh-Go。"})
+sl.Append(session.UserMessageData{Content: "Hello"})
+sl.Append(session.AssistantMessageData{Content: "Hi, I'm Dsh-Go."})
 
-evs := sl.Events() // 读出这条"不可变事实日志"
+evs := sl.Events() // read out this "immutable fact log"
 ```
 
-关键点：
+Key points:
 
-- **append-only**：只追加，永不修改/删除历史
-- **时序不变量**：turn 开闭配对、tool call↔result 匹配，违规立刻被拒绝
-- **唯一写入口**：`Append()`，引擎保证一致性
+- **append-only**: only append; never modify or delete history
+- **temporal invariants**: paired `turn` open/close, `tool call` ↔ `result` matching — violations are rejected immediately
+- **single write entry point**: `Append()`, with consistency guaranteed by the engine
 
-## 好处与代价
+## Benefits and Costs
 
 {{< callout emoji="✅" >}}
-**好处**：可审计、可回放、可 fork/compact、崩溃可恢复
+**Benefits**: auditable, replayable, forkable/compactable, crash-recoverable
 {{< /callout >}}
 
 {{< callout emoji="⚠️" >}}
-**代价**：日志越来越长，需要压缩（compaction）和投影（projection）来读状态
+**Costs**: the log keeps growing, so you need compaction and projection to read state
 {{< /callout >}}
 
-## 对照源码
+## Source Reference
 
-- `pkg/session/session.go` —— 事件日志与 45+ 事件词汇
-- 可运行示例：[`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) 第 1 步
+- `pkg/session/session.go` — the event log and 45+ event vocabulary
+- Runnable example: [`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) step 1
 
-## 下一步
+## Next Steps
 
-→ [学习 fold 投影](../fold-projection/)：状态如何从事件"算"出来
+→ [Learn fold Projection](../fold-projection/): how state is "derived" from events

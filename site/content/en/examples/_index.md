@@ -1,18 +1,18 @@
 ---
 title: "Examples"
-description: "9 个零依赖教学示例"
+description: "9 zero-dependency teaching examples"
 weight: 4
 ---
 
-仓库内置 **9 个可直接运行的示例**，全部零依赖可跑（除 `chat` 需 API Key）。源码在 [`examples/`](https://github.com/JopenChen/dsh-go/tree/master/examples)。
+The repository ships **9 runnable examples**, all zero dependencies out of the box (except `chat`, which needs an API Key). Source code lives in [`examples/`](https://github.com/JopenChen/dsh-go/tree/master/examples).
 
-## 运行方式
+## Running the examples
 
 ```bash
-# 教学入口（推荐先跑这个）
+# Teaching entry point (start with this)
 go run ./examples/tutorial
 
-# 其余示例
+# The rest of the examples
 go run ./examples/agent_loop
 go run ./examples/usage
 go run ./examples/todo
@@ -20,23 +20,23 @@ go run ./examples/workflow
 go run ./examples/subagent
 go run ./examples/sandbox_approval
 go run ./examples/mcp
-go run ./examples/chat   # 需要 DEEPSEEK_API_KEY
+go run ./examples/chat   # requires DEEPSEEK_API_KEY
 ```
 
-## 示例一览
+## Example overview
 
-| 示例 | 演示内容 | 依赖 |
+| Example | Demonstrated content | Dependency |
 |---|---|---|
-| `tutorial` | 事件溯源 → fold 投影 → Goal 状态机（教学入口） | 无 |
-| `agent_loop` | Agent Turn/Step 双循环 + 工具续步 | 无 |
-| `usage` | 会话/投影/Goal 工具/命令/持久化 | 无 |
-| `todo` | Todo 整体替换待办（规划原语） | 无 |
-| `workflow` | Pipeline 串行 / Parallel 并行 / 取消级联 | 无 |
-| `subagent` | 多后端派生 + 家谱 + 父释放级联 | 无 |
-| `sandbox_approval` | 审批三态 + 沙箱模式 | 无 |
-| `mcp` | MCP 客户端 → 工具桥（内存 Transport） | 无 |
-| `chat` | 真实 DeepSeek 多轮对话 | 需 API Key |
+| `tutorial` | Event Sourcing → fold projection → Goal state machine (teaching entry point) | none |
+| `agent_loop` | Agent Turn/Step dual loop + tool continuation steps | none |
+| `usage` | Session/projection/Goal tools/commands/persistence | none |
+| `todo` | Todo wholesale replacement of the todo list (planning primitive) | none |
+| `workflow` | Pipeline serial / Parallel parallel / cancellation cascading | none |
+| `subagent` | Multi-backend derivation + family tree + parent-release cascading | none |
+| `sandbox_approval` | Approval three states + sandbox mode | none |
+| `mcp` | MCP client → tool bridge (in-memory Transport) | none |
+| `chat` | Real DeepSeek multi-turn conversation | API Key required |
 
-## 对照教程
+## Companion tutorials
 
-每个示例都配有对照源码指引（见[教程](/en/tutorials/)），建议"示例 + 源码 + 教程"三件套搭配阅读。
+Each example ships with source-mapping guidance (see [tutorials](/en/tutorials/)). It is recommended to read the "example + source + tutorial" trio together.
