@@ -130,6 +130,13 @@ git log --oneline cd5ef81481..origin/master -- docs/subsystems packages/\*/src p
 | ID | 级别 | 状态 | 优先级 | 能力名 | 归属包 | 依赖项 | 验收要点 | 关联测试文件 |
 |---|---|---|---|---|---|---|---|---|
 | M26 | MUST | ✅ | 2 | Sandbox 接缝 3 模式 | `pkg/sandbox` | M01 | Bash & FS 消费者 ExecutionPolicy 一致 | `tests/sandbox_mode_apply_test.go` |
+| N01 | MUST | ✅ | 3 | Sandbox/mode 事件持久化 | `pkg/sandbox/session_mode.go` | M26 | log-only 事件 + fold + 最后一条生效 | `tests/sandbox_mode_event_test.go` |
+| N02 | MUST | ✅ | 3 | WritableRoots + CanonicalPath | `pkg/sandbox/roots.go` | M26 | 沙箱与 FS 防护栏共享单一真相源 | `tests/sandbox_writable_roots_test.go` |
+| N03 | MUST | ✅ | 3 | 升级机制 Escalation | `pkg/sandbox/escalation.go` | M26 | 严格更宽阶梯 + 审批集成 + fail-closed | `tests/sandbox_escalation_test.go` |
+| N04 | SHOULD | ✅ | 4 | 不变量校验 Invariant | `pkg/sandbox/invariant.go` | M26 | 开发模式启用 + 生产可关闭 | `tests/sandbox_invariant_test.go` |
+| N05 | MUST | ✅ | 3 | 本地后端 Profile 构建 | `pkg/sandbox/profiles.go` | M26 | bwrap/landlock/seatbelt 三种 profile | `tests/sandbox_profiles_test.go` |
+| N06 | MUST | ✅ | 3 | 多后端探测链 + LocalProvider | `pkg/sandbox/local.go` | N05 | 平台检测 + 功能探测 + 结果缓存 | `tests/sandbox_local_test.go` |
+| N07 | MUST | ✅ | 4 | Windows ACL 后端 | `pkg/sandbox/windows_acl.go` | N06 | 受限令牌 + ACL 授权 + 降级策略 | `tests/sandbox_windows_acl_test.go` |
 | M28 | MUST | ✅ | 3 | Permission Presets 组合旋钮 | `pkg/presets/permission_presets.go` | M26 | 4 预设一一对应 | `tests/permission_presets_combo_test.go` |
 | M27 | MUST | ✅ | 3 | Approval Policy 接缝 | `pkg/approval` | M03,M14,M28 | 三层 override；ask-once 语义 | `tests/approval_override_order_test.go` |
 | M22 | MUST | ✅ | 3 | PreToolDecision 三态(allow/deny/ask) | `pkg/tools` | M02,M27 | ask 用户只放行当次 | `tests/tools_predecision_ask_once_test.go` |
