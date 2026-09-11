@@ -18,13 +18,40 @@ import (
 )
 
 // TodoItem 是单个待办项。
+// TodoStatus 是待办三态生命周期（对齐官方 TodoItem.status）。
+type TodoStatus string
+
+const (
+	StatusPending    TodoStatus = "pending"     // 未开始
+	StatusInProgress TodoStatus = "in_progress" // 正在做
+	StatusCompleted  TodoStatus = "completed"   // 已完成
+)
+
+// Valid 返回状态是否为三态之一。
+func (s TodoStatus) Valid() bool {
+	return s == StatusPending || s == StatusInProgress || s == StatusCompleted
+}
+
 type TodoItem struct {
-	// ID 稳定标识（整体替换时用于跨轮跟踪）。
+	// ID 稳定标识（整体替换时用于跨轮跟踪，官方不设；dsh-go 保留可选）。
 	ID string `json:"id,omitempty"`
 	// Content 待办内容。
 	Content string `json:"content"`
-	// Done 是否已完成。
+	// Status 三态状态。
+	Status TodoStatus `json:"status,omitempty"`
+	// Done 是否已完成（两态兼容字段；Status 为空时据此推导）。
 	Done bool `json:"done,omitempty"`
+}
+
+// ResolvedStatus 返回有效状态：优先 Status，否则由 Done 推导。
+func (it TodoItem) ResolvedStatus() TodoStatus {
+	if it.Status.Valid() {
+		return it.Status
+	}
+	if it.Done {
+		return StatusCompleted
+	}
+	return StatusPending
 }
 
 // TodoWriteTool 是 todo_write 工具定义。
@@ -35,6 +62,8 @@ type TodoItem struct {
 type TodoWriteTool struct {
 	// log 目标会话日志（写入 todo/write 事件）。
 	log *session.SessionLog
+	// AllowParallel 是否允许多个 in_progress（默认 false：顺序工作）。
+	AllowParallel bool
 }
 
 // NewTodoWriteTool 创建 todo_write 工具。
@@ -64,17 +93,31 @@ func (t *TodoWriteTool) Execute(ctx context.Context, input map[string]any) (any,
 		return nil, fmt.Errorf("todo: invalid input: %w", err)
 	}
 
-	// 提取内容列表
-	contents := make([]string, 0, len(in.Items))
-	for _, it := range in.Items {
-		contents = append(contents, it.Content)
+	// 规范化：非空、去重、in_progress 数量约束。
+	items, err := Normalize(in.Items, t.AllowParallel)
+	if err != nil {
+		return nil, err
+	}
+
+	// 构造持久化三态条目（同时回填 Items 兼容字段）。
+	entries := make([]session.TodoEntry, len(items))
+	contents := make([]string, len(items))
+	for i, it := range items {
+		entries[i] = session.TodoEntry{Content: it.Content, Status: string(it.ResolvedStatus())}
+		contents[i] = it.Content
 	}
 
 	// 写入 todo/write 事件（整体替换，last-write-wins）
-	if _, err := t.log.Append(session.TodoWriteData{Items: contents}); err != nil {
+	if _, err := t.log.Append(session.TodoWriteData{Items: contents, Entries: entries}); err != nil {
 		return nil, fmt.Errorf("todo: append: %w", err)
 	}
-	return map[string]any{"ok": true, "count": len(contents)}, nil
+	c := Count(items)
+	return map[string]any{
+		"ok": true,
+		"counts": map[string]int{
+			"pending": c.Pending, "inProgress": c.InProgress, "completed": c.Completed,
+		},
+	}, nil
 }
 
 // TodoTool returns a *tools.Tool wrapper for integration with M23 pipeline.
@@ -86,8 +129,19 @@ func (t *TodoWriteTool) Tool() *tools.Tool {
 	}
 }
 
-// Current 返回当前待办列表（通过 fold 派生，last-write-wins）。
-func Current(log *session.SessionLog) []string {
+// Current 返回当前待办列表（通过 fold 派生，last-write-wins），优先三态。
+func Current(log *session.SessionLog) []TodoItem {
 	fold := session.FoldTodoWrite(log.Events())
-	return fold.Items
+	if len(fold.Entries) > 0 {
+		out := make([]TodoItem, len(fold.Entries))
+		for i, e := range fold.Entries {
+			out[i] = TodoItem{Content: e.Content, Status: TodoStatus(e.Status)}
+		}
+		return out
+	}
+	out := make([]TodoItem, len(fold.Items))
+	for i, c := range fold.Items {
+		out[i] = TodoItem{Content: c, Status: StatusPending}
+	}
+	return out
 }

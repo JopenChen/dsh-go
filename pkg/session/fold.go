@@ -269,8 +269,9 @@ func FoldGoalChange(events []SessionEvent) GoalFold {
 
 // TodoFold 是待办列表投影（整体替换，last-write-wins）。
 type TodoFold struct {
-	Present bool     `json:"present"`
-	Items   []string `json:"items,omitempty"`
+	Present bool        `json:"present"`
+	Items   []string    `json:"items,omitempty"`
+	Entries []TodoEntry `json:"entries,omitempty"`
 }
 
 // foldTodoWrite 折叠出最新待办列表（每次 todo/write 整体替换）。
@@ -281,7 +282,11 @@ func foldTodoWrite(events []SessionEvent) TodoFold {
 			continue
 		}
 		if d, ok := ev.Data.(TodoWriteData); ok {
-			out = TodoFold{Present: true, Items: append([]string(nil), d.Items...)}
+			out = TodoFold{
+				Present: true,
+				Items:   append([]string(nil), d.Items...),
+				Entries: append([]TodoEntry(nil), d.Entries...),
+			}
 		}
 	}
 	return out

@@ -26,7 +26,7 @@ func TestTodoWriteReplace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("第一次执行失败: %v", err)
 	}
-	if got := todo.Current(sl); !reflect.DeepEqual(got, []string{"a", "b"}) {
+	if got := contentsOf(todo.Current(sl)); !reflect.DeepEqual(got, []string{"a", "b"}) {
 		t.Fatalf("第一次替换结果 = %v, want [a b]", got)
 	}
 
@@ -39,7 +39,7 @@ func TestTodoWriteReplace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("第二次执行失败: %v", err)
 	}
-	if got := todo.Current(sl); !reflect.DeepEqual(got, []string{"c"}) {
+	if got := contentsOf(todo.Current(sl)); !reflect.DeepEqual(got, []string{"c"}) {
 		t.Fatalf("第二次应整体替换为 [c], got %v", got)
 	}
 
@@ -57,4 +57,13 @@ func TestTodoWriteReplace(t *testing.T) {
 	if !fold.Present || len(fold.Items) != 0 {
 		t.Fatalf("fold 应反映最新空列表: %+v", fold)
 	}
+}
+
+// contentsOf 提取待办的内容列表。
+func contentsOf(items []todo.TodoItem) []string {
+	out := make([]string, len(items))
+	for i, it := range items {
+		out[i] = it.Content
+	}
+	return out
 }

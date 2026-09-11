@@ -404,9 +404,17 @@ type GoalRoundData struct {
 
 func (GoalRoundData) EventType() EventType { return EventGoalRound }
 
+// TodoEntry 是一条带三态状态的待办（对齐官方 TodoItem）。
+type TodoEntry struct {
+	Content string `json:"content"`
+	Status  string `json:"status"` // pending | in_progress | completed
+}
+
 // TodoWriteData todo/write：整体替换待办列表。
+// Items 为仅内容的兼容字段，Entries 携带三态状态。
 type TodoWriteData struct {
-	Items []string `json:"items"`
+	Items   []string    `json:"items,omitempty"`
+	Entries []TodoEntry `json:"entries,omitempty"`
 }
 
 func (TodoWriteData) EventType() EventType { return EventTodoWrite }

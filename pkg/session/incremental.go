@@ -261,7 +261,11 @@ func ApplyTodoWrite(s TodoFold, ev SessionEvent) TodoFold {
 		return s
 	}
 	if d, ok := ev.Data.(TodoWriteData); ok {
-		return TodoFold{Present: true, Items: append([]string(nil), d.Items...)}
+		return TodoFold{
+			Present: true,
+			Items:   append([]string(nil), d.Items...),
+			Entries: append([]TodoEntry(nil), d.Entries...),
+		}
 	}
 	return s
 }

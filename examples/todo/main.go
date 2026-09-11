@@ -66,8 +66,8 @@ func main() {
 }
 
 // dump 打印当前待办列表。
-func dump(items []string) {
+func dump(items []todo.TodoItem) {
 	for i, it := range items {
-		fmt.Printf("  %d. %s\n", i+1, it)
+		fmt.Printf("  %d. [%s] %s\n", i+1, it.ResolvedStatus(), it.Content)
 	}
 }
