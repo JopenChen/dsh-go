@@ -38,6 +38,8 @@ Due items are delivered via `Out()`; one-shots are removed after dispatch while 
 
 `launchenv` freezes the process, project `.env`, and user `.env` layers at launch and resolves a name in the fixed trust order process > project > user (folding names on Windows).
 
+`homepath.Resolve` picks the single user-data root by configured path > `DSH_HOME` > `~/.dsh` (a blank override is treated as unset) and expands `~`.
+
 ## Source Map
 
 | Concept | Go | Official TypeScript |
@@ -47,6 +49,7 @@ Due items are delivered via `Out()`; one-shots are removed after dispatch while 
 | Clock context | `pkg/timecontext/timecontext.go` | `context/time-context/src/index.ts` |
 | In-process schedule | `pkg/schedule/schedule.go` | `schedule/schedule/src/runtime.ts` |
 | Layered environment | `pkg/launchenv/launchenv.go` | `util/launch-environment/src/index.ts` |
+| User-data root | `pkg/homepath/homepath.go` | `util/home-paths/src/index.ts` |
 
 ## Next Steps
 

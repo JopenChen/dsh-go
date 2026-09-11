@@ -45,6 +45,8 @@ weight: 45
 
 同一个变量可能同时出现在进程环境、项目 `.env`、用户 `.env` 三处。`launchenv` 在启动时把三层冻结成不可变快照，按"进程 > 项目 > 用户"的固定信任顺序解析（Windows 上变量名大小写折叠），避免运行中切换目录后配置被悄悄改变。
 
+用户数据则统一收敛到一个根：`homepath.Resolve` 按"显式配置 > `DSH_HOME` > `~/.dsh`"的优先级解析（空白覆盖视为未设置），并支持 `~` 展开。
+
 ## 源码对照
 
 | 概念 | Go 实现 | 官方 TypeScript |
@@ -54,6 +56,7 @@ weight: 45
 | 时钟上下文 | `pkg/timecontext/timecontext.go` | `packages/context/time-context/src/index.ts` |
 | 进程内调度 | `pkg/schedule/schedule.go` | `packages/schedule/schedule/src/runtime.ts` |
 | 分层环境 | `pkg/launchenv/launchenv.go` | `packages/util/launch-environment/src/index.ts` |
+| 用户数据根 | `pkg/homepath/homepath.go` | `packages/util/home-paths/src/index.ts` |
 
 ## 下一步
 
