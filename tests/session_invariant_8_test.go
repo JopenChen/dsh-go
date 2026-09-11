@@ -18,8 +18,8 @@ import (
 // buildHealthyLog 构造一段 8 条不变量全部通过的健康日志（含 turn/step/approval/goal/tool）。
 func buildHealthyLog(t *testing.T) []session.SessionEvent {
 	sl := session.NewSessionLog(brand.NewSessionID("n02"))
-	_, _ = sl.Append(session.TurnStartData{})
-	_, _ = sl.Append(session.StepStartData{StepSeq: 1})
+	_, _ = sl.Append(session.TurnStartData{Turn: 0})
+	_, _ = sl.Append(session.StepStartData{Turn: 0, Step: 1})
 	aid := brand.NewApprovalRequestID("ap1")
 	_, _ = sl.Append(session.ApprovalRequestIDData{RequestID: aid, Tool: "bash"})
 	_, _ = sl.Append(session.ApprovalDecidedData{RequestID: aid, Allowed: true})
@@ -28,8 +28,8 @@ func buildHealthyLog(t *testing.T) []session.SessionEvent {
 	_, _ = sl.Append(session.ToolResultData{CallID: callID, Output: "hi"})
 	_, _ = sl.Append(session.GoalChangeData{GoalID: "g1", Phase: session.GoalPhase("active"), Revision: 1})
 	_, _ = sl.Append(session.GoalChangeData{GoalID: "g1", Revision: 2})
-	_, _ = sl.Append(session.StepEndData{StepSeq: 1})
-	_, _ = sl.Append(session.TurnEndData{Reason: session.ReasonFinished})
+	_, _ = sl.Append(session.StepEndData{Turn: 0, Step: 1})
+	_, _ = sl.Append(session.TurnEndData{Turn: 0, Reason: session.ReasonFinished})
 	return sl.Events()
 }
 
@@ -69,7 +69,7 @@ func TestN02InvTimeRewindCaptured(t *testing.T) {
 func TestN02InvUnpairedTurnCaptured(t *testing.T) {
 	// 只有一个 turn/start，无 turn/end。
 	var events []session.SessionEvent
-	ev := session.SessionEvent{Seq: 1, Time: time.Now(), Type: session.EventTurnStart, Data: session.TurnStartData{}}
+	ev := session.SessionEvent{Seq: 1, Time: time.Now(), Type: session.EventTurnStart, Data: session.TurnStartData{Turn: 0}}
 	events = append(events, ev)
 	fails := session.VerifyInvariants(events)
 	if !hasInvariant(fails, session.InvTurnPaired) {
@@ -104,13 +104,13 @@ func TestN02InvUnknownTypeCaptured(t *testing.T) {
 // TestN02FiftyRoundsSeqTime 验证 50 轮正常对话后 seq 连续 + time 单调。
 func TestN02FiftyRoundsSeqTime(t *testing.T) {
 	sl := session.NewSessionLog(brand.NewSessionID("n02-50"))
-	for i := 0; i < 50; i++ {
-		_, _ = sl.Append(session.TurnStartData{})
-		_, _ = sl.Append(session.StepStartData{StepSeq: 1})
+	for i := uint64(0); i < 50; i++ {
+		_, _ = sl.Append(session.TurnStartData{Turn: i})
+		_, _ = sl.Append(session.StepStartData{Turn: i, Step: 1})
 		_, _ = sl.Append(session.UserMessageData{Content: "hi"})
 		_, _ = sl.Append(session.AssistantMessageData{Content: "ok"})
-		_, _ = sl.Append(session.StepEndData{StepSeq: 1})
-		_, _ = sl.Append(session.TurnEndData{Reason: session.ReasonFinished})
+		_, _ = sl.Append(session.StepEndData{Turn: i, Step: 1})
+		_, _ = sl.Append(session.TurnEndData{Turn: i, Reason: session.ReasonFinished})
 	}
 	events := sl.Events()
 	if fails := session.VerifyInvariants(events); len(fails) != 0 {

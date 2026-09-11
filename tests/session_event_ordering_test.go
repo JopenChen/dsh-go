@@ -9,20 +9,21 @@ import (
 )
 
 // appendTurn 便捷构造一段完整合法 Turn（start → step → step/end → end）。
-func appendTurn(sl *session.SessionLog) error {
-	if _, err := sl.Append(session.TurnStartData{}); err != nil {
+// turnIdx 是当前 turn 的编号（从 0 开始）。
+func appendTurn(sl *session.SessionLog, turnIdx uint64) error {
+	if _, err := sl.Append(session.TurnStartData{Turn: turnIdx}); err != nil {
 		return err
 	}
-	if _, err := sl.Append(session.StepStartData{StepSeq: 1}); err != nil {
+	if _, err := sl.Append(session.StepStartData{Turn: turnIdx, Step: 1}); err != nil {
 		return err
 	}
 	if _, err := sl.Append(session.UserMessageData{Content: "hi"}); err != nil {
 		return err
 	}
-	if _, err := sl.Append(session.StepEndData{StepSeq: 1}); err != nil {
+	if _, err := sl.Append(session.StepEndData{Turn: turnIdx, Step: 1}); err != nil {
 		return err
 	}
-	_, err := sl.Append(session.TurnEndData{Reason: session.ReasonFinished})
+	_, err := sl.Append(session.TurnEndData{Turn: turnIdx, Reason: session.ReasonFinished})
 	return err
 }
 
@@ -53,12 +54,12 @@ func TestSessionTurnPairing(t *testing.T) {
 	sl := session.NewSessionLog(brand.NewSessionID("s1"))
 
 	// turn/end 没有前置 turn/start → 拒绝
-	if _, err := sl.Append(session.TurnEndData{Reason: session.ReasonFinished}); err == nil {
+	if _, err := sl.Append(session.TurnEndData{Turn: 0, Reason: session.ReasonFinished}); err == nil {
 		t.Fatal("无 turn/start 的 turn/end 应被拒绝")
 	}
 
 	// 合法 turn
-	if err := appendTurn(sl); err != nil {
+	if err := appendTurn(sl, 0); err != nil {
 		t.Fatalf("合法 turn 应通过: %v", err)
 	}
 }
@@ -68,17 +69,17 @@ func TestSessionStepPairing(t *testing.T) {
 	sl := session.NewSessionLog(brand.NewSessionID("s1"))
 
 	// 无开放 turn 的 step/start → 拒绝
-	if _, err := sl.Append(session.StepStartData{StepSeq: 1}); err == nil {
+	if _, err := sl.Append(session.StepStartData{Turn: 0, Step: 1}); err == nil {
 		t.Fatal("无开放 turn 的 step/start 应被拒绝")
 	}
 
 	// turn 内合法 step
-	_, _ = sl.Append(session.TurnStartData{})
-	if _, err := sl.Append(session.StepStartData{StepSeq: 1}); err != nil {
+	_, _ = sl.Append(session.TurnStartData{Turn: 0})
+	if _, err := sl.Append(session.StepStartData{Turn: 0, Step: 1}); err != nil {
 		t.Fatalf("turn 内 step/start 应通过: %v", err)
 	}
 	// step/end 未配对 step/start 后再开 step → 拒绝
-	if _, err := sl.Append(session.StepStartData{StepSeq: 2}); err == nil {
+	if _, err := sl.Append(session.StepStartData{Turn: 0, Step: 2}); err == nil {
 		t.Fatal("step 未关闭时再次 step/start 应被拒绝")
 	}
 }
@@ -86,8 +87,8 @@ func TestSessionStepPairing(t *testing.T) {
 // TestSessionToolCallResultPairing 验证 tool/call ↔ tool/result 缺失配对被拒绝。
 func TestSessionToolCallResultPairing(t *testing.T) {
 	sl := session.NewSessionLog(brand.NewSessionID("s1"))
-	_, _ = sl.Append(session.TurnStartData{})
-	_, _ = sl.Append(session.StepStartData{StepSeq: 1})
+	_, _ = sl.Append(session.TurnStartData{Turn: 0})
+	_, _ = sl.Append(session.StepStartData{Turn: 0, Step: 1})
 
 	// 无匹配 tool/call 的 tool/result → 拒绝
 	if _, err := sl.Append(session.ToolResultData{CallID: brand.NewToolCallID("ghost")}); err == nil {
@@ -117,14 +118,14 @@ func TestSessionToolCallResultPairing(t *testing.T) {
 func TestSessionValidTurnWithTools(t *testing.T) {
 	sl := session.NewSessionLog(brand.NewSessionID("s1"))
 
-	_, _ = sl.Append(session.TurnStartData{})
-	_, _ = sl.Append(session.StepStartData{StepSeq: 1})
+	_, _ = sl.Append(session.TurnStartData{Turn: 0})
+	_, _ = sl.Append(session.StepStartData{Turn: 0, Step: 1})
 	_, _ = sl.Append(session.UserMessageData{Content: "list files"})
 	callID := brand.NewToolCallID("call_ls")
 	_, _ = sl.Append(session.ToolCallData{CallID: callID, Tool: "bash"})
 	_, _ = sl.Append(session.ToolResultData{CallID: callID, Output: "a.txt"})
-	_, _ = sl.Append(session.StepEndData{StepSeq: 1})
-	_, err := sl.Append(session.TurnEndData{Reason: session.ReasonFinished})
+	_, _ = sl.Append(session.StepEndData{Turn: 0, Step: 1})
+	_, err := sl.Append(session.TurnEndData{Turn: 0, Reason: session.ReasonFinished})
 	if err != nil {
 		t.Fatalf("完整合法 turn 应通过: %v", err)
 	}

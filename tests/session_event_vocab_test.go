@@ -19,15 +19,15 @@ func fixedTestTime() time.Time {
 func sampleDataFor(t session.EventType) session.EventData {
 	switch t {
 	case session.EventTurnStart:
-		return session.TurnStartData{}
+		return session.TurnStartData{Turn: 0}
 	case session.EventTurnEnd:
-		return session.TurnEndData{Reason: session.ReasonFinished}
+		return session.TurnEndData{Turn: 0, Reason: session.ReasonFinished}
 	case session.EventTurnStopping:
 		return session.TurnStoppingData{Reason: "goal/round"}
 	case session.EventStepStart:
-		return session.StepStartData{StepSeq: 1}
+		return session.StepStartData{Turn: 0, Step: 1}
 	case session.EventStepEnd:
-		return session.StepEndData{StepSeq: 1}
+		return session.StepEndData{Turn: 0, Step: 1}
 	case session.EventAgentError:
 		return session.AgentErrorData{Message: "boom", Pkg: "pkg/agent"}
 	case session.EventAgentPreStep:

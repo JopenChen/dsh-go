@@ -131,12 +131,12 @@ func TestH02CloseFlushesEverything(t *testing.T) {
 		_ = b.SaveHeader(ctx, session.NewSessionHeader(id, "/ws"))
 		_ = b.Append(ctx, id, session.SessionEvent{
 			Seq: 1, Time: fixedTestTimeH02(),
-			Type: session.EventTurnStart, Data: session.TurnStartData{},
+			Type: session.EventTurnStart, Data: session.TurnStartData{Turn: 0},
 		})
 		_ = b.Append(ctx, id, session.SessionEvent{
 			Seq: 2, Time: fixedTestTimeH02(),
 			Type: session.EventTurnEnd,
-			Data: session.TurnEndData{Reason: session.ReasonFinished},
+			Data: session.TurnEndData{Turn: 0, Reason: session.ReasonFinished},
 		})
 	}
 
@@ -229,12 +229,12 @@ func TestH02ExplicitFlushImmediate(t *testing.T) {
 
 	_ = b.Append(ctx, id, session.SessionEvent{
 		Seq: 1, Time: fixedTestTimeH02(),
-		Type: session.EventTurnStart, Data: session.TurnStartData{},
+		Type: session.EventTurnStart, Data: session.TurnStartData{Turn: 0},
 	})
 	_ = b.Append(ctx, id, session.SessionEvent{
 		Seq: 2, Time: fixedTestTimeH02(),
 		Type: session.EventTurnEnd,
-		Data: session.TurnEndData{Reason: session.ReasonFinished},
+		Data: session.TurnEndData{Turn: 0, Reason: session.ReasonFinished},
 	})
 
 	if err := b.Flush(ctx, id); err != nil {

@@ -27,8 +27,8 @@ func TestPersistenceCrashRepair(t *testing.T) {
 
 	// 写入半截 turn + 工具事件（已落盘），但不写 turn/end（模拟进程在此崩溃）
 	events := []session.SessionEvent{
-		{Seq: 1, Type: session.EventTurnStart, Data: session.TurnStartData{}},
-		{Seq: 2, Type: session.EventStepStart, Data: session.StepStartData{StepSeq: 1}},
+		{Seq: 1, Type: session.EventTurnStart, Data: session.TurnStartData{Turn: 0}},
+		{Seq: 2, Type: session.EventStepStart, Data: session.StepStartData{Turn: 0, Step: 1}},
 		{Seq: 3, Type: session.EventUserMessage, Data: session.UserMessageData{Content: "hi"}},
 		{Seq: 4, Type: session.EventToolCall, Data: session.ToolCallData{CallID: brand.NewToolCallID("call_1"), Tool: "bash"}},
 	}
@@ -134,8 +134,8 @@ func TestPersistenceFlushCheckpoint(t *testing.T) {
 	_ = backend.SaveHeader(ctx, header)
 
 	// 写入几条事件（batch 100，不自动 flush）
-	_ = backend.Append(ctx, id, session.SessionEvent{Seq: 1, Type: session.EventTurnStart, Data: session.TurnStartData{}})
-	_ = backend.Append(ctx, id, session.SessionEvent{Seq: 2, Type: session.EventTurnEnd, Data: session.TurnEndData{Reason: session.ReasonFinished}})
+	_ = backend.Append(ctx, id, session.SessionEvent{Seq: 1, Type: session.EventTurnStart, Data: session.TurnStartData{Turn: 0}})
+	_ = backend.Append(ctx, id, session.SessionEvent{Seq: 2, Type: session.EventTurnEnd, Data: session.TurnEndData{Turn: 0, Reason: session.ReasonFinished}})
 
 	// flush 前重载（新 backend）应看不到事件（未落盘）
 	backendProbe := newJSONLNoCheck(t, dir)

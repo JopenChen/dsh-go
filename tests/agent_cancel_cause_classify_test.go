@@ -19,7 +19,7 @@ func TestAgentCancelCauseClassify(t *testing.T) {
 	for _, cause := range causes {
 		sl := session.NewSessionLog(brand.NewSessionID("cancel_" + string(cause)))
 		// 打开 turn（turn-stopping 事件要求处于开放 turn 中）
-		_, _ = sl.Append(session.TurnStartData{})
+		_, _ = sl.Append(session.TurnStartData{Turn: 0})
 		// 记录取消
 		if err := agent.RecordCancel(sl, cause); err != nil {
 			t.Fatalf("RecordCancel(%s) 失败: %v", cause, err)
@@ -39,7 +39,7 @@ func TestAgentCancelCauseClassify(t *testing.T) {
 func TestAgentCancelViaAgentAPI(t *testing.T) {
 	sl := session.NewSessionLog(brand.NewSessionID("cancel_api"))
 	a := agent.NewAgent(brand.NewSessionID("cancel_api"), sl, nil, nil, nil)
-	_, _ = sl.Append(session.TurnStartData{})
+	_, _ = sl.Append(session.TurnStartData{Turn: 0})
 
 	a.Cancel(agent.CancelHook)
 	got, ok := agent.ExtractCancelCause(sl.Events())
