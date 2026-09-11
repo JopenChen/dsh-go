@@ -35,6 +35,7 @@ for _, m := range proj.Messages {
 
 - `FoldAll` folds the entire log into a `SessionProjection` (containing the `Messages` / `Goal` / `Todo` / `PlanMode` sub-projections)
 - **Incremental fold (H04)**: instead of recomputing on every read, it is maintained incrementally in O(N)
+- **Title normalization**: `sessiontitle.CleanTitle` strips ANSI/control/directional characters and folds whitespace; `TruncateUTF8` enforces a byte budget without splitting a rune.
 
 ## Performance Data
 
@@ -45,6 +46,7 @@ Incremental fold vs. brute-force recompute: **16.9s → 4.9ms, ≈ 3437×** (10k
 ## Source Reference
 
 - `pkg/session/fold.go` — the projection function family
+- `pkg/sessiontitle/normalize.go` — title cleaning and UTF-8 truncation
 - `pkg/session/incremental.go` — incremental projection (H04)
 - Runnable example: [`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) step 2
 
