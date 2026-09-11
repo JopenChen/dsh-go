@@ -34,6 +34,10 @@ func sampleDataFor(t session.EventType) session.EventData {
 		return session.AgentPreStepData{Blocked: false}
 	case session.EventAgentRequest:
 		return session.AgentRequestData{Provider: "deepseek", Model: "deepseek-chat"}
+	case session.EventAgentStatus:
+		return session.AgentStatusData{Status: "running"}
+	case session.EventAgentInboxSpliced:
+		return session.InboxSplicedData{Target: session.InboxNextTurn, Start: 0, Inserted: []string{"hello"}}
 	case session.EventUserMessage:
 		return session.UserMessageData{Content: "hello", Source: "user"}
 	case session.EventAssistantMessage:
