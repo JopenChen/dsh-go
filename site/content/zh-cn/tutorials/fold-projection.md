@@ -36,6 +36,7 @@ for _, m := range proj.Messages {
 - `FoldAll` 把整个日志折叠成 `SessionProjection`（内含 `Messages` / `Goal` / `Todo` / `PlanMode` 子投影）
 - **增量 fold（H04）**：不是每次读都重算，而是 O(N) 增量维护
 - **标题归一化**：会话标题来自不可信文本，`sessiontitle.CleanTitle` 先剥离 ANSI 转义、控制与方向字符并归一空白，`TruncateUTF8` 再按 UTF-8 字节预算截断而不拆字符，保证标题单行、安全且长度有界。
+- **耗时统计**：`telemetry.StatsCollector` 从 step/tool 边界增量统计回合数、步数与模型耗时、首 token 延迟、工具耗时（turn 去重），用于展示性能画像而无需回溯整段日志。
 
 ## 性能数据
 
@@ -47,6 +48,7 @@ for _, m := range proj.Messages {
 
 - `pkg/session/fold.go` —— 投影函数族
 - `pkg/sessiontitle/normalize.go` —— 标题清洗与 UTF-8 字节截断
+- `pkg/telemetry/stats.go` —— 会话耗时增量统计
 - `pkg/session/incremental.go` —— 增量投影（H04）
 - 可运行示例：[`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) 第 2 步
 
