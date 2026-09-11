@@ -67,6 +67,8 @@ type ToolCallResult struct {
 	Value any
 	// Error 错误信息（IsError 时填充）。
 	Error string
+	// ErrorCode 稳定错误码（可选，用于路由/重放）。
+	ErrorCode string
 }
 
 // ExecContext 是贯穿四级链的共享上下文（payload）。
@@ -162,6 +164,10 @@ func (p *Pipeline) Run(ctx context.Context, req *ToolCallRequest, tool *Tool) *T
 	}
 
 	// 阶段 2：execute（调用工具实现；execute 链的最内层是真正的执行）
+	// 若进入工具体前上下文已取消，直接返回派发前取消结果，不执行工具。
+	if ctx.Err() != nil {
+		return AbortedBeforeDispatchResult(req.CallID)
+	}
 	_ = p.execute.Run(ctx, ec)
 	if ec.Signal == SignalCancel {
 		// 取消信号：post 阶段会 block，这里先标记
