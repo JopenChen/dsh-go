@@ -676,12 +676,16 @@ func repairOrphanTurn(events *[]session.SessionEvent) int {
 	if len(*events) == 0 {
 		return 0
 	}
-	// 计算最终 turn 状态
+	// 计算最终 turn 状态，并跟踪当前打开的 turn 编号
 	turnOpen := false
+	var openTurn uint64
 	for _, ev := range *events {
 		switch ev.Type {
 		case session.EventTurnStart:
 			turnOpen = true
+			if td, ok := ev.Data.(session.TurnStartData); ok {
+				openTurn = td.Turn
+			}
 		case session.EventTurnEnd:
 			turnOpen = false
 		}
@@ -689,13 +693,13 @@ func repairOrphanTurn(events *[]session.SessionEvent) int {
 	if !turnOpen {
 		return 0
 	}
-	// 补一条 turn/end{reason:interrupted}
+	// 补一条 turn/end{reason:interrupted}，携带正确的 turn 编号
 	last := (*events)[len(*events)-1]
 	repaired := session.SessionEvent{
 		Seq:  last.Seq + 1,
 		Time: last.Time,
 		Type: session.EventTurnEnd,
-		Data: session.TurnEndData{Reason: session.ReasonInterrupted},
+		Data: session.TurnEndData{Turn: openTurn, Reason: session.ReasonInterrupted},
 	}
 	*events = append(*events, repaired)
 	return 1
