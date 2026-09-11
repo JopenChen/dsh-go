@@ -18,6 +18,10 @@ weight: 45
 - `AncestorChain(root, cwd)` 给出由宽到窄的目录链；
 - `DedupByDirectory` 对**同一目录**内 trim 后内容相同的候选去重（不同目录即使内容相同也保留，因为层级语义不同）。
 
+## @文件引用：输入时的路径补全
+
+用户在输入框敲 `@` 时需要路径补全。`pkg/fileref` 复刻这套语法：`ActiveAtToken` 提取光标处正在输入的 token（区分普通与引号路径，邮箱里的 `@` 不触发）；`FormatMention` 把选中路径格式化——含空白用 `@"..."`、目录保留尾斜杠以便继续下钻。
+
 ## 时钟上下文：让模型知道"现在"
 
 长时间运行的会话里，模型需要知道当前时间以及距上条消息过了多久。`pkg/timecontext`：
@@ -42,6 +46,7 @@ weight: 45
 | 概念 | Go 实现 | 官方 TypeScript |
 |---|---|---|
 | 指令发现 | `pkg/instructions/instructions.go` | `packages/context/agent-instructions/src/files.ts` |
+| @文件引用 | `pkg/fileref/fileref.go` | `packages/context/file-reference/src/grammar.ts` |
 | 时钟上下文 | `pkg/timecontext/timecontext.go` | `packages/context/time-context/src/index.ts` |
 | 进程内调度 | `pkg/schedule/schedule.go` | `packages/schedule/schedule/src/runtime.ts` |
 

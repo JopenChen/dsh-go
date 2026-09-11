@@ -14,6 +14,10 @@ weight: 45
 
 `pkg/instructions` mirrors the official discovery: `FindProjectRoot(cwd, markers)` walks upward to the first directory containing a marker such as `.git`; `AncestorChain(root, cwd)` yields the broad-to-narrow directory chain; `DedupByDirectory` collapses trimmed duplicates within the same directory only.
 
+## @File Reference
+
+`pkg/fileref.ActiveAtToken` extracts the token under the cursor (plain vs quoted; an `@` inside an email does not trigger). `FormatMention` renders a selected path — spaces use `@"..."`, directories keep a trailing slash for further descent.
+
 ## Clock Context
 
 `pkg/timecontext.FormatElapsed` compacts elapsed time into `d/h/m/s`; `Render(now, loc, previous)` emits the current time, zone and elapsed time since the preceding model-visible message, or `unavailable` when absent.
@@ -35,6 +39,7 @@ Due items are delivered via `Out()`; one-shots are removed after dispatch while 
 | Concept | Go | Official TypeScript |
 |---|---|---|
 | Instruction discovery | `pkg/instructions/instructions.go` | `context/agent-instructions/src/files.ts` |
+| @File reference | `pkg/fileref/fileref.go` | `context/file-reference/src/grammar.ts` |
 | Clock context | `pkg/timecontext/timecontext.go` | `context/time-context/src/index.ts` |
 | In-process schedule | `pkg/schedule/schedule.go` | `schedule/schedule/src/runtime.ts` |
 
