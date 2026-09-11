@@ -211,15 +211,18 @@ func (a *Agent) runTurn(req *turnReq) {
 		}
 	}()
 
+	// 查询当前 turn 编号（从 SessionLog 状态获取，保证严格单调递增）
+	turnIdx := a.log.NextTurn()
+
 	// turn/start
-	if _, err := a.log.Append(session.TurnStartData{}); err != nil {
+	if _, err := a.log.Append(session.TurnStartData{Turn: turnIdx}); err != nil {
 		turnErr = err
 		return
 	}
 
 	// 记录 user/message（run 与 followup 均为用户输入）
 	if _, err := a.log.Append(session.UserMessageData{Content: req.input, Source: req.kind}); err != nil {
-		_ = a.failTurn(turnErr, err)
+		_ = a.failTurn(turnIdx, turnErr, err)
 		turnErr = err
 		return
 	}
@@ -228,19 +231,19 @@ func (a *Agent) runTurn(req *turnReq) {
 	stepSeq := uint64(1)
 	for {
 		// step/start
-		if _, err := a.log.Append(session.StepStartData{StepSeq: stepSeq}); err != nil {
-			_ = a.failTurn(turnErr, err)
+		if _, err := a.log.Append(session.StepStartData{Turn: turnIdx, Step: stepSeq}); err != nil {
+			_ = a.failTurn(turnIdx, turnErr, err)
 			turnErr = err
 			return
 		}
 
 		err := a.runStep(req, stepSeq)
 		// step/end
-		_, _ = a.log.Append(session.StepEndData{StepSeq: stepSeq})
+		_, _ = a.log.Append(session.StepEndData{Turn: turnIdx, Step: stepSeq})
 
 		if err != nil {
 			// agent/error + turn 以 interrupted 关闭
-			_ = a.failTurn(turnErr, err)
+			_ = a.failTurn(turnIdx, turnErr, err)
 			turnErr = err
 			return
 		}
@@ -256,7 +259,7 @@ func (a *Agent) runTurn(req *turnReq) {
 
 	// turn-stopping → turn/end (finished)
 	_, _ = a.log.Append(session.TurnStoppingData{Reason: "finished"})
-	_, _ = a.log.Append(session.TurnEndData{Reason: session.ReasonFinished})
+	_, _ = a.log.Append(session.TurnEndData{Turn: turnIdx, Reason: session.ReasonFinished})
 }
 
 // lastStepHadToolCall 返回上一步是否执行过工具调用（内部状态）。
@@ -265,9 +268,9 @@ func (a *Agent) lastStepHadToolCall() bool {
 }
 
 // failTurn 记录 agent/error 并以 interrupted 关闭 turn。
-func (a *Agent) failTurn(prev, err error) error {
+func (a *Agent) failTurn(turnIdx uint64, prev, err error) error {
 	_, _ = a.log.Append(session.AgentErrorData{Message: err.Error(), Pkg: "pkg/agent"})
-	_, _ = a.log.Append(session.TurnEndData{Reason: session.ReasonInterrupted})
+	_, _ = a.log.Append(session.TurnEndData{Turn: turnIdx, Reason: session.ReasonInterrupted})
 	return err
 }
 
