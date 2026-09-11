@@ -151,7 +151,10 @@ type EventData interface {
 // --- 簇 A：Turn / Step ---
 
 // TurnStartData turn/start：一个 Turn 轮次开始。
-type TurnStartData struct{}
+// Turn 是从 0 开始的单调递增整数，每个会话独立计数。
+type TurnStartData struct {
+	Turn uint64 `json:"turn"`
+}
 
 func (TurnStartData) EventType() EventType { return EventTurnStart }
 
@@ -159,14 +162,21 @@ func (TurnStartData) EventType() EventType { return EventTurnStart }
 type TurnEndReason string
 
 // turn/end 关闭原因枚举。
+// 对齐官方 packages/core/session/src/types.ts TurnEndReasonMap：
+// completed / aborted / blocked / error / max-tokens / interrupted
 const (
-	ReasonFinished    TurnEndReason = "finished"
+	ReasonCompleted   TurnEndReason = "completed"
+	ReasonFinished    TurnEndReason = "finished" // 兼容旧名称，等同于 completed
 	ReasonInterrupted TurnEndReason = "interrupted"
 	ReasonAborted     TurnEndReason = "aborted"
+	ReasonBlocked     TurnEndReason = "blocked"
+	ReasonError       TurnEndReason = "error"
+	ReasonMaxTokens   TurnEndReason = "max-tokens"
 )
 
 // TurnEndData turn/end：一个 Turn 轮次结束。
 type TurnEndData struct {
+	Turn   uint64        `json:"turn"`
 	Reason TurnEndReason `json:"reason"`
 }
 
@@ -180,15 +190,20 @@ type TurnStoppingData struct {
 func (TurnStoppingData) EventType() EventType { return EventTurnStopping }
 
 // StepStartData step/start：单步开始。
+// Step 是从 1 开始的单调递增整数，每个 Turn 内独立计数（新 Turn 开始时重置为 1）。
 type StepStartData struct {
-	StepSeq uint64 `json:"stepSeq"`
+	Turn   uint64 `json:"turn"`
+	Step   uint64 `json:"step"`
+	StepSeq uint64 `json:"stepSeq,omitempty"` // 兼容旧字段，等同于 Step
 }
 
 func (StepStartData) EventType() EventType { return EventStepStart }
 
 // StepEndData step/end：单步结束。
 type StepEndData struct {
-	StepSeq uint64 `json:"stepSeq"`
+	Turn   uint64 `json:"turn"`
+	Step   uint64 `json:"step"`
+	StepSeq uint64 `json:"stepSeq,omitempty"` // 兼容旧字段，等同于 Step
 }
 
 func (StepEndData) EventType() EventType { return EventStepEnd }
@@ -835,6 +850,10 @@ func (e *SessionEvent) UnmarshalJSON(data []byte) error {
 type sessionState struct {
 	turnOpen    bool
 	stepOpen    bool
+	openTurn    uint64 // 当前打开的 turn 编号（turnOpen=true 时有效）
+	openStep    uint64 // 当前打开的 step 编号（stepOpen=true 时有效）
+	nextTurn    uint64 // 下一个 turn 的编号（从 0 开始）
+	nextStep    uint64 // 下一个 step 的编号（每个 turn 开始时重置为 1）
 	toolCalls   map[string]bool // CallID.Raw() -> 是否已配 result
 	lastTime    time.Time
 }
@@ -980,6 +999,35 @@ func (sl *SessionLog) LastSeq() uint64 {
 	return sl.seq
 }
 
+// NextTurn 返回下一个 turn 的编号（从 0 开始单调递增）。
+// 用于 Agent 在创建 turn/start 事件前查询正确的编号。
+func (sl *SessionLog) NextTurn() uint64 {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	return sl.state.nextTurn
+}
+
+// NextStep 返回当前 turn 内下一个 step 的编号（每个 turn 开始时重置为 1）。
+func (sl *SessionLog) NextStep() uint64 {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	return sl.state.nextStep
+}
+
+// OpenTurn 返回当前打开的 turn 编号（无打开 turn 时返回 0 和 false）。
+func (sl *SessionLog) OpenTurn() (uint64, bool) {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	return sl.state.openTurn, sl.state.turnOpen
+}
+
+// OpenStep 返回当前打开的 step 编号（无打开 step 时返回 0 和 false）。
+func (sl *SessionLog) OpenStep() (uint64, bool) {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	return sl.state.openStep, sl.state.stepOpen
+}
+
 // Append 是唯一写入路径：追加一条事件并执行时序不变量校验。
 //   - 自动分配严格递增序号（1..N 连续）与单调时间；
 //   - 违反 turn 开闭 / step 配对 / tool call↔result 匹配 → 拒绝写入并返回错误。
@@ -1033,7 +1081,16 @@ func (sl *SessionLog) applyState(ev SessionEvent) error {
 		if sl.state.turnOpen {
 			return fmt.Errorf("session invariant: turn/start while turn already open")
 		}
+		data, ok := ev.Data.(TurnStartData)
+		if !ok {
+			return fmt.Errorf("session invariant: turn/start data type mismatch")
+		}
+		if data.Turn != sl.state.nextTurn {
+			return fmt.Errorf("session invariant: turn/start expected turn %d, got %d", sl.state.nextTurn, data.Turn)
+		}
 		sl.state.turnOpen = true
+		sl.state.openTurn = data.Turn
+		sl.state.nextStep = 1 // 每个 turn 开始时 step 重置为 1
 	case EventTurnEnd:
 		if !sl.state.turnOpen {
 			return fmt.Errorf("session invariant: turn/end without open turn/start")
@@ -1041,7 +1098,16 @@ func (sl *SessionLog) applyState(ev SessionEvent) error {
 		if sl.state.stepOpen {
 			return fmt.Errorf("session invariant: turn/end while step still open")
 		}
+		data, ok := ev.Data.(TurnEndData)
+		if !ok {
+			return fmt.Errorf("session invariant: turn/end data type mismatch")
+		}
+		if data.Turn != sl.state.openTurn {
+			return fmt.Errorf("session invariant: turn/end turn %d does not match open turn %d", data.Turn, sl.state.openTurn)
+		}
 		sl.state.turnOpen = false
+		sl.state.openTurn = 0
+		sl.state.nextTurn++
 	case EventTurnStopping:
 		// 允许在 turn 开放时进入停止流程
 		if !sl.state.turnOpen {
@@ -1054,12 +1120,35 @@ func (sl *SessionLog) applyState(ev SessionEvent) error {
 		if sl.state.stepOpen {
 			return fmt.Errorf("session invariant: step/start while step already open")
 		}
+		data, ok := ev.Data.(StepStartData)
+		if !ok {
+			return fmt.Errorf("session invariant: step/start data type mismatch")
+		}
+		if data.Turn != sl.state.openTurn {
+			return fmt.Errorf("session invariant: step/start in turn %d but open turn is %d", data.Turn, sl.state.openTurn)
+		}
+		if data.Step != sl.state.nextStep {
+			return fmt.Errorf("session invariant: step/start expected step %d, got %d", sl.state.nextStep, data.Step)
+		}
 		sl.state.stepOpen = true
+		sl.state.openStep = data.Step
+		sl.state.nextStep++
 	case EventStepEnd:
 		if !sl.state.stepOpen {
 			return fmt.Errorf("session invariant: step/end without open step/start")
 		}
+		data, ok := ev.Data.(StepEndData)
+		if !ok {
+			return fmt.Errorf("session invariant: step/end data type mismatch")
+		}
+		if data.Turn != sl.state.openTurn {
+			return fmt.Errorf("session invariant: step/end in turn %d but open turn is %d", data.Turn, sl.state.openTurn)
+		}
+		if data.Step != sl.state.openStep {
+			return fmt.Errorf("session invariant: step/end step %d does not match open step %d", data.Step, sl.state.openStep)
+		}
 		sl.state.stepOpen = false
+		sl.state.openStep = 0
 	case EventToolCall:
 		if !sl.state.stepOpen {
 			return fmt.Errorf("session invariant: tool/call without open step")
