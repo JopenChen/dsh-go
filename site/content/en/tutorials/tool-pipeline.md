@@ -56,6 +56,10 @@ err := g.Update(tools.PreAllow)         // relax → ErrGuardRelaxed
 // g.Decision() stays PreDeny (fail closed)
 ```
 
+## Bounded Output
+
+`retain.ItemRetainer` answers only the mechanical question: keep the first N observed units and count the rest as exact omissions. Budget omission is distinct from an incomplete upstream, which stays a tool-domain state.
+
 ## Layered Tool Restriction
 
 Beyond per-call decisions, tool visibility uses a `Restriction` mask. `RestrictionSet` holds an ordered layer stack (host outermost, nearer scope wins), resolved **nearest-scope-wins**: scan from the nearest layer back to host; the first layer that mentions a tool decides. `host deny + scope allow(exempt)` restores a tool; both deny → reject; unmentioned → allowed by default. It serves Subagent capability limits and Preset tool hiding via `Filter`.
@@ -84,6 +88,7 @@ Upstream's only published PTC backend is a Node worker thread running TypeScript
 | Monotonic guard | `pkg/tools/monotonic.go` — `MonotonicGuard` | monotonic guard |
 | Layered mask | `pkg/tools/restriction.go` — `RestrictionSet` | tools restriction |
 | PTC seam | `pkg/coderuntime/coderuntime.go` — `Runtime` | `packages/code-runtime` |
+| Bounded output | `pkg/retain/retain.go` — `ItemRetainer` | `packages/util/output-retention` |
 | run_code bridge | `pkg/tools/ptc.go` — `NewRunCodeTool` | `tools/src/ptc.ts` |
 | Object pool | `pkg/tools/pooled.go` — `SetPooled` | (dsh-go addition) |
 
