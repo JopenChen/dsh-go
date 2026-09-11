@@ -61,6 +61,10 @@ The adapter translates the unified `ChatRequest` into the target wire format and
 
 External data is validated before entering the core: `attachment.DecodeCanonicalBase64` rejects non-canonical base64 and `NewLimiter` bounds image-transform concurrency; `feedback.ValidateRating/ValidateNote` constrain rating and note; `skills.IsName/RenderContent` enforce the kebab grammar and escape embedded text; `mcp.PublicToolName` derives `mcp__server__raw` and appends an identity hash on lossy normalization to prevent collapse.
 
+## Anonymous Identity
+
+`telemetry.GetOrCreateAnonymousID` mints a random UUID per Harness home, persisted as `.anonymous-user-id`, never derived from host or network. A write failure still returns a usable id.
+
 ## Why the Three Roles Matter
 
 This is how "everything is a plugin, freely replaceable" lands: swap a Provider without touching Consumers; inject a stub in tests; compose multiple Providers behind a routing adapter. The cost is upfront interface design — an unstable Definition moves every Consumer.
@@ -78,6 +82,7 @@ This is how "everything is a plugin, freely replaceable" lands: swap a Provider 
 | Feedback validation | `pkg/feedback/validate.go` | message-feedback/spec |
 | Skill grammar | `pkg/skills/grammar.go` | skill/src/index |
 | MCP public name | `pkg/mcp/publicname.go` | mcp-client/tools |
+| Anonymous identity | `pkg/telemetry/anonymous.go` | identity/anonymous-user-id |
 
 ## Next Steps
 

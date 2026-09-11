@@ -82,6 +82,10 @@ _, _ = llm.Chat(ctx, req, func(c llm.StreamChunk) {
 - **技能语法**：`skills.IsName` 校验 kebab-case 名称，`RenderContent` 渲染统一 `<skill_content>` 块并转义内嵌文本；
 - **MCP 公共名**：`mcp.PublicToolName` 生成 `mcp__server__raw`，字符替换或截断时追加身份哈希，防止不同外部身份塌缩为同名。
 
+## 匿名身份：与机器解耦
+
+遥测与反馈需要一个稳定的用户标识，但不应从主机名、网络地址等可识别信息派生。`telemetry.GetOrCreateAnonymousID` 在每个 Harness home 下生成一个随机 UUID 并持久化为 `.anonymous-user-id`：同一 home 的进程共享，删除文件即换新身份；写入失败也会返回本次可用的 ID，不阻塞遥测与反馈。
+
 ## 为什么三角色很重要？
 
 这套结构是"一切皆插件、能力可自由替换"的落地方式。它的收益：
@@ -105,6 +109,7 @@ _, _ = llm.Chat(ctx, req, func(c llm.StreamChunk) {
 | 反馈值约束 | `pkg/feedback/validate.go` | message-feedback/spec |
 | 技能语法 | `pkg/skills/grammar.go` | skill/src/index |
 | MCP 公共名 | `pkg/mcp/publicname.go` | mcp-client/tools |
+| 匿名身份 | `pkg/telemetry/anonymous.go` | identity/anonymous-user-id |
 
 ## 下一步
 
