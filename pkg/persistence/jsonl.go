@@ -671,36 +671,91 @@ func (j *JSONLBackend) List(ctx context.Context) ([]brand.SessionID, error) {
 // 崩溃修复
 // ============================================================================
 
-// repairOrphanTurn 检测末尾未关闭 turn 并补写 interrupted。返回补写数量。
+// repairOrphanTurn 检测末尾未关闭的 turn，依次补齐：悬空调用的错误结果 →
+// 未闭合的 step/end → interrupted 的 turn/end。返回补写数量。
 func repairOrphanTurn(events *[]session.SessionEvent) int {
 	if len(*events) == 0 {
 		return 0
 	}
-	// 计算最终 turn 状态，并跟踪当前打开的 turn 编号
 	turnOpen := false
+	stepOpen := false
 	var openTurn uint64
+	var openStep uint64
+	// pending 按出现顺序保留尚未收到 result 的调用 id。
+	var pending []string
+	hasResult := map[string]bool{}
 	for _, ev := range *events {
 		switch ev.Type {
 		case session.EventTurnStart:
-			turnOpen = true
+			turnOpen, stepOpen = true, false
+			pending = nil
 			if td, ok := ev.Data.(session.TurnStartData); ok {
 				openTurn = td.Turn
 			}
 		case session.EventTurnEnd:
-			turnOpen = false
+			turnOpen, stepOpen = false, false
+			pending = nil
+		case session.EventStepStart:
+			stepOpen = true
+			if sd, ok := ev.Data.(session.StepStartData); ok {
+				openStep = sd.Step
+			}
+		case session.EventStepEnd:
+			stepOpen = false
+		case session.EventAssistantMessage:
+			if am, ok := ev.Data.(session.AssistantMessageData); ok {
+				for _, id := range am.ToolCallIDs {
+					if !hasResult[id] {
+						pending = append(pending, id)
+					}
+				}
+			}
+		case session.EventToolResult:
+			if tr, ok := ev.Data.(session.ToolResultData); ok {
+				hasResult[tr.CallID.String()] = true
+			}
 		}
 	}
 	if !turnOpen {
 		return 0
 	}
-	// 补一条 turn/end{reason:interrupted}，携带正确的 turn 编号
 	last := (*events)[len(*events)-1]
-	repaired := session.SessionEvent{
-		Seq:  last.Seq + 1,
-		Time: last.Time,
+	seq := last.Seq
+	time := last.Time
+	add := func(ev session.SessionEvent) {
+		seq++
+		ev.Seq, ev.Time = seq, time
+		*events = append(*events, ev)
+	}
+	n := 0
+	// 1) 悬空调用补错误结果。
+	for _, id := range pending {
+		if hasResult[id] {
+			continue
+		}
+		add(session.SessionEvent{
+			Type: session.EventToolResult,
+			Data: session.ToolResultData{
+				CallID:  brand.NewToolCallID(id),
+				IsError: true,
+				Output:  "工具调用在记录结果前被中断，结果未知；如仍需要请在确认外部状态后重试。",
+			},
+		})
+		n++
+	}
+	// 2) 未闭合的 step。
+	if stepOpen {
+		add(session.SessionEvent{
+			Type: session.EventStepEnd,
+			Data: session.StepEndData{Turn: openTurn, Step: openStep},
+		})
+		n++
+	}
+	// 3) interrupted 的 turn/end。
+	add(session.SessionEvent{
 		Type: session.EventTurnEnd,
 		Data: session.TurnEndData{Turn: openTurn, Reason: session.ReasonInterrupted},
-	}
-	*events = append(*events, repaired)
-	return 1
+	})
+	n++
+	return n
 }
