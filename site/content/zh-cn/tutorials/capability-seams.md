@@ -73,6 +73,15 @@ _, _ = llm.Chat(ctx, req, func(c llm.StreamChunk) {
 - **重试**：`pkg/llm/retry.go` 只对可重试错误（超时、429、5xx）退避重试，确定性失败（4xx 鉴权错误）立即返回，不做无意义重试；
 - **缓存**：`pkg/cache` 对确定性请求提供命中，降低重复调用成本与延迟。
 
+## 输入边界：外部数据进入前的校验
+
+能力接缝不只是"接得上"，外部数据在进入内核前必须先过一道边界校验，dsh-go 对应实现：
+
+- **附件准入**：`attachment.DecodeCanonicalBase64` 解码后再编码比对，拒绝非规范 base64；`attachment.NewLimiter` 用固定并发上限约束图像变换，超出排队；
+- **反馈值约束**：`feedback.ValidateRating` 只接受 thumbs up/down（0=未评分不落库），`ValidateNote` 要求非空备注含非空白字符；
+- **技能语法**：`skills.IsName` 校验 kebab-case 名称，`RenderContent` 渲染统一 `<skill_content>` 块并转义内嵌文本；
+- **MCP 公共名**：`mcp.PublicToolName` 生成 `mcp__server__raw`，字符替换或截断时追加身份哈希，防止不同外部身份塌缩为同名。
+
 ## 为什么三角色很重要？
 
 这套结构是"一切皆插件、能力可自由替换"的落地方式。它的收益：
@@ -92,6 +101,10 @@ _, _ = llm.Chat(ctx, req, func(c llm.StreamChunk) {
 | 错误链 | `pkg/llm/errorchain.go` | （dsh-go 增强） |
 | 重试 | `pkg/llm/retry.go` | （dsh-go 增强） |
 | 能力注册 | `pkg/registry/registry.go` — `Freezable` | Cordis service 注册 |
+| 附件准入/限流 | `pkg/attachment/admission.go`、`limiter.go` | attachment/admission、compression-limiter |
+| 反馈值约束 | `pkg/feedback/validate.go` | message-feedback/spec |
+| 技能语法 | `pkg/skills/grammar.go` | skill/src/index |
+| MCP 公共名 | `pkg/mcp/publicname.go` | mcp-client/tools |
 
 ## 下一步
 

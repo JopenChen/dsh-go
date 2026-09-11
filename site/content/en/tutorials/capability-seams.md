@@ -57,6 +57,10 @@ The adapter translates the unified `ChatRequest` into the target wire format and
 - **Retry**: `pkg/llm/retry.go` only backs off on retryable errors (timeout, 429, 5xx); deterministic failures (4xx) return immediately;
 - **Cache**: `pkg/cache` serves deterministic requests to cut cost and latency.
 
+## Input Boundary Validation
+
+External data is validated before entering the core: `attachment.DecodeCanonicalBase64` rejects non-canonical base64 and `NewLimiter` bounds image-transform concurrency; `feedback.ValidateRating/ValidateNote` constrain rating and note; `skills.IsName/RenderContent` enforce the kebab grammar and escape embedded text; `mcp.PublicToolName` derives `mcp__server__raw` and appends an identity hash on lossy normalization to prevent collapse.
+
 ## Why the Three Roles Matter
 
 This is how "everything is a plugin, freely replaceable" lands: swap a Provider without touching Consumers; inject a stub in tests; compose multiple Providers behind a routing adapter. The cost is upfront interface design — an unstable Definition moves every Consumer.
@@ -70,6 +74,10 @@ This is how "everything is a plugin, freely replaceable" lands: swap a Provider 
 | Error chain | `pkg/llm/errorchain.go` | (dsh-go addition) |
 | Retry | `pkg/llm/retry.go` | (dsh-go addition) |
 | Capability registry | `pkg/registry/registry.go` | Cordis service |
+| Attachment admission/limiter | `pkg/attachment/admission.go`, `limiter.go` | attachment/admission |
+| Feedback validation | `pkg/feedback/validate.go` | message-feedback/spec |
+| Skill grammar | `pkg/skills/grammar.go` | skill/src/index |
+| MCP public name | `pkg/mcp/publicname.go` | mcp-client/tools |
 
 ## Next Steps
 
