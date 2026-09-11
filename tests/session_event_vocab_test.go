@@ -124,6 +124,8 @@ func sampleDataFor(t session.EventType) session.EventData {
 		return session.WorkspaceChangeData{WorkspaceID: brand.NewWorkspaceID("ws_1"), Root: "/ws"}
 	case session.EventUserQuestion:
 		return session.UserQuestionData{Question: "q", Answer: "a"}
+	case session.EventSandboxMode:
+		return session.SandboxModeData{Mode: "read-only", Source: "user"}
 	default:
 		return nil
 	}
