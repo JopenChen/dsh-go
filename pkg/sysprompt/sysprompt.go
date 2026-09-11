@@ -109,7 +109,13 @@ func (a *Assembler) Sections() []*Section {
 	defer a.mu.RUnlock()
 	out := make([]*Section, len(a.sections))
 	copy(out, a.sections)
-	sort.SliceStable(out, func(i, j int) bool { return out[i].Order < out[j].Order })
+	// 先按 order，order 相同再按 name：跨机器确定性，不依赖注册顺序。
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].Order != out[j].Order {
+			return out[i].Order < out[j].Order
+		}
+		return out[i].Name < out[j].Name
+	})
 	return out
 }
 
