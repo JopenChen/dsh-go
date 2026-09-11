@@ -40,6 +40,8 @@ const (
 	EventAgentError   EventType = "agent/error"
 	EventAgentPreStep EventType = "agent/pre-step"
 	EventAgentRequest EventType = "agent/request"
+	EventAgentStatus  EventType = "agent/status"
+	EventAgentInboxSpliced EventType = "agent/inbox/spliced"
 )
 
 // 簇 B：消息（6 种）
@@ -123,7 +125,7 @@ const (
 // 全部事件类型清单（用于词汇表遍历与 round-trip 测试）。
 var AllEventTypes = []EventType{
 	EventTurnStart, EventTurnEnd, EventTurnStopping, EventStepStart, EventStepEnd,
-	EventAgentError, EventAgentPreStep, EventAgentRequest,
+	EventAgentError, EventAgentPreStep, EventAgentRequest, EventAgentStatus, EventAgentInboxSpliced,
 	EventUserMessage, EventAssistantMessage, EventAssistantChunk, EventAssistantReasoning,
 	EventInjectionContext, EventSessionTitle,
 	EventToolCall, EventToolResult, EventToolError, EventToolObserved, EventToolPresentation,
@@ -230,6 +232,34 @@ type AgentRequestData struct {
 }
 
 func (AgentRequestData) EventType() EventType { return EventAgentRequest }
+
+// AgentStatusData agent/status：Agent 生命周期状态转换（idle ↔ running）。
+type AgentStatusData struct {
+	Status string `json:"status"`
+}
+
+func (AgentStatusData) EventType() EventType { return EventAgentStatus }
+
+// InboxTarget 是收件箱目标（next-turn 或 next-step）。
+type InboxTarget string
+
+const (
+	// InboxNextTurn 表示等待下一个 turn 的消息。
+	InboxNextTurn InboxTarget = "next-turn"
+	// InboxNextStep 表示等待下一个 step 边界的输入。
+	InboxNextStep InboxTarget = "next-step"
+)
+
+// InboxSplicedData agent/inbox/spliced：Agent 持久化待处理消息列表的一次规范化变更。
+type InboxSplicedData struct {
+	Target       InboxTarget `json:"target"`
+	Start        int         `json:"start"`
+	RemovedCount int         `json:"removedCount,omitempty"`
+	Inserted     []string    `json:"inserted"`
+	Outcome      string      `json:"outcome,omitempty"`
+}
+
+func (InboxSplicedData) EventType() EventType { return EventAgentInboxSpliced }
 
 // --- 簇 B：消息 ---
 
@@ -665,6 +695,10 @@ func newEventData(t EventType) (EventData, error) {
 		return AgentPreStepData{}, nil
 	case EventAgentRequest:
 		return AgentRequestData{}, nil
+	case EventAgentStatus:
+		return AgentStatusData{}, nil
+	case EventAgentInboxSpliced:
+		return InboxSplicedData{}, nil
 	case EventUserMessage:
 		return UserMessageData{}, nil
 	case EventAssistantMessage:
