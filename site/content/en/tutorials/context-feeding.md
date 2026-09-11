@@ -34,6 +34,14 @@ weight: 45
 
 Due items are delivered via `Out()`; one-shots are removed after dispatch while recurring ones re-arm. Delivery stays session-local.
 
+## Prompt Assembly
+
+`pkg/sysprompt` assembles the ordered sections before each request:
+
+- `Interpolate` performs strict `{{name}}` substitution: names match `[a-z][a-z0-9_]*`, unknown or valueless variables error, substituted values are never rescanned, and a lone `{{` stays literal;
+- sections sort by `order`, then by name for machine-independent output;
+- `OrderTools` orders tools by config, inserting unlisted tools at the `<unlisted-tools>` marker exactly once.
+
 ## Layered Environment
 
 `launchenv` freezes the process, project `.env`, and user `.env` layers at launch and resolves a name in the fixed trust order process > project > user (folding names on Windows).
@@ -50,6 +58,8 @@ Due items are delivered via `Out()`; one-shots are removed after dispatch while 
 | In-process schedule | `pkg/schedule/schedule.go` | `schedule/schedule/src/runtime.ts` |
 | Layered environment | `pkg/launchenv/launchenv.go` | `util/launch-environment/src/index.ts` |
 | User-data root | `pkg/homepath/homepath.go` | `util/home-paths/src/index.ts` |
+| Variable interpolation | `pkg/sysprompt/interpolate.go` | `core/system-prompt/src/index.ts` |
+| Tool ordering | `pkg/sysprompt/order_tools.go` | `core/system-prompt/src/index.ts` |
 
 ## Next Steps
 

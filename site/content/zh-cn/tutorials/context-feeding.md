@@ -41,6 +41,14 @@ weight: 45
 
 到点经 `Out()` 通道投递；一次性触发后移除，周期性自动重排；`Cancel/List/Shutdown` 管理生命周期。提醒投递不离开拥有者会话（session-local）。
 
+## 系统提示装配：变量插值与确定性排序
+
+每个能力块向系统提示贡献一个带 `order` 的 Section，最终在请求前装配成完整提示。`pkg/sysprompt` 复刻这套规则：
+
+- `Interpolate` 做严格 `{{name}}` 插值：变量名须为 `[a-z][a-z0-9_]*`，未知或无值变量直接报错，**替换进去的值不再二次扫描**（防止值里夹带模板），没有后续 `}}` 的孤立 `{{` 当作普通文本；
+- Section 先按 `order` 升序，`order` 相同再按名称排序——跨机器结果一致，不依赖注册先后；
+- `OrderTools` 按配置排列工具，未列出的工具在 `<unlisted-tools>` 标记处按名称插入；配置必须恰好含一次该标记、不得重复或引用不存在的工具。
+
 ## 分层环境：配置值的信任顺序
 
 同一个变量可能同时出现在进程环境、项目 `.env`、用户 `.env` 三处。`launchenv` 在启动时把三层冻结成不可变快照，按"进程 > 项目 > 用户"的固定信任顺序解析（Windows 上变量名大小写折叠），避免运行中切换目录后配置被悄悄改变。
@@ -57,6 +65,8 @@ weight: 45
 | 进程内调度 | `pkg/schedule/schedule.go` | `packages/schedule/schedule/src/runtime.ts` |
 | 分层环境 | `pkg/launchenv/launchenv.go` | `packages/util/launch-environment/src/index.ts` |
 | 用户数据根 | `pkg/homepath/homepath.go` | `packages/util/home-paths/src/index.ts` |
+| 变量插值 | `pkg/sysprompt/interpolate.go` | `packages/core/system-prompt/src/index.ts` |
+| 工具排序 | `pkg/sysprompt/order_tools.go` | `packages/core/system-prompt/src/index.ts` |
 
 ## 下一步
 
