@@ -111,6 +111,12 @@ func keyOf(session brand.SessionID, messageID string) string {
 // Put 写入（或创建）一条反馈。Sign 若提供 expectedVersion，则做 CAS：版本不符 → VERSION_CONFLICT。
 // 返回新版本号。
 func (s *Store) Put(ctx context.Context, session brand.SessionID, messageID string, rating Rating, note string, expectedVersion *uint64) (uint64, error) {
+	if err := ValidateRating(rating); err != nil {
+		return 0, err
+	}
+	if err := ValidateNote(note); err != nil {
+		return 0, err
+	}
 	if session.IsZero() {
 		return 0, fail(CodeSessionNotFound, "missing session id")
 	}
