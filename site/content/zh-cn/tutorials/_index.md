@@ -21,6 +21,14 @@ weight: 2
 
 6. [沙箱与受控执行](sandbox-execution/) —— Agent 能在哪儿写？三种沙箱模式、策略解析与 fail-closed 强制约束
 
+## 扩展与工程
+
+7. [插件内核与事件系统](plugin-kernel/) —— 一切皆插件如何落地：注册中心、四种事件分发与自动清理
+8. [工具执行流水线](tool-pipeline/) —— 一次工具调用经过的固定环节、三态决策与单调守卫
+9. [能力三角色与 LLM 适配器](capability-seams/) —— Definition / Provider / Consumer 与任意模型接入
+10. [组合包与配置分层](bundle-profile/) —— bundle/profile 如何落地为 Preset 组合与分层 Settings
+11. [防御性编程与事故复盘](defensive-patterns/) —— 结果报告、资源清理、凭据保护与复盘四问
+
 ## 运行方式
 
 ```bash
@@ -39,6 +47,13 @@ go run ./examples/sandbox_approval
 - `pkg/agent/agent.go` —— Agent 循环，驱动 Turn/Step 双循环
 - `pkg/sandbox/sandbox.go` —— 三种沙箱模式与 fail-closed 强制约束
 - `pkg/approval/approval.go` —— 审批策略（另一道安全闸）
+- `pkg/registry/registry.go` —— 可冻结的能力注册中心
+- `pkg/eventbus/eventbus.go` —— 事件总线（emit/bail/serial）
+- `pkg/waterfall/waterfall.go` —— 洋葱式 waterfall 链
+- `pkg/tools/` —— 工具流水线、三态决策、单调守卫与分层掩码
+- `pkg/llm/llm.go` —— LLMAdapter 与 StreamChunk 流式协议
+- `pkg/presets/`、`pkg/settings/` —— 能力档组合与分层配置
+- `pkg/credentials/credentials.go` —— 凭据引用与最小暴露
 
 ## 后续规划
 
