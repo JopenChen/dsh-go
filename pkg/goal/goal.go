@@ -197,10 +197,16 @@ func (g *GoalToolset) goalSetPhase(ctx context.Context, input map[string]any) (a
 		return nil, NewGoalError(ErrorNotFound, "no active goal", nil)
 	}
 	// 校验非法阶段（官方 GOAL_INVALID_TRANSITION）。
-	if !Phase(phase).Valid() {
+	target := Phase(phase)
+	if !target.Valid() {
 		return nil, NewGoalError(ErrorInvalidTransition, "invalid phase: "+phase, nil)
 	}
-	cur.Phase = Phase(phase)
+	// 校验 from→to 迁移合法性（complete 终态、paused/blocked 仅从 active）。
+	if !CanTransition(cur.Phase, target) {
+		return nil, NewGoalError(ErrorInvalidTransition,
+			"cannot transition "+string(cur.Phase)+" -> "+phase, nil)
+	}
+	cur.Phase = target
 	cur.Revision++
 	if err := writeGoal(g.sl, cur); err != nil {
 		return nil, err
