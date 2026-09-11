@@ -41,6 +41,8 @@ type Tool struct {
 	Description string
 	// Schema 参数 JSON Schema（进 prompt + 入参校验）。
 	Schema *JsonSchemaNode
+	// TimeoutMs 协作式超时预算（0 = 不限）；工具应尊重 ctx，超时映射为 TOOL_TIMEOUT。
+	TimeoutMs int
 	// Execute 具体实现。
 	Execute ToolExecuteFunc
 }
