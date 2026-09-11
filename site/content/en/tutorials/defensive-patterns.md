@@ -51,7 +51,7 @@ A tool declares `TimeoutMs`; `tools.WrapTimeout` arms the deadline and maps its 
 
 ### Tool Pairing
 
-A compaction cut must never sit between a tool_call and its tool_result. `compaction.BalancedCuts` treats tool calls as +1 and results as -1; only zero-balance cuts are legal. `NearestBalancedFrom` moves a desired cut to the nearest balanced position.
+A compaction cut must never sit between a tool_call and its tool_result. `compaction.BalancedCuts` treats tool calls as +1 and results as -1; only zero-balance cuts are legal. `NearestBalancedFrom` moves a desired cut to the nearest balanced position. A single over-long result is handled by `compaction.PruneText`, which keeps the head and tail and replaces the middle with a marker (rune-safe slicing).
 
 ## Postmortem: Four Questions
 
@@ -84,6 +84,7 @@ Defensive patterns push errors left to write/startup/compile time; when somethin
 | Cooperative timeout | `pkg/tools/timeout.go` — `WrapTimeout` | guard/timeout-policy |
 | Repeat reminder | `pkg/tools/repeat.go` — `RepeatState` | guard/repeat-tool-reminder |
 | Tool pairing | `pkg/compaction/pairing.go` — `BalancedCuts` | compaction/tool-pairing |
+| Head-tail prune | `pkg/compaction/pruner.go` — `PruneText` | compaction/compaction-tool-result-pruner |
 | Error chain | `pkg/llm/errorchain.go` | (dsh-go addition) |
 
 ## Next Steps

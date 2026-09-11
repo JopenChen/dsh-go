@@ -59,7 +59,7 @@ API Key、OAuth Token 是最高敏感级：
 
 ### 工具配平：防止压缩出非法历史
 
-压缩历史时，切点绝不能落在一次 tool_call 与它的 tool_result 之间，否则会留下"有调用没结果"的历史，模型会因此卡住。`compaction.BalancedCuts` 用括号配平：assistant/message 里每个工具调用 +1、tool/result -1，只有进行中计数归零处才是合法切点；`NearestBalancedFrom` 会把期望边界安全后移到最近的配平位置。
+压缩历史时，切点绝不能落在一次 tool_call 与它的 tool_result 之间，否则会留下"有调用没结果"的历史，模型会因此卡住。`compaction.BalancedCuts` 用括号配平：assistant/message 里每个工具调用 +1、tool/result -1，只有进行中计数归零处才是合法切点；`NearestBalancedFrom` 会把期望边界安全后移到最近的配平位置。对于单条超长的工具结果，则用 `compaction.PruneText` 保留头尾、中间替换为省略标记（按 rune 切分不拆字符），在不丢失首尾关键信息的前提下省出空间。
 
 ## 事故复盘：四问
 
@@ -102,6 +102,7 @@ dsh-go 借鉴上游的复盘文化：一个 bug 出现在"不该出现"的地方
 | 协作式超时 | `pkg/tools/timeout.go` — `WrapTimeout` | `packages/guard/timeout-policy` |
 | 重复提醒 | `pkg/tools/repeat.go` — `RepeatState` | `packages/guard/repeat-tool-reminder` |
 | 工具配平 | `pkg/compaction/pairing.go` — `BalancedCuts` | `packages/compaction/tool-pairing` |
+| 首尾修剪 | `pkg/compaction/pruner.go` — `PruneText` | `packages/compaction/compaction-tool-result-pruner` |
 | 错误链 | `pkg/llm/errorchain.go` | （dsh-go 增强） |
 
 ## 下一步
