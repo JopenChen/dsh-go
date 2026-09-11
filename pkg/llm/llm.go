@@ -38,6 +38,7 @@ type ContentBlockKind string
 // 内容块类型枚举。
 const (
 	BlockText    ContentBlockKind = "text"
+	BlockReasoning ContentBlockKind = "reasoning"
 	BlockToolUse ContentBlockKind = "tool_use"
 	BlockToolResult ContentBlockKind = "tool_result"
 	BlockImage   ContentBlockKind = "image"
@@ -75,6 +76,11 @@ type ContentBlock struct {
 // Text 构造文本内容块。
 func Text(s string) ContentBlock {
 	return ContentBlock{Kind: BlockText, Text: s}
+}
+
+// Reasoning 构造思维链内容块。
+func Reasoning(s string) ContentBlock {
+	return ContentBlock{Kind: BlockReasoning, Text: s}
 }
 
 // ToolUse 构造工具调用内容块。
