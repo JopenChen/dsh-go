@@ -60,6 +60,21 @@ err := g.Update(tools.PreAllow)         // relax → ErrGuardRelaxed
 
 Beyond per-call decisions, tool visibility uses a `Restriction` mask. `RestrictionSet` holds an ordered layer stack (host outermost, nearer scope wins), resolved **nearest-scope-wins**: scan from the nearest layer back to host; the first layer that mentions a tool decides. `host deny + scope allow(exempt)` restores a tool; both deny → reject; unmentioned → allowed by default. It serves Subagent capability limits and Preset tool hiding via `Filter`.
 
+## PTC Mode: The Model Writes a Program
+
+In standard mode the model emits tool calls one at a time. Upstream also offers **PTC (Programmatic Tool Calling)**: the model writes a program (an async function body) that composes multiple calls via `tools.name(args)` and returns one curated result.
+
+dsh-go splits this into two layers:
+
+- **`pkg/coderuntime` fixes the execution seam**: `RunRequest` (program + binding namespaces), `RunResult` (value + logs + six failure kinds), and the `Runtime` interface. A Go process has no in-process JS engine, so no language backend is built in; the user implements the interface (external process / embedded interpreter / remote service).
+- **`pkg/tools.NewRunCodeTool` bridges**: it maps the tool set into a `"tools"` binding namespace, and each member still runs through the same tool pipeline when called by the program — so permission, sandbox, and the monotonic guard apply identically.
+
+The key semantics: **sub-dispatches are logged for reconstruction; only the outer curated result enters model history**.
+
+### Why no built-in code engine in Go?
+
+Upstream's only published PTC backend is a Node worker thread running TypeScript — natural in the JS ecosystem. Embedding a JS engine in Go would be heavy and fragile. dsh-go replicates the protocol and bridge semantics while leaving the execution backend a replaceable interface.
+
 ## Source Map
 
 | Concept | Go implementation | Upstream TypeScript |
@@ -68,6 +83,8 @@ Beyond per-call decisions, tool visibility uses a `Restriction` mask. `Restricti
 | Three-state decision | `pkg/tools/predecision.go` | tools pre-execute |
 | Monotonic guard | `pkg/tools/monotonic.go` — `MonotonicGuard` | monotonic guard |
 | Layered mask | `pkg/tools/restriction.go` — `RestrictionSet` | tools restriction |
+| PTC seam | `pkg/coderuntime/coderuntime.go` — `Runtime` | `packages/code-runtime` |
+| run_code bridge | `pkg/tools/ptc.go` — `NewRunCodeTool` | `tools/src/ptc.ts` |
 | Object pool | `pkg/tools/pooled.go` — `SetPooled` | (dsh-go addition) |
 
 ## Next Steps

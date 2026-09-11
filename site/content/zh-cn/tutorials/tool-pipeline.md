@@ -87,6 +87,26 @@ err := g.Update(tools.PreAllow)         // 放宽，拒绝 → ErrGuardRelaxed
 
 它服务于 Subagent 父限子能力、Preset 隐藏工具等场景，`Filter` 直接按掩码过滤工具列表。
 
+## PTC 模式：让模型写程序组合工具
+
+标准模式下模型逐个发出工具调用，每调用一次走一遍流水线。官方还提供 **PTC（Programmatic Tool Calling）模式**：模型不再逐个调用，而是写一段程序（async 函数体），程序内部通过 `tools.name(args)` 组合多步调用，最后只把精选结果返回。
+
+```
+标准模式：模型 → toolA → 模型 → toolB → 模型 → 汇总（多轮）
+PTC 模式：模型 → run_code(一段程序) → 程序内连续调用 toolA/toolB → 一次返回
+```
+
+dsh-go 的对应实现分两层：
+
+- **`pkg/coderuntime` 固化执行缝契约**：`RunRequest`（程序 + 绑定命名空间）、`RunResult`（完成值 + logs + 六类失败）、`Runtime` 接口。Go 进程内没有 JS 引擎，因此不内置语言后端，由使用方实现接口（外部进程 / 嵌入式解释器 / 远程服务）。
+- **`pkg/tools.NewRunCodeTool` 做桥接**：把当前工具集映射为一个 `"tools"` 绑定命名空间，每个成员在被程序调用时仍走同一条工具流水线——因此权限、沙箱、单调守卫对程序内调用**同样生效**，不会因为换了调用方式就绕过安全策略。
+
+关键语义是**子调度留痕、外层结果入史**：程序内每次工具调用都可被记录用于重建，而只有外层 run_code 的精选结果进入模型历史，避免一段程序把几十条中间结果灌爆上下文。
+
+### 为什么 Go 不内置代码引擎？
+
+PTC 上游唯一发布的后端是 Node 工作线程执行 TypeScript，这是 JS 生态的天然能力。强行在 Go 里嵌入 JS 引擎既笨重又脆弱。dsh-go 的取舍是**复刻协议与桥接语义、把执行后端留成可替换接口**——需要 PTC 时接入合适的 Runtime，不需要时这层抽象零成本。
+
 ## 源码对照
 
 | 概念 | Go 实现 | 官方 TypeScript |
@@ -95,6 +115,8 @@ err := g.Update(tools.PreAllow)         // 放宽，拒绝 → ErrGuardRelaxed
 | 三态决策 | `pkg/tools/predecision.go` — `PreDecisionMiddleware` | `packages/core/tools/pre-execute` |
 | 单调守卫 | `pkg/tools/monotonic.go` — `MonotonicGuard` | tools monotonic guard |
 | 分层掩码 | `pkg/tools/restriction.go` — `RestrictionSet` | `packages/core/tools/restriction` |
+| PTC 执行缝 | `pkg/coderuntime/coderuntime.go` — `Runtime` | `packages/code-runtime` |
+| run_code 桥 | `pkg/tools/ptc.go` — `NewRunCodeTool` | `packages/core/tools/src/ptc.ts` |
 | 对象池 | `pkg/tools/pooled.go` — `SetPooled` | （dsh-go 性能增强） |
 
 ## 下一步

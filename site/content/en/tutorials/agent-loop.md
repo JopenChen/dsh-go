@@ -233,6 +233,25 @@ action := ResolveRequestError(chain, payload)
 
 Only **overload** and **rate-limit** errors are retryable (classified by `llm.ClassifyLlmError`). Other errors (auth, invalid request, etc.) immediately abort.
 
+## ConsumedWork: Account for Consumed Work
+
+Reading turn/end alone conflates a turn cut short before its first step with the balanced no-op a rejection or empty claim produces. `agent.FoldConsumedWork` folds the log in one pass:
+
+- **End**: the latest turn that actually accounted for work — it entered a model step, or claimed input and then failed/was blocked;
+- **DroppedUnrun**: whether work was cancelled out of the inbox unrun before any turn could open.
+
+`accountsForClaim`: of turns that claimed input but never reached a step, only `completed` does not account for it; `blocked/aborted/error/interrupted` are the input's ending too.
+
+## Model Selection Dual Snapshot
+
+A model can switch at runtime, but the prompt-assembly surface and request-routing surface must not use different models. `agent.ModelSelectionRef`:
+
+- `Select` updates the `current` for the next step;
+- `Capture` freezes current into `assembled` at the prompt-assembly boundary;
+- `Apply` overrides provider/model/effort with the assembled snapshot when sending.
+
+A concurrent switch thus takes effect only on a **later step**; when the captured selection carries no reasoning effort, `Apply` clears the inherited effort to restore the selected model's default.
+
 ## Interaction with Other Subsystems
 
 ### SessionLog
@@ -286,6 +305,8 @@ Approval decides **whether** a tool can run. Like the Sandbox, this is handled i
 | PreStepDecision | `pkg/agent/options.go` — `PreStepDecision` | `packages/core/agent/src/runtime-types.ts` — `PreStepDecision` |
 | RequestError | `pkg/agent/requesterror.go` — `RequestErrorWaterfall` | `packages/core/agent-loop/` — request-error waterfall |
 | Initiator | `pkg/agent/initiator.go` — `Initiator` | `packages/core/agent/src/index.ts` — initiator tracking |
+| ConsumedWork | `pkg/agent/consumed.go` — `FoldConsumedWork` | `packages/core/agent/src/consumed-work.ts` |
+| Model selection | `pkg/agent/model_selection.go` — `ModelSelectionRef` | `packages/core/agent/src/model-selection.ts` |
 
 ## Next Steps
 

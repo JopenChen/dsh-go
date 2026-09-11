@@ -73,6 +73,16 @@ defer dispose()          // 组件销毁时摘除，幂等可重复调用
 
 这种"注册即返回逆操作"的模式贯穿整个项目：注册工具返回注销、订阅事件返回退订。它让每一项资源都有明确的归属与回收点，避免监听器泄漏导致的"幽灵回调"。
 
+## 作用域的父链
+
+分层作用域除了"层栈叠加"，还能显式声明自己的外层（父）作用域，解析时沿祖先链向上回溯。`scope.ParentTree` 承载这层关系：
+
+- `Bind(key, parent)` 一次性绑定父，重复绑定返回 `ErrAlreadyBound`；
+- 每次绑定做**环检测**：沿父链若能走回 key 自己（会成环），返回 `ErrCycle`；
+- `ChainOf(key)` 返回 nearest-first 的祖先链 `[key, parent, …]`，并带 visited 防御异常数据。
+
+父关系因此是一张有向无环图：无论作用域怎么嵌套，"沿父走到根"的遍历永远不会陷入循环。
+
 ## 为什么这样取舍？
 
 照搬 Cordis 的动态插件容器到 Go 会引入大量运行时反射与全局可变状态，违背 Go"显式优于隐式"的习惯。dsh-go 的选择是：
@@ -92,6 +102,7 @@ defer dispose()          // 组件销毁时摘除，幂等可重复调用
 | 广播/保释/串行 | `pkg/eventbus/eventbus.go` — `Emit/Bail/Serial` | Cordis `emit/bail/serial` |
 | 洋葱委托 | `pkg/waterfall/waterfall.go` — `Chain.Run` | Cordis `waterfall` |
 | 自动清理 | `pkg/eventbus/eventbus.go` — `On` 返回 dispose | Cordis 插件卸载自动 `dispose` |
+| 父作用域链 | `pkg/scope/parent.go` — `ParentTree` | `packages/core/scope` parent binding |
 
 ## 下一步
 

@@ -233,6 +233,27 @@ action := ResolveRequestError(chain, payload)
 
 只有 **overload** 和 **rate-limit** 错误是可重试的（由 `llm.ClassifyLlmError` 分类）。其他错误（auth、无效请求等）立即中止。
 
+## ConsumedWork：结算被消费的工作
+
+只看 turn/end 会混淆两类外形相同的 turn："在首个 step 前就中止的 turn"和"被拒绝/空 claim 产生的 no-op turn"——要么把半途而废误记为完成，要么冤枉每个 no-op。
+
+`agent.FoldConsumedWork` 单遍折叠日志，给出一份结算：
+
+- **End**：最后一个真正结算了工作的 turn——它进入过模型 step，或 claim 了输入后失败/被阻止；
+- **DroppedUnrun**：是否有工作在取消时被丢弃、从未运行（任何 turn 都来不及打开）。
+
+判定规则 `accountsForClaim`：一个 claim 了输入却没走到 step 的 turn，只有 `completed` 不结算（claim 被改写后已无东西可跑），`blocked/aborted/error/interrupted` 都算那份输入的结局。这份账让"干了活"与"丢了活"在取消路径上也能被准确区分。
+
+## 模型选择双快照：切换不撕裂
+
+模型可以在运行期切换，但"prompt 装配面"与"请求路由面"不能各用一个模型。`agent.ModelSelectionRef` 用双快照保证一致性：
+
+- `Select` 更新下一步要用的 `current`；
+- `Capture` 在一次 step 的 prompt 装配边界把 current 冻结为 `assembled`；
+- `Apply` 在发请求时用 assembled 覆盖 provider/model/effort。
+
+于是一次并发切换只在**后续 step** 生效，当前 step 从装配到请求始终用同一个模型。捕获选择未带推理努力时，`Apply` 会清掉继承的努力以恢复所选模型的默认行为。
+
 ## 与其他子系统的交互
 
 ### SessionLog
@@ -286,6 +307,8 @@ Agent 在 `runStep()` 内部调用适配器的 `Stream()` 方法。适配器基�
 | PreStepDecision | `pkg/agent/options.go` — `PreStepDecision` | `packages/core/agent/src/runtime-types.ts` — `PreStepDecision` |
 | 请求错误 | `pkg/agent/requesterror.go` — `RequestErrorWaterfall` | `packages/core/agent-loop/` — request-error waterfall |
 | Initiator | `pkg/agent/initiator.go` — `Initiator` | `packages/core/agent/src/index.ts` — initiator tracking |
+| ConsumedWork | `pkg/agent/consumed.go` — `FoldConsumedWork` | `packages/core/agent/src/consumed-work.ts` |
+| 模型选择 | `pkg/agent/model_selection.go` — `ModelSelectionRef` | `packages/core/agent/src/model-selection.ts` |
 
 ## 下一步
 

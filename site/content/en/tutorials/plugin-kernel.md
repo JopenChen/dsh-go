@@ -64,6 +64,16 @@ defer dispose()          // removed on teardown; idempotent
 
 This "register returns its inverse" pattern runs throughout the project: registering a tool returns its removal, subscribing returns unsubscription — giving every resource a clear owner and reclamation point.
 
+## Scope Parent Chain
+
+Beyond layer-stack overlay, a scope can explicitly declare its enclosing (parent) scope. `scope.ParentTree`:
+
+- `Bind(key, parent)` binds once; a repeat returns `ErrAlreadyBound`;
+- Every bind runs **cycle detection**: walking parents back to the key itself returns `ErrCycle`;
+- `ChainOf(key)` returns the nearest-first ancestor chain, with a visited guard.
+
+The parent relation is thus a DAG: "walk parents to the root" can never loop.
+
 ## Why These Trade-offs?
 
 Copying Cordis's dynamic plugin container into Go would introduce runtime reflection and global mutable state, against Go's "explicit over implicit" habit. dsh-go keeps **replaceability** (interface + key lookup), keeps **reversible lifecycle** (dispose), and drops **dynamic module loading** in favor of compile-time wiring — trading runtime hot-swap for stronger type safety and zero reflection.
@@ -77,6 +87,7 @@ Copying Cordis's dynamic plugin container into Go would introduce runtime reflec
 | Emit/bail/serial | `pkg/eventbus/eventbus.go` | Cordis emit/bail/serial |
 | Onion delegation | `pkg/waterfall/waterfall.go` — `Chain.Run` | Cordis waterfall |
 | Auto cleanup | `pkg/eventbus/eventbus.go` — `On` returns dispose | Cordis unload cleanup |
+| Parent chain | `pkg/scope/parent.go` — `ParentTree` | scope parent binding |
 
 ## Next Steps
 
