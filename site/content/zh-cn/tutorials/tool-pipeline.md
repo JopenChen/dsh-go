@@ -77,6 +77,10 @@ err := g.Update(tools.PreAllow)         // 放宽，拒绝 → ErrGuardRelaxed
 
 这是一条典型的 fail-closed 设计：安全策略的优先级永远高于便利策略，任何想"撤销"一个已成立的拒绝的尝试都会被明确拒绝，而不是被静默放行。
 
+## 并行调度：有界池 + 模型序归位
+
+一个 step 里模型可能同时发出多个工具调用。标记为并行的工具进入有界滚动池（默认在途上限 10），互斥工具则作为屏障、等前面的并行组排空后单独执行。`tools.RunParallel` 是与具体工具无关的泛型执行器：并发跑、结果按输入索引归位，因此**执行是并发的、提交给会话的顺序仍与模型给出的顺序一致**；任一工具报错立即取消其余任务。
+
 ## 有界输出：保留多少、省略多少
 
 工具返回的内容必须有上限，否则一次 grep 出上万条匹配就会撑爆上下文。`retain.ItemRetainer` 承担这个机械问题：持续 push 观察到的单元，只保留前 N 个，其余精确计数，`Finish` 同时给出保留子集与省略数量。注意"因预算省略"和"上游本身不完整"是两回事——后者属于工具业务状态，不混入省略计数。
@@ -120,6 +124,7 @@ PTC 上游唯一发布的后端是 Node 工作线程执行 TypeScript，这是 J
 | 单调守卫 | `pkg/tools/monotonic.go` — `MonotonicGuard` | tools monotonic guard |
 | 分层掩码 | `pkg/tools/restriction.go` — `RestrictionSet` | `packages/core/tools/restriction` |
 | PTC 执行缝 | `pkg/coderuntime/coderuntime.go` — `Runtime` | `packages/code-runtime` |
+| 有界并行池 | `pkg/tools/pool.go` — `RunParallel` | `packages/core/agent-loop/src/tool-calls.ts` |
 | 有界输出 | `pkg/retain/retain.go` — `ItemRetainer` | `packages/util/output-retention` |
 | run_code 桥 | `pkg/tools/ptc.go` — `NewRunCodeTool` | `packages/core/tools/src/ptc.ts` |
 | 对象池 | `pkg/tools/pooled.go` — `SetPooled` | （dsh-go 性能增强） |

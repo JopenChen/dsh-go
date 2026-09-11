@@ -56,6 +56,10 @@ err := g.Update(tools.PreAllow)         // relax → ErrGuardRelaxed
 // g.Decision() stays PreDeny (fail closed)
 ```
 
+## Parallel Scheduling: Bounded Pool
+
+Parallel-safe tool calls run in a bounded rolling pool (default 10 in flight), while exclusive calls act as barriers. `tools.RunParallel` runs concurrently but slots results back by input index, so execution is concurrent yet commits stay model-ordered; any error cancels the rest.
+
 ## Bounded Output
 
 `retain.ItemRetainer` answers only the mechanical question: keep the first N observed units and count the rest as exact omissions. Budget omission is distinct from an incomplete upstream, which stays a tool-domain state.
@@ -88,6 +92,7 @@ Upstream's only published PTC backend is a Node worker thread running TypeScript
 | Monotonic guard | `pkg/tools/monotonic.go` — `MonotonicGuard` | monotonic guard |
 | Layered mask | `pkg/tools/restriction.go` — `RestrictionSet` | tools restriction |
 | PTC seam | `pkg/coderuntime/coderuntime.go` — `Runtime` | `packages/code-runtime` |
+| Bounded parallel pool | `pkg/tools/pool.go` — `RunParallel` | `packages/core/agent-loop/src/tool-calls.ts` |
 | Bounded output | `pkg/retain/retain.go` — `ItemRetainer` | `packages/util/output-retention` |
 | run_code bridge | `pkg/tools/ptc.go` — `NewRunCodeTool` | `tools/src/ptc.ts` |
 | Object pool | `pkg/tools/pooled.go` — `SetPooled` | (dsh-go addition) |
