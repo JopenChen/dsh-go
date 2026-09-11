@@ -12,9 +12,13 @@ weight: 2
 2. [fold 投影](fold-projection/) —— 状态如何从事件日志"算"出来
 3. [Goal 状态机](goal-state-machine/) —— Agent 如何把目标变成可续轮的执行循环
 
+## Agent 循环
+
+4. [Turn / Step 双循环](turn-step-loop/) —— 对话如何被结构化为嵌套的 Turn 和 Step 循环，以及严格单调编号
+
 ## 安全与治理
 
-4. [沙箱与受控执行](sandbox-execution/) —— Agent 能在哪儿写？三种沙箱模式、策略解析与 fail-closed 强制约束
+5. [沙箱与受控执行](sandbox-execution/) —— Agent 能在哪儿写？三种沙箱模式、策略解析与 fail-closed 强制约束
 
 ## 运行方式
 
@@ -28,9 +32,10 @@ go run ./examples/sandbox_approval
 
 ## 对照源码
 
-- `pkg/session/session.go` —— 事件日志与事件词汇
+- `pkg/session/session.go` —— 事件日志与事件词汇（含 Turn/Step 数据结构）
 - `pkg/session/fold.go` —— fold 投影函数族
 - `pkg/goal/goal.go` —— Goal 状态机
+- `pkg/agent/agent.go` —— Agent 循环，驱动 Turn/Step 双循环
 - `pkg/sandbox/sandbox.go` —— 三种沙箱模式与 fail-closed 强制约束
 - `pkg/approval/approval.go` —— 审批策略（另一道安全闸）
 

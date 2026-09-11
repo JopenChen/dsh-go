@@ -12,9 +12,13 @@ The tutorial section is at the heart of what Dsh-Go offers. We have designed a p
 2. [fold Projection](fold-projection/) — how state is "derived" from the event log
 3. [Goal State Machine](goal-state-machine/) — how an Agent turns a goal into an execution loop with round continuation
 
+## Agent Loop
+
+4. [Turn / Step Dual Loop](turn-step-loop/) — how a conversation is structured as nested Turn and Step loops with strict monotonic numbering
+
 ## Safety & Governance
 
-4. [Sandbox & Controlled Execution](sandbox-execution/) — where can the Agent write? Three sandbox modes, policy resolution, and fail-closed confinement
+5. [Sandbox & Controlled Execution](sandbox-execution/) — where can the Agent write? Three sandbox modes, policy resolution, and fail-closed confinement
 
 ## Running It
 
@@ -28,9 +32,10 @@ go run ./examples/sandbox_approval
 
 ## Source Reference
 
-- `pkg/session/session.go` — the event log and its event vocabulary
+- `pkg/session/session.go` — the event log and its event vocabulary (including Turn/Step data structures)
 - `pkg/session/fold.go` — the fold projection function family
 - `pkg/goal/goal.go` — the Goal state machine
+- `pkg/agent/agent.go` — the Agent loop driving Turn/Step dual loop
 - `pkg/sandbox/sandbox.go` — three sandbox modes and fail-closed confinement
 - `pkg/approval/approval.go` — the approval policy (the other safety gate)
 
