@@ -28,13 +28,22 @@ func NewChangeOnlyInjector(reg *ContextRegistry, persistedHash string) *ChangeOn
 }
 
 // MightInject 对比 Compute() 哈希：变化时注入并返回文本，否则不注入。
+// ClearedContextText 是快照从有内容变为空时注入的"已清空"标记，让模型明确
+// 知道此前的运行时上下文不再适用（而不是收到一条没有信息量的空消息）。
+const ClearedContextText = "Current runtime context: none. Earlier runtime-context snapshots no longer apply."
+
 func (in *ChangeOnlyInjector) MightInject() (text string, injected bool) {
 	text, hash := in.reg.Compute()
 	if hash == in.lastHash {
 		return "", false
 	}
+	hadSnapshot := in.lastHash != ""
 	in.lastHash = hash
 	in.injects++
+	// 从有快照变为空：注入明确的清空标记。
+	if text == "" && hadSnapshot {
+		return ClearedContextText, true
+	}
 	// 不修改 system prompt：注入内容以 user-msg（text）交给上层，仅此一次。
 	return text, true
 }
