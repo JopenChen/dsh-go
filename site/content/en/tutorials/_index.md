@@ -21,6 +21,14 @@ The tutorial section is at the heart of what Dsh-Go offers. We have designed a p
 
 6. [Sandbox & Controlled Execution](sandbox-execution/) — where can the Agent write? Three sandbox modes, policy resolution, and fail-closed confinement
 
+## Extension & Engineering
+
+7. [Plugin Kernel & Event System](plugin-kernel/) — how everything-is-a-plugin lands: a registry, four dispatch modes, and auto cleanup
+8. [Tool Execution Pipeline](tool-pipeline/) — the fixed stages of a tool call, three-state decision, and monotonic guard
+9. [Capability Seams & LLM Adapter](capability-seams/) — Definition / Provider / Consumer and attaching any model
+10. [Bundle & Profile Layering](bundle-profile/) — bundle/profile as Preset composition and layered Settings
+11. [Defensive Patterns & Postmortem](defensive-patterns/) — result reporting, cleanup, credentials, and the four-question postmortem
+
 ## Running It
 
 ```bash
@@ -39,6 +47,13 @@ go run ./examples/sandbox_approval
 - `pkg/agent/agent.go` — the Agent loop driving Turn/Step dual loop
 - `pkg/sandbox/sandbox.go` — three sandbox modes and fail-closed confinement
 - `pkg/approval/approval.go` — the approval policy (the other safety gate)
+- `pkg/registry/registry.go` — a freezable capability registry
+- `pkg/eventbus/eventbus.go` — event bus (emit/bail/serial)
+- `pkg/waterfall/waterfall.go` — onion-style waterfall chain
+- `pkg/tools/` — tool pipeline, three-state decision, monotonic guard, layered mask
+- `pkg/llm/llm.go` — LLMAdapter and StreamChunk protocol
+- `pkg/presets/`, `pkg/settings/` — preset composition and layered config
+- `pkg/credentials/credentials.go` — credential references and minimal exposure
 
 ## Roadmap
 
