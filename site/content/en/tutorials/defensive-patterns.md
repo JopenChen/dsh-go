@@ -41,6 +41,10 @@ defer kill()                    // child process reaped at Turn end
 
 ## Three Runtime Guardrails
 
+### Aborted Before Dispatch
+
+If the request is cancelled before entering the tool body, the pipeline returns `TOOL_ABORTED_BEFORE_DISPATCH` and never runs the tool.
+
 ### Cooperative Timeout
 
 A tool declares `TimeoutMs`; `tools.WrapTimeout` arms the deadline and maps its own expiry to `TOOL_TIMEOUT`. A parent ctx cancelling first reads as an ordinary cancel. It is **cooperative** — Go cannot kill a goroutine, so the tool must observe `ctx.Done()`.
@@ -81,6 +85,7 @@ Defensive patterns push errors left to write/startup/compile time; when somethin
 | Temp artifacts | `pkg/spill` | (dsh-go counterpart) |
 | Credential store | `pkg/credentials/credentials.go` — `Store` | credentials |
 | Secret redaction | `pkg/settings/settings.go` — `MarkSecret` | (dsh-go addition) |
+| Aborted before dispatch | `pkg/tools/aborted.go` — `AbortedBeforeDispatchResult` | session/session-checkpoint-policy |
 | Cooperative timeout | `pkg/tools/timeout.go` — `WrapTimeout` | guard/timeout-policy |
 | Repeat reminder | `pkg/tools/repeat.go` — `RepeatState` | guard/repeat-tool-reminder |
 | Tool pairing | `pkg/compaction/pairing.go` — `BalancedCuts` | compaction/tool-pairing |

@@ -49,6 +49,10 @@ API Key、OAuth Token 是最高敏感级：
 
 除了静态的资源/凭据纪律，Agent 在长时间运行中还会遇到卡死、空转、历史损坏三类问题，对应三重运行期护栏。
 
+### 派发前取消：不进入半截工具
+
+如果请求在真正进入工具体之前就已被取消（例如等待持久化 flush 期间连接断开），流水线直接返回 `TOOL_ABORTED_BEFORE_DISPATCH` 结果，绝不带着已取消的上下文执行工具、产生无法归属的副作用。
+
 ### 协作式超时：防止永久卡死
 
 工具用 `TimeoutMs` 声明预算，`tools.WrapTimeout` 武装截止时间：本层计时器到期时把结果映射为结构化 `TOOL_TIMEOUT`，父 ctx 先取消则按普通取消处理，不会误报。它是**协作式**的——Go 无法强杀 goroutine，工具实现必须监听 `ctx.Done()` 自行退出，否则后台仍会继续。
@@ -99,6 +103,7 @@ dsh-go 借鉴上游的复盘文化：一个 bug 出现在"不该出现"的地方
 | 临时产物 | `pkg/spill` | （dsh-go 对应） |
 | 凭据存储 | `pkg/credentials/credentials.go` — `Store` | credentials 管理 |
 | 密钥脱敏 | `pkg/settings/settings.go` — `MarkSecret` | （dsh-go 增强） |
+| 派发前取消 | `pkg/tools/aborted.go` — `AbortedBeforeDispatchResult` | `packages/session/session-checkpoint-policy` |
 | 协作式超时 | `pkg/tools/timeout.go` — `WrapTimeout` | `packages/guard/timeout-policy` |
 | 重复提醒 | `pkg/tools/repeat.go` — `RepeatState` | `packages/guard/repeat-tool-reminder` |
 | 工具配平 | `pkg/compaction/pairing.go` — `BalancedCuts` | `packages/compaction/tool-pairing` |
