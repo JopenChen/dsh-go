@@ -41,6 +41,10 @@ weight: 45
 
 到点经 `Out()` 通道投递；一次性触发后移除，周期性自动重排；`Cancel/List/Shutdown` 管理生命周期。提醒投递不离开拥有者会话（session-local）。
 
+## 分层环境：配置值的信任顺序
+
+同一个变量可能同时出现在进程环境、项目 `.env`、用户 `.env` 三处。`launchenv` 在启动时把三层冻结成不可变快照，按"进程 > 项目 > 用户"的固定信任顺序解析（Windows 上变量名大小写折叠），避免运行中切换目录后配置被悄悄改变。
+
 ## 源码对照
 
 | 概念 | Go 实现 | 官方 TypeScript |
@@ -49,6 +53,7 @@ weight: 45
 | @文件引用 | `pkg/fileref/fileref.go` | `packages/context/file-reference/src/grammar.ts` |
 | 时钟上下文 | `pkg/timecontext/timecontext.go` | `packages/context/time-context/src/index.ts` |
 | 进程内调度 | `pkg/schedule/schedule.go` | `packages/schedule/schedule/src/runtime.ts` |
+| 分层环境 | `pkg/launchenv/launchenv.go` | `packages/util/launch-environment/src/index.ts` |
 
 ## 下一步
 
