@@ -19,6 +19,19 @@ weight: 30
 | `blocked` | 被阻塞（blocker 未解决） | ❌ 否 |
 | `complete` | 已完成 | ❌ 否 |
 
+## 合法迁移：不是任意两态都能切换
+
+只校验目标态是四态之一并不够，状态机还约束 from→to 的方向（`goal.CanTransition`）：
+
+```
+active   → active / paused / blocked / complete
+paused   → active / complete
+blocked  → active / complete
+complete → （终态，无出边）
+```
+
+`paused`/`blocked` 只能从 `active` 进入；`complete` 一旦到达不可再迁移。非法迁移返回 `GOAL_INVALID_TRANSITION`。
+
 ## 稳定错误码
 
 与官方 `error.ts` 对齐的 9 个稳定 `GOAL_*` 错误码（如 `GOAL_INVALID_MAX_ROUNDS`、`GOAL_STALE_REVISION`、`GOAL_NOT_FOUND`）。错误按稳定串路由，绝不解析 message 文本。
@@ -41,10 +54,23 @@ if _, err := call(ts, "goal_set_max_rounds", map[string]any{"maxRounds": float64
 }
 ```
 
+## Todo：整体替换的三态清单
+
+Goal 与 Todo 互补：Goal 管"目标处于什么阶段"，Todo 管"具体要做哪些事"。`todo` 包的待办是**整体替换**（last-write-wins），每条三态：
+
+| 状态 | 含义 |
+|---|---|
+| `pending` | 未开始 |
+| `in_progress` | 正在做（顺序模式至多一个，`AllowParallel` 可放开） |
+| `completed` | 已完成 |
+
+`Normalize` 会保证内容非空、不重复，并约束进行中数量。
+
 ## 对照源码
 
 - `pkg/goal/goal.go` —— Goal 状态机与 6 工具
 - `pkg/goal/errors.go` —— 9 个稳定错误码 + GoalError
+- `pkg/goal/transition.go` —— `CanTransition` 迁移合法性
 - 可运行示例：[`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) 第 3 步
 
 ## 下一步

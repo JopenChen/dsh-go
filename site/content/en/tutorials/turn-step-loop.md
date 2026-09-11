@@ -217,6 +217,10 @@ func (a *Agent) runTurn(req *turnReq) {
 
 This pattern — **query before append** — is the canonical way to ensure strict monotonic numbering without maintaining a separate counter in the Agent.
 
+## Streaming Block Assembly
+
+Model output arrives as a chunk stream. `llm.BlockAssembler` is the single canonical assembler: it merges consecutive text/reasoning deltas, fixes tool-call chunks into tool-use blocks, preserves stream order, and yields the assistant message via `Message()`. Size is estimated by `tokenmeter.EstimateMessage` at fixed density (4 chars/token); crossing the budget triggers compaction — an assemble → estimate → compact loop.
+
 ## Crash Repair: Orphan Turns
 
 If the process crashes mid-Turn, the persisted log will contain a `turn/start` without a matching `turn/end`. The persistence layer's `repairOrphanTurn` function detects this and appends a synthetic `turn/end {reason: interrupted}`:
@@ -302,6 +306,7 @@ The JSONL backend persists all Turn/Step events verbatim. On load, it runs `repa
 | Query methods | `pkg/session/session.go` — `NextTurn()`, `NextStep()`, `OpenTurn()`, `OpenStep()` | (not exposed in official; maintained internally) |
 | Agent loop | `pkg/agent/agent.go` — `runTurn()`, `runStep()` | `packages/core/agent/src/` — agent loop |
 | Crash repair | `pkg/persistence/jsonl.go` — `repairOrphanTurn()` | `packages/core/session/src/repair.ts` |
+| Block assembly | `pkg/llm/assembler.go` — `BlockAssembler` | `packages/llm/llm/src/assembler.ts` |
 
 ## Next Steps
 

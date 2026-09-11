@@ -217,6 +217,16 @@ func (a *Agent) runTurn(req *turnReq) {
 
 这种模式——**追加前先查询**——是确保严格单调编号的规范方式，无需在 Agent 中维护单独的计数器。
 
+## 流式块组装：从分片到助手消息
+
+一个 Step 内，模型输出是逐片到达的流。`llm.BlockAssembler` 是唯一权威的组装算法：一边接收分片、一边把原始分片写入日志，最后组装出完整的助手消息。
+
+- 连续的 text/reasoning 增量被合并，类型切换时固化为新块；
+- tool-call 分片到达时固化为工具使用块；
+- 输出严格保持流顺序，`Message()` 直接给出助手消息。
+
+这样既保留了原始分片的回放保真度，又得到了可直接入史的结构化消息。组装/历史的规模由 `tokenmeter.EstimateMessage` 按固定密度（4 字符/token）估算，累计超阈值时触发压缩，形成"组装 → 估算 → 压缩"的闭环。
+
 ## 崩溃修复：孤儿 Turn
 
 如果进程在 Turn 中途崩溃，持久化的日志将包含一个 `turn/start` 而没有匹配的 `turn/end`。持久层的 `repairOrphanTurn` 函数会检测到这种情况，并追加一个合成的 `turn/end {reason: interrupted}`：
@@ -302,6 +312,7 @@ JSONL 后端原样持久化所有 Turn/Step 事件。加载时，它运行 `repa
 | 查询方法 | `pkg/session/session.go` — `NextTurn()`、`NextStep()`、`OpenTurn()`、`OpenStep()` | （官方未暴露；内部维护） |
 | Agent 循环 | `pkg/agent/agent.go` — `runTurn()`、`runStep()` | `packages/core/agent/src/` — agent 循环 |
 | 崩溃修复 | `pkg/persistence/jsonl.go` — `repairOrphanTurn()` | `packages/core/session/src/repair.ts` |
+| 流式块组装 | `pkg/llm/assembler.go` — `BlockAssembler` | `packages/llm/llm/src/assembler.ts` |
 
 ## 下一步
 

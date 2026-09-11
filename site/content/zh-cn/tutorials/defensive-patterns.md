@@ -45,6 +45,22 @@ API Key、OAuth Token 是最高敏感级：
 - **转储脱敏**：`settings.MarkSecret` 标记的路径在 `Describe(redactSecrets=true)` 时被脱敏；`credentials.Store.Describe` 只输出元信息（是否存在、来源），不回传值；
 - **按请求获取**：由 `pkg/credentials` 统一管理生命周期（Set/Unset）与授权流，避免密钥散落在各组件。
 
+## 运行期三重护栏
+
+除了静态的资源/凭据纪律，Agent 在长时间运行中还会遇到卡死、空转、历史损坏三类问题，对应三重运行期护栏。
+
+### 协作式超时：防止永久卡死
+
+工具用 `TimeoutMs` 声明预算，`tools.WrapTimeout` 武装截止时间：本层计时器到期时把结果映射为结构化 `TOOL_TIMEOUT`，父 ctx 先取消则按普通取消处理，不会误报。它是**协作式**的——Go 无法强杀 goroutine，工具实现必须监听 `ctx.Done()` 自行退出，否则后台仍会继续。
+
+### 重复提醒：打破原地空转
+
+模型有时会以完全相同的参数反复调用同一工具而毫无进展。`tools.RepeatState` 统计连续相同调用：参数经 `CanonicalizeArgs` 深度 key 排序，属性顺序不同也视为相同；达到阈值（默认 3/5/8）时给出温和、再到详细的提醒，但**只提醒、不否决**，决定权仍在后续流程。用户一旦插话，链即重置——跨插话的重复不算循环。
+
+### 工具配平：防止压缩出非法历史
+
+压缩历史时，切点绝不能落在一次 tool_call 与它的 tool_result 之间，否则会留下"有调用没结果"的历史，模型会因此卡住。`compaction.BalancedCuts` 用括号配平：assistant/message 里每个工具调用 +1、tool/result -1，只有进行中计数归零处才是合法切点；`NearestBalancedFrom` 会把期望边界安全后移到最近的配平位置。
+
 ## 事故复盘：四问
 
 dsh-go 借鉴上游的复盘文化：一个 bug 出现在"不该出现"的地方（真实运行、已合并代码）时，写一份回顾性记录，回答四个问题：
@@ -83,6 +99,9 @@ dsh-go 借鉴上游的复盘文化：一个 bug 出现在"不该出现"的地方
 | 临时产物 | `pkg/spill` | （dsh-go 对应） |
 | 凭据存储 | `pkg/credentials/credentials.go` — `Store` | credentials 管理 |
 | 密钥脱敏 | `pkg/settings/settings.go` — `MarkSecret` | （dsh-go 增强） |
+| 协作式超时 | `pkg/tools/timeout.go` — `WrapTimeout` | `packages/guard/timeout-policy` |
+| 重复提醒 | `pkg/tools/repeat.go` — `RepeatState` | `packages/guard/repeat-tool-reminder` |
+| 工具配平 | `pkg/compaction/pairing.go` — `BalancedCuts` | `packages/compaction/tool-pairing` |
 | 错误链 | `pkg/llm/errorchain.go` | （dsh-go 增强） |
 
 ## 下一步

@@ -39,6 +39,20 @@ defer kill()                    // child process reaped at Turn end
 - **Dump redaction**: paths marked by `settings.MarkSecret` are redacted in `Describe`; `credentials.Store.Describe` returns metadata only, never values;
 - **Per-request fetch**: `pkg/credentials` manages lifecycle (Set/Unset) and authorization flows.
 
+## Three Runtime Guardrails
+
+### Cooperative Timeout
+
+A tool declares `TimeoutMs`; `tools.WrapTimeout` arms the deadline and maps its own expiry to `TOOL_TIMEOUT`. A parent ctx cancelling first reads as an ordinary cancel. It is **cooperative** — Go cannot kill a goroutine, so the tool must observe `ctx.Done()`.
+
+### Repeat Reminder
+
+`tools.RepeatState` counts consecutive identical calls. `CanonicalizeArgs` deep-sorts keys so property order does not matter. At thresholds (default 3/5/8) it emits a gentle-then-detailed reminder, **advisory only, never a veto**. A user interjection resets the chain.
+
+### Tool Pairing
+
+A compaction cut must never sit between a tool_call and its tool_result. `compaction.BalancedCuts` treats tool calls as +1 and results as -1; only zero-balance cuts are legal. `NearestBalancedFrom` moves a desired cut to the nearest balanced position.
+
 ## Postmortem: Four Questions
 
 | Question | What to answer |
@@ -67,6 +81,9 @@ Defensive patterns push errors left to write/startup/compile time; when somethin
 | Temp artifacts | `pkg/spill` | (dsh-go counterpart) |
 | Credential store | `pkg/credentials/credentials.go` — `Store` | credentials |
 | Secret redaction | `pkg/settings/settings.go` — `MarkSecret` | (dsh-go addition) |
+| Cooperative timeout | `pkg/tools/timeout.go` — `WrapTimeout` | guard/timeout-policy |
+| Repeat reminder | `pkg/tools/repeat.go` — `RepeatState` | guard/repeat-tool-reminder |
+| Tool pairing | `pkg/compaction/pairing.go` — `BalancedCuts` | compaction/tool-pairing |
 | Error chain | `pkg/llm/errorchain.go` | (dsh-go addition) |
 
 ## Next Steps

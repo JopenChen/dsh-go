@@ -252,6 +252,10 @@ A model can switch at runtime, but the prompt-assembly surface and request-routi
 
 A concurrent switch thus takes effect only on a **later step**; when the captured selection carries no reasoning effort, `Apply` clears the inherited effort to restore the selected model's default.
 
+## Delegation Depth
+
+A recursion budget prevents unbounded nesting. In the `subagent` package: a top-level agent is depth 0, `ChildDepth` adds one per level; `ResolveDepth` takes the **max** of the persisted header and runtime depth (runtime can only deepen); `CanDelegate(depth, maxDepth)` gates further spawning.
+
 ## Interaction with Other Subsystems
 
 ### SessionLog
@@ -307,6 +311,7 @@ Approval decides **whether** a tool can run. Like the Sandbox, this is handled i
 | Initiator | `pkg/agent/initiator.go` — `Initiator` | `packages/core/agent/src/index.ts` — initiator tracking |
 | ConsumedWork | `pkg/agent/consumed.go` — `FoldConsumedWork` | `packages/core/agent/src/consumed-work.ts` |
 | Model selection | `pkg/agent/model_selection.go` — `ModelSelectionRef` | `packages/core/agent/src/model-selection.ts` |
+| Delegation depth | `pkg/subagent/depth.go` — `ChildDepth/CanDelegate` | `packages/subagent/subagent/src/depth.ts` |
 
 ## Next Steps
 

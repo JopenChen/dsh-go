@@ -254,6 +254,14 @@ action := ResolveRequestError(chain, payload)
 
 于是一次并发切换只在**后续 step** 生效，当前 step 从装配到请求始终用同一个模型。捕获选择未带推理努力时，`Apply` 会清掉继承的努力以恢复所选模型的默认行为。
 
+## 委托深度：递归派生的预算
+
+当 Agent 派生子代理、子代理再派生时，需要一份递归预算防止无限套娃。`subagent` 包的深度核算规则：
+
+- 顶层代理深度为 0，每派生一层 `ChildDepth` +1；
+- `ResolveDepth` 合并持久化头与运行期深度时取 **max**：运行期只能加深、不能降低——否则一个恢复出来的子代理若从 0 计起，就会像顶层一样获得过多委托预算；
+- `CanDelegate(depth, maxDepth)` 判定当前是否还能再派生，负上限表示不限。
+
 ## 与其他子系统的交互
 
 ### SessionLog
@@ -309,6 +317,7 @@ Agent 在 `runStep()` 内部调用适配器的 `Stream()` 方法。适配器基�
 | Initiator | `pkg/agent/initiator.go` — `Initiator` | `packages/core/agent/src/index.ts` — initiator tracking |
 | ConsumedWork | `pkg/agent/consumed.go` — `FoldConsumedWork` | `packages/core/agent/src/consumed-work.ts` |
 | 模型选择 | `pkg/agent/model_selection.go` — `ModelSelectionRef` | `packages/core/agent/src/model-selection.ts` |
+| 委托深度 | `pkg/subagent/depth.go` — `ChildDepth/CanDelegate` | `packages/subagent/subagent/src/depth.ts` |
 
 ## 下一步
 

@@ -19,6 +19,19 @@ weight: 30
 | `blocked` | Blocked (blocker unresolved) | ❌ No |
 | `complete` | Completed | ❌ No |
 
+## Legal Transitions
+
+`goal.CanTransition` constrains direction, not just target validity:
+
+```
+active   → active / paused / blocked / complete
+paused   → active / complete
+blocked  → active / complete
+complete → (terminal, no outgoing edge)
+```
+
+`paused`/`blocked` are entered only from `active`; `complete` is terminal. Illegal moves return `GOAL_INVALID_TRANSITION`.
+
 ## Stable Error Codes
 
 Nine stable `GOAL_*` error codes aligned with the official `error.ts` (e.g. `GOAL_INVALID_MAX_ROUNDS`, `GOAL_STALE_REVISION`, `GOAL_NOT_FOUND`). Errors are routed by stable string, never by parsing message text.
@@ -41,10 +54,15 @@ if _, err := call(ts, "goal_set_max_rounds", map[string]any{"maxRounds": float64
 }
 ```
 
+## Todo: Whole-List Three-State Checklist
+
+Goal and Todo complement each other. A todo list is replaced wholesale (last-write-wins); each item is `pending` / `in_progress` / `completed`. Sequential mode allows at most one `in_progress` (`AllowParallel` relaxes it). `Normalize` enforces non-empty, unique content and the active count.
+
 ## Source Reference
 
 - `pkg/goal/goal.go` — the Goal state machine and its 6 tools
 - `pkg/goal/errors.go` — 9 stable error codes + GoalError
+- `pkg/goal/transition.go` — `CanTransition`
 - Runnable example: [`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) step 3
 
 ## Next Steps
