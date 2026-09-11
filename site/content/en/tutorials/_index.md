@@ -28,6 +28,7 @@ The tutorial section is at the heart of what Dsh-Go offers. We have designed a p
 9. [Capability Seams & LLM Adapter](capability-seams/) — Definition / Provider / Consumer and attaching any model
 10. [Bundle & Profile Layering](bundle-profile/) — bundle/profile as Preset composition and layered Settings
 11. [Defensive Patterns & Postmortem](defensive-patterns/) — result reporting, cleanup, credentials, and the four-question postmortem
+12. [Context Feeding](context-feeding/) — instruction discovery, clock context and in-process scheduling
 
 ## Running It
 

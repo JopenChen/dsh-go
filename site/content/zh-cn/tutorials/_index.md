@@ -28,6 +28,7 @@ weight: 2
 9. [能力三角色与 LLM 适配器](capability-seams/) —— Definition / Provider / Consumer 与任意模型接入
 10. [组合包与配置分层](bundle-profile/) —— bundle/profile 如何落地为 Preset 组合与分层 Settings
 11. [防御性编程与事故复盘](defensive-patterns/) —— 结果报告、资源清理、凭据保护与复盘四问
+12. [上下文供给](context-feeding/) —— 指令文件发现、时钟上下文与进程内调度
 
 ## 运行方式
 
