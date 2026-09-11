@@ -54,6 +54,10 @@ if _, err := call(ts, "goal_set_max_rounds", map[string]any{"maxRounds": float64
 }
 ```
 
+## Ralph: Goal-Driven Auto-Iteration
+
+`workflow.RunRalph` runs a fresh structured-output child per round, carrying only the objective and the prior bounded handoff. A child reports continue / complete / blocked; the loop ends on complete or blocked, and reports budget-limited at the round ceiling.
+
 ## Todo: Whole-List Three-State Checklist
 
 Goal and Todo complement each other. A todo list is replaced wholesale (last-write-wins); each item is `pending` / `in_progress` / `completed`. Sequential mode allows at most one `in_progress` (`AllowParallel` relaxes it). `Normalize` enforces non-empty, unique content and the active count.
@@ -63,6 +67,7 @@ Goal and Todo complement each other. A todo list is replaced wholesale (last-wri
 - `pkg/goal/goal.go` — the Goal state machine and its 6 tools
 - `pkg/goal/errors.go` — 9 stable error codes + GoalError
 - `pkg/goal/transition.go` — `CanTransition`
+- `pkg/workflow/ralph.go` — `RunRalph`
 - Runnable example: [`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) step 3
 
 ## Next Steps

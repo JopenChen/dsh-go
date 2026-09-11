@@ -54,6 +54,10 @@ if _, err := call(ts, "goal_set_max_rounds", map[string]any{"maxRounds": float64
 }
 ```
 
+## Ralph：目标驱动的自动迭代
+
+当目标明确、希望 Agent 自主推进到完成时，`workflow.RunRalph` 提供一个前台循环：每轮启动一个全新子代理，只携带固定目标与上一轮的结构化 handoff，子代理返回 `continue / complete / blocked` 报告。`continue` 携 handoff 进入下一轮，`complete` 成功收尾（须给出 evidence），`blocked` 交回人工；达到轮数上限则记为 `budget-limited`。每轮 handoff 都有长度上限，避免循环中上下文无限膨胀。
+
 ## Todo：整体替换的三态清单
 
 Goal 与 Todo 互补：Goal 管"目标处于什么阶段"，Todo 管"具体要做哪些事"。`todo` 包的待办是**整体替换**（last-write-wins），每条三态：
@@ -71,6 +75,7 @@ Goal 与 Todo 互补：Goal 管"目标处于什么阶段"，Todo 管"具体要�
 - `pkg/goal/goal.go` —— Goal 状态机与 6 工具
 - `pkg/goal/errors.go` —— 9 个稳定错误码 + GoalError
 - `pkg/goal/transition.go` —— `CanTransition` 迁移合法性
+- `pkg/workflow/ralph.go` —— `RunRalph` 目标自动迭代循环
 - 可运行示例：[`examples/tutorial`](https://github.com/JopenChen/dsh-go/blob/master/examples/tutorial/main.go) 第 3 步
 
 ## 下一步
