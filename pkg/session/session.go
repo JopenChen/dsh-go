@@ -110,13 +110,14 @@ const (
 	EventLLMDone    EventType = "llm/done"
 )
 
-// 簇 I：表面替换 & 杂项（5 种）
+// 簇 I：表面替换 & 杂项（6 种）
 const (
 	EventSurfaceReplace          EventType = "surface/replace"
 	EventAttachmentAdded         EventType = "attachment/added"
 	EventSessionProjectionUpdate EventType = "session/projection-updated"
 	EventWorkspaceChange         EventType = "workspace/change"
 	EventUserQuestion            EventType = "user/question"
+	EventSandboxMode             EventType = "sandbox/mode"
 )
 
 // 全部事件类型清单（用于词汇表遍历与 round-trip 测试）。
@@ -134,7 +135,7 @@ var AllEventTypes = []EventType{
 	EventSkillsChange, EventSkillsCatalog, EventSkillInject,
 	EventLLMRequest, EventLLMStream, EventLLMRetry, EventLLMError, EventLLMDone,
 	EventSurfaceReplace, EventAttachmentAdded, EventSessionProjectionUpdate, EventWorkspaceChange,
-	EventUserQuestion,
+	EventUserQuestion, EventSandboxMode,
 }
 
 // ============================================================================
@@ -616,6 +617,16 @@ type UserQuestionData struct {
 
 func (UserQuestionData) EventType() EventType { return EventUserQuestion }
 
+// SandboxModeData sandbox/mode：会话沙箱模式切换（log-only，不进模型 transcript）。
+// 对齐官方 packages/sandbox-policy/session-mode.ts：最后一条事件为会话生效覆盖。
+// source 为 'delegation' 时表示子代理委派时植入的覆盖。
+type SandboxModeData struct {
+	Mode   string `json:"mode"`
+	Source string `json:"source,omitempty"`
+}
+
+func (SandboxModeData) EventType() EventType { return EventSandboxMode }
+
 // ============================================================================
 // 事件类型 → 数据实例工厂（反序列化分发用）
 // ============================================================================
@@ -729,6 +740,8 @@ func newEventData(t EventType) (EventData, error) {
 		return WorkspaceChangeData{}, nil
 	case EventUserQuestion:
 		return UserQuestionData{}, nil
+	case EventSandboxMode:
+		return SandboxModeData{}, nil
 	default:
 		return nil, fmt.Errorf("session: unknown event type %q", t)
 	}
@@ -924,6 +937,24 @@ func NewSessionLog(id brand.SessionID) *SessionLog {
 // SessionID 返回日志所属会话 ID。
 func (sl *SessionLog) SessionID() brand.SessionID {
 	return sl.sessionID
+}
+
+// SandboxMode 从事件日志 fold 出会话级沙箱模式覆盖：
+// 取最后一个 sandbox/mode 事件的 mode；没有则返回 ok=false。
+// 对齐官方 packages/sandbox-policy/session-mode.ts 的 effectiveSandboxMode。
+func (sl *SessionLog) SandboxMode() (SandboxMode, bool) {
+	evs := sl.Events()
+	for i := len(evs) - 1; i >= 0; i-- {
+		if evs[i].Type != EventSandboxMode {
+			continue
+		}
+		data, ok := evs[i].Data.(SandboxModeData)
+		if !ok {
+			continue
+		}
+		return SandboxMode(data.Mode), true
+	}
+	return "", false
 }
 
 // Events 返回全部事件的只读快照。
