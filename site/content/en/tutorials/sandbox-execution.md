@@ -517,6 +517,10 @@ if err != nil {
 return exec.Command(confined.Argv[0], confined.Argv[1:]...)
 ```
 
+## Terminal Output Sanitization
+
+`terminal.StripANSI` removes CSI/OSC and two-byte escapes from raw PTY output; `NormalizeText` folds CRLF/CR into LF and drops BEL.
+
 ## Permission Presets: Sandbox + Approval Combined
 
 In practice, sandbox mode and approval policy are selected together via **permission presets** (`pkg/presets`):
@@ -558,6 +562,7 @@ The `custom` preset supports **derived overrides**: the user can independently o
 - `pkg/sandbox/windows_acl.go` — Windows restricted token + ACL backend
 - `pkg/approval/approval.go` — the other safety gate (allow / deny / ask)
 - `pkg/presets/permission_presets.go` — safe / danger / review / custom presets
+- `pkg/terminal/sanitize.go` — ANSI escape stripping and text normalization
 - Runnable example: [`examples/sandbox_approval`](https://github.com/JopenChen/dsh-go/blob/master/examples/sandbox_approval/main.go)
 
 ## Next Steps

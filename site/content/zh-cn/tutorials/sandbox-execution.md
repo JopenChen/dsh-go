@@ -516,6 +516,10 @@ if err != nil {
 return exec.Command(confined.Argv[0], confined.Argv[1:]...)
 ```
 
+## 终端输出清洗
+
+PTY 的原始输出夹杂大量 ANSI 转义（颜色、光标移动、标题设置），直接回灌给模型既浪费 token 又干扰阅读。`terminal.StripANSI` 剥离 CSI/OSC 与两字节转义序列，`NormalizeText` 把 CRLF/孤立 CR 归一为 LF 并移除 BEL，得到干净的纯文本。
+
 ## 权限预设：沙箱 + 审批的组合
 
 实际使用中，沙箱模式和审批策略通过**权限预设**（`pkg/presets`）一起选择：
@@ -557,6 +561,7 @@ preset, _ := presets.Resolve("safe")
 - `pkg/sandbox/windows_acl.go` —— Windows 受限令牌 + ACL 后端
 - `pkg/approval/approval.go` —— 另一道安全闸（allow / deny / ask）
 - `pkg/presets/permission_presets.go` —— safe / danger / review / custom 预设
+- `pkg/terminal/sanitize.go` —— ANSI 转义剥离与文本归一化
 - 可运行示例：[`examples/sandbox_approval`](https://github.com/JopenChen/dsh-go/blob/master/examples/sandbox_approval/main.go)
 
 ## 下一步
