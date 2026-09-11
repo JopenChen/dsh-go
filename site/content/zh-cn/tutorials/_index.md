@@ -15,10 +15,11 @@ weight: 2
 ## Agent 循环
 
 4. [Turn / Step 双循环](turn-step-loop/) —— 对话如何被结构化为嵌套的 Turn 和 Step 循环，以及严格单调编号
+5. [Agent 循环与运行时](agent-loop/) —— Agent 如何驱动循环、管理状态、收件箱、取消和请求错误恢复
 
 ## 安全与治理
 
-5. [沙箱与受控执行](sandbox-execution/) —— Agent 能在哪儿写？三种沙箱模式、策略解析与 fail-closed 强制约束
+6. [沙箱与受控执行](sandbox-execution/) —— Agent 能在哪儿写？三种沙箱模式、策略解析与 fail-closed 强制约束
 
 ## 运行方式
 

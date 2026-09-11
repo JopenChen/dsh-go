@@ -15,10 +15,11 @@ The tutorial section is at the heart of what Dsh-Go offers. We have designed a p
 ## Agent Loop
 
 4. [Turn / Step Dual Loop](turn-step-loop/) — how a conversation is structured as nested Turn and Step loops with strict monotonic numbering
+5. [Agent Loop & Runtime](agent-loop/) — how the Agent drives the loop, manages status, inbox, cancellation, and request-error recovery
 
 ## Safety & Governance
 
-5. [Sandbox & Controlled Execution](sandbox-execution/) — where can the Agent write? Three sandbox modes, policy resolution, and fail-closed confinement
+6. [Sandbox & Controlled Execution](sandbox-execution/) — where can the Agent write? Three sandbox modes, policy resolution, and fail-closed confinement
 
 ## Running It
 
