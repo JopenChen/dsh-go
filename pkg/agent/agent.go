@@ -59,6 +59,10 @@ type Agent struct {
 	pipeline *tools.Pipeline
 	// adapter LLM 适配器（M07）。
 	adapter llm.LLMAdapter
+	// options Agent 配置（provider/model/reasoningEffort/maxTokens）。
+	options AgentOptions
+	// inbox Agent 拥有的待处理消息双队列（next-turn/next-step）。
+	inbox *Inbox
 
 	// turnCh turn 队列（容量 2：1 运行中 + 1 排队）。
 	turnCh chan *turnReq
@@ -68,8 +72,12 @@ type Agent struct {
 	wg sync.WaitGroup
 	// started 是否已启动 worker。
 	started bool
-	// mu 保护 started。
+	// mu 保护 started 和 status。
 	mu sync.Mutex
+	// status 当前生命周期状态（idle/running）。
+	status AgentStatus
+	// idleCh 用于 whenIdle 等待（每次 status 变为 idle 时关闭并重建）。
+	idleCh chan struct{}
 	// pendingToolRounds 上一步产出的工具调用数（用于续步判断）。
 	pendingToolRounds int
 	// toolProvider 按工具名解析工具（测试可注入 mock；生产由 harness 注入）。
@@ -90,17 +98,82 @@ type turnReq struct {
 
 // NewAgent 创建代理。
 // adapter 可为 nil（测试时由 Start 前的 mock 注入）。
-func NewAgent(id brand.SessionID, log *session.SessionLog, sys *sysprompt.Assembler, pipeline *tools.Pipeline, adapter llm.LLMAdapter) *Agent {
+// options 可为 nil（使用默认配置）。
+func NewAgent(id brand.SessionID, log *session.SessionLog, sys *sysprompt.Assembler, pipeline *tools.Pipeline, adapter llm.LLMAdapter, options ...AgentOptions) *Agent {
+	opts := AgentOptions{}
+	if len(options) > 0 {
+		opts = options[0]
+	}
 	a := &Agent{
 		ID:       id,
 		log:      log,
 		sys:      sys,
 		pipeline: pipeline,
 		adapter:  adapter,
+		options:  opts,
 		turnCh:   make(chan *turnReq, 2),
 		stopCh:   make(chan struct{}),
+		status:   StatusIdle,
+		idleCh:   make(chan struct{}),
 	}
+	// 初始状态是 idle，关闭 idleCh 以便 whenIdle 立即返回
+	close(a.idleCh)
+	// 初始化 Inbox（从日志重放历史事件）
+	a.inbox = NewInbox(log, InboxNotifications{})
 	return a
+}
+
+// Inbox 返回 Agent 的收件箱（待处理消息双队列）。
+func (a *Agent) Inbox() *Inbox {
+	return a.inbox
+}
+
+// Options 返回 Agent 的配置（只读）。
+func (a *Agent) Options() AgentOptions {
+	return a.options
+}
+
+// Status 返回当前生命周期状态（idle/running）。
+func (a *Agent) Status() AgentStatus {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.status
+}
+
+// setStatus 设置状态并发出 agent/status 事件。
+func (a *Agent) setStatus(status AgentStatus) {
+	a.mu.Lock()
+	if a.status == status {
+		a.mu.Unlock()
+		return
+	}
+	a.status = status
+	if status == StatusRunning {
+		// 进入 running 时，创建新的 idleCh（未关闭，whenIdle 会阻塞）
+		a.idleCh = make(chan struct{})
+	} else if status == StatusIdle {
+		// 进入 idle 时，关闭 idleCh 通知所有等待者
+		close(a.idleCh)
+	}
+	a.mu.Unlock()
+
+	// 发出 agent/status 事件
+	_, _ = a.log.Append(session.AgentStatusData{Status: string(status)})
+}
+
+// WhenIdle 等待 Agent 活动达到静止。
+// 如果当前已经是 idle，立即返回。
+func (a *Agent) WhenIdle(ctx context.Context) error {
+	a.mu.Lock()
+	idleCh := a.idleCh
+	a.mu.Unlock()
+
+	select {
+	case <-idleCh:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // SetToolProvider 注入工具解析函数。
@@ -206,10 +279,15 @@ func (a *Agent) Cancel(cause CancelCause) {
 func (a *Agent) runTurn(req *turnReq) {
 	var turnErr error
 	defer func() {
+		// turn 结束后设置 status=idle
+		a.setStatus(StatusIdle)
 		if req.done != nil {
 			req.done <- turnErr
 		}
 	}()
+
+	// turn 开始时设置 status=running
+	a.setStatus(StatusRunning)
 
 	// 查询当前 turn 编号（从 SessionLog 状态获取，保证严格单调递增）
 	turnIdx := a.log.NextTurn()
